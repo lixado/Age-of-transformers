@@ -16,8 +16,8 @@ Transformers based AI to learn to play openage
  - `sudo apt-get install cmake flex make`
  - `sudo apt-get install gcc g++`
 
-3.     Clone repo and Compile
- - `git clone git@github.com:SFTtech/openage.git && cd openage && ./configure --mode=release --download-nyan --prefix=./../../../game && make && make install`
+3.     Compile openage
+ - `cd openage && ./configure --mode=release --download-nyan --prefix=./../../../game && make && make install`
 
 4.     Create enviroment and download requirements
  - `cd .. && python -m venv env`
