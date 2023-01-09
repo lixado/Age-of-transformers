@@ -1,0 +1,3 @@
+[submodule "openage"]
+	path = openage
+	url = git@github.com:SFTtech/openage.git
