@@ -16,10 +16,16 @@ Transformers based AI to learn to play openage
  - `sudo apt-get install cmake flex make`
  - `sudo apt-get install gcc g++`
 
-3.     Compile openage
+3.     Clone repo
+ - `git clone git@github.com:lixado/Age-of-transformers.git`
+ - `cd Age-of-transformers`
+ - `git submodule init`
+ - `git submodule update`
+
+4.     Compile openage
  - `cd openage && ./configure --mode=release --download-nyan --prefix=./../../../game && make && make install`
 
-4.     Create enviroment and download requirements
+5.     Create enviroment and download requirements
  - `cd .. && python -m venv env`
  - `source env/bin/activate && pip install -r requirements.txt` 
 
