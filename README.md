@@ -8,10 +8,11 @@ Transformers based AI to learn to play openage
 
 2.    Download deep-rts
  - `git submodule init`
- - `git submodule update` 
+ - `git submodule update`
+ - `cd deep-rts && git checkout cace3c2c55ef3d86906ad492b0779d832df218c2`
 
 3.    Compile deep-rts
- - `cd deep-rts && git submodule sync && git submodule update --init && pip install .`
+ - `git submodule sync && git submodule update --init && pip install .`
 
 
 # Extra commands
