@@ -16,47 +16,46 @@ logger = Logger()
 import random
 import numpy
 
-from pyDeepRTS import PyDeepRTS
+import random
+from DeepRTS import python
+from DeepRTS import Engine
 
-# Start the game
-g = PyDeepRTS()
+from DeepRTS.python import scenario
 
-# Add players
-player1 = g.add_player()
-player2 = g.add_player()
+if __name__ == "__main__":
 
-# Set FPS and UPS limits
-g.set_max_fps(10000000)
-g.set_max_ups(10000000)
+    episodes = 10000000
+    random_play = True
+    gui_config = python.Config(
+        render=True,
+        view=True,
+        inputs=True,
+        caption=False,
+        unit_health=True,
+        unit_outline=False,
+        unit_animation=True,
+        audio=False,
+        audio_volume=50
+    )
 
-# How often the state should be drawn
-g.render_every(50)
+    engine_config: Engine.Config = Engine.Config.defaults()
+    engine_config.set_barracks(True)
 
-# How often the capture function should return a state
-g.capture_every(50)
 
-# How often the game image should be drawn to the screen
-g.view_every(50)
+    env = scenario.GoldCollectOnePlayerFifteen({})
+    game = env.game
 
-# Start the game (flag)
-g.start()
 
-# Run forever
-while True:
-    g.tick()  # Update the game clock
-    g.update()  # Process the game state
-    g.render()  # Draw the game state to graphics
-    state = g.capture()  # Captures current state (Returns None if .capture_every is set for some iterations)
-    g.caption()  # Show Window caption
+    game.set_max_fps(30)
+    game.set_max_ups(10000000)
 
-    g.view()  # View the game state in the pygame window
-    
-    # If the game is in terminal state
-    if g.is_terminal():
-        g.reset()  # Reset the game
+    for episode in range(episodes):
+        print("Episode: %s, FPS: %s, UPS: %s" % (episode, game.get_fps(), game.get_ups()))
 
-    # Perform random action for player 1
-    player1.queue_action(numpy.random.randint(0, 16), 1)
-    
-    # Perform random action for player 2
-    player2.queue_action(numpy.random.randint(0, 16), 1)
+        terminal = False
+        state = env.reset()
+        while not terminal:
+            action = random.randint(0, 15)  # TODO AI Goes here
+            next_state, reward, terminal, _ = env.step(action)
+
+            state = next_state
