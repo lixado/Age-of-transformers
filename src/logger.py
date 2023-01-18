@@ -14,6 +14,8 @@ class Logger():
 
         print("Saved to folder " + os.path.abspath(self.folder_path)) 
 
+    def getSaveSolver(self):
+        return self.folder_path
 
     def save_epoch(self):
         pass

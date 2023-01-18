@@ -1,61 +1,47 @@
-import torch
-import matplotlib
-import time
-
+import gymnasium as gym
+from gymnasium.utils.save_video import save_video
 from logger import Logger
-
-x = torch.rand(5, 3)
-print(x)
-
-print(torch.cuda.is_available())
-
-print(time.strftime("%Y%m%d-%H-%M-%S"))
+from agents.ddqn import DDQN_Agent
+import copy
 
 logger = Logger()
 
-import random
-import numpy
+env = gym.make("BipedalWalker-v3", hardcore=True, render_mode="rgb_array_list")
 
-import random
-from DeepRTS import python
-from DeepRTS import Engine
-
-from DeepRTS.python import scenario
-
-if __name__ == "__main__":
-
-    episodes = 10000000
-    random_play = True
-    gui_config = python.Config(
-        render=True,
-        view=True,
-        inputs=True,
-        caption=False,
-        unit_health=True,
-        unit_outline=False,
-        unit_animation=True,
-        audio=False,
-        audio_volume=50
-    )
-
-    engine_config: Engine.Config = Engine.Config.defaults()
-    engine_config.set_barracks(True)
+agent = DDQN_Agent(env.observation_space.shape, len(env.action_space), logger.getSaveSolver())
 
 
-    env = scenario.GoldCollectOnePlayerFifteen({})
-    game = env.game
+step_starting_index = 0
+episode_index = 0
+observation, info = env.reset()
+step_index = 0
+while episode_index < 10:
+    prev_observation = copy.copy(observation)
+    step_index += 1
+    action = env.action_space.sample()
+    print(env.action_space)
 
 
-    game.set_max_fps(30)
-    game.set_max_ups(10000000)
+    observation, reward, terminated, truncated, info = env.step(action)
 
-    for episode in range(episodes):
-        print("Episode: %s, FPS: %s, UPS: %s" % (episode, game.get_fps(), game.get_ups()))
+    # Remember
+    #agent.cache(prev_observation, observation, actionId, reward, (terminated or truncated))
+    # Learn
+    #q, loss = agent.learn()
 
-        terminal = False
-        state = env.reset()
-        while not terminal:
-            action = random.randint(0, 15)  # TODO AI Goes here
-            next_state, reward, terminal, _ = env.step(action)
+    if terminated or truncated:
+        save_video(
+         env.render(),
+         "videos",
+         fps=env.metadata["render_fps"],
+         step_starting_index=step_starting_index,
+         episode_index=episode_index
+        )
+        r = []
+        step_starting_index = step_index + 1
+        episode_index += 1
+        observation, info = env.reset()
 
-            state = next_state
+
+
+env.close()

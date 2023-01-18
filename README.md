@@ -14,4 +14,5 @@ Transformers based AI to learn to play deep-rts
 
 # Extra commands
 
-### To save all dependencies: `pip freeze > requirements.txt`
+- To save all dependencies: `pip freeze > requirements.txt`
+- Remove all pip packages: `pip freeze | xargs pip uninstall -y`
