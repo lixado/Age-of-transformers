@@ -17,3 +17,4 @@ Transformers based AI to learn to play deep-rts
 
 - To save all dependencies: `pip freeze > requirements.txt`
 - Remove all pip packages: `pip freeze | xargs pip uninstall -y` if error `pip uninstall DeepRTS`
+- To update submodules: `git submodule sync`
