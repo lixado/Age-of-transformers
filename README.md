@@ -9,7 +9,7 @@ Transformers based AI to learn to play deep-rts
 2.     Download and compile deep-rts
  - `git submodule init && git submodule update`
  - `cd deep-rts && git submodule init && git submodule update`
- - `sudo apt install ccache libgtk-3-dev`
+ - `sudo apt install ccache libgtk-3-dev cmake`
  - `pip install .`
 
 
