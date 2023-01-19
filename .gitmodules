@@ -1,3 +1,6 @@
-[submodule "openage"]
-	path = openage
-	url = git@github.com:SFTtech/openage.git
+[submodule "deep-rts"]
+	path = deep-rts
+	url = git@github.com:cair/deep-rts.git
+[submodule "MicroRTS-Py"]
+	path = MicroRTS-Py
+	url = git@github.com:Farama-Foundation/MicroRTS-Py.git

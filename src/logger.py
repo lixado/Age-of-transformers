@@ -10,10 +10,12 @@ class Logger():
         os.mkdir(self.folder_path)
 
         # copy configs
-        shutil.copy2("./config.json", self.folder_path)
+        shutil.copy2("./src/config.json", self.folder_path)
 
         print("Saved to folder " + os.path.abspath(self.folder_path)) 
 
+    def getSaveSolver(self):
+        return self.folder_path
 
     def save_epoch(self):
         pass
