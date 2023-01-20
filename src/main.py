@@ -1,4 +1,5 @@
 from DeepRTS import Engine
+import cv2
 
 if __name__ == "__main__":
     # Minimal example of DeepRTS in python.
@@ -28,7 +29,8 @@ if __name__ == "__main__":
             game.update()
             state = game.state
             image = game.render()
+            
 
-            # cv2.imshow("DeepRTS", image)
-            # cv2.waitKey(1)
+            cv2.imshow("DeepRTS", image)
+            cv2.waitKey(1)
             game.caption()
