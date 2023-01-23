@@ -12,6 +12,13 @@ Transformers based AI to learn to play deep-rts
  - `sudo apt install ccache libgtk-3-dev cmake`
  - `pip install .`
 
+# Docker
+ - `cd age-of-transformers`
+ - `docker build --tag age-of-transformers .`
+ - `docker run -it age-of-transformers`
+ - When the container has started run: `pip install deep-rts/`
+   - If this command fails after some time, try to run the command again and it should install successfully (DeepRTS should show up after running `pip list`)
+
 
 # Extra commands
 
