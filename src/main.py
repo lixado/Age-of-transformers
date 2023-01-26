@@ -1,36 +1,25 @@
+import random
 from DeepRTS import Engine
-import cv2
 
 if __name__ == "__main__":
-    # Minimal example of DeepRTS in python.
-    # on my machine, the recorded FPS is: 60772
-    # if you run purely in C++, the number is 4 001 004
+    random_play = True
+    episodes = 100
 
-    num_episodes = 100000
+    for i in range(episodes):
+        env = Engine.DeepRTS.Scenario.GeneralAI_1v1(Engine.Config.Map.THIRTYONE)
+        state = env.reset()
+        done = False
 
-    config: Engine.Config = Engine.Config().defaults()
-    config.set_console_caption_enabled(True)
-    config.set_gui("Blend2DGui")
+        while not done:
+            env.game.set_player(env.game.players[0])
+            action = random.randrange(15)
+            next_state, reward, done, _ = env.step(action)
+            state = next_state
 
-    game: Engine.Game = Engine.Game("10x10-2p-ffa-Eblil.json", config)
-    player0: Engine.Player = game.add_player()
-    player1: Engine.Player = game.add_player()
+            if (done):
+                break
 
-    game.set_max_fps(0)  # 0 = unlimited
-    game.start()
-
-    for i in range(num_episodes):
-
-        game.reset()
-        while not game.is_terminal():
-            player0.do_action(Engine.Random.get(Engine.Constants.ACTION_MIN, Engine.Constants.ACTION_MAX))
-            player1.do_action(Engine.Random.get(Engine.Constants.ACTION_MIN, Engine.Constants.ACTION_MAX))
-
-            game.update()
-            state = game.state
-            image = game.render()
-            
-
-            cv2.imshow("DeepRTS", image)
-            cv2.waitKey(1)
-            game.caption()
+            env.game.set_player(env.game.players[1])
+            action = random.randrange(15)
+            next_state, reward, done, _ = env.step(action)
+            state = next_state

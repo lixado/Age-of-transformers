@@ -1,3 +1,3 @@
-import sys
+from DeepRTS import Constants
 
-print(sys.stdin.read(1))
+from DeepRTS.scenario import Scenario

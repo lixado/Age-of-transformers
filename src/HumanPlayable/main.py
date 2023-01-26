@@ -5,14 +5,12 @@ import pygame
 import cv2
 import numpy as np
 from PIL import Image
-from constants import action_space, inv_action_space
+from constants import action_space, inv_action_space, Map
 
 """
     Constants
 """
 tileSize = 32
-WIDTH = 10*tileSize
-HEIGHT = 10*tileSize
 
 map = "10x10-2p-ffa-Eblil.json"
 mapsize = (int(map.split("x")[0]), int(map.split("x")[1].split("-")[0]))
@@ -24,6 +22,8 @@ pygame.init()
 
 pygame.display.set_caption('DeepRTS v3.0') # set the pygame window name
 
+WIDTH = mapsize[0]*tileSize
+HEIGHT = mapsize[1]*tileSize
 canvas = pygame.display.set_mode((WIDTH, HEIGHT))
  
 
@@ -63,6 +63,14 @@ while not game.is_terminal():
                     action = 4
                 case pygame.K_SPACE:
                     action = 11
+                case pygame.K_x:
+                    action = 12
+                case pygame.K_c:
+                    action = 13
+                case pygame.K_v:
+                    action = 14
+                case pygame.K_b:
+                    action = 15
 
         if action != 16:
             print(inv_action_space[action])
