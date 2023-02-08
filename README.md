@@ -25,6 +25,8 @@ Transformers based AI to learn to play deep-rts
      - run `xhost +` in a terminal (`xhost -` to stop connections)
  - When the container has started run: `pip install deep-rts/`
    - If this command fails after some time, try to run the command again and it should install successfully (DeepRTS should show up after running `pip list`)
+- Extras:
+  - If you want to edit files within the container for development, you can add the volume parameter to the docker run command: `--volume /path/to/Age-of-transformers:/age-of-transformers`
 
 
 # Extra commands
