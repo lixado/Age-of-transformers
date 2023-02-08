@@ -25,3 +25,7 @@ torchaudio==0.13.1
 torchvision==0.14.1
 typing_extensions==4.4.0
 urllib3==1.26.14
+pybind11==2.10.3
+pygame==2.1.2
+opencv-python==4.7.0.68
+Cython==0.29.33
