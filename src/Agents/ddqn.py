@@ -1,3 +1,4 @@
+import os
 import torch.nn as nn
 import copy
 from collections import deque
@@ -7,11 +8,10 @@ import torch
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
 class DDQN_Agent:
-    def __init__(self, state_dim, action_space_dim, save_dir, date):
+    def __init__(self, state_dim, action_space_dim, save_dir):
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
         self.save_dir = save_dir
-        self.date = date
         self.device = "cpu"
         if torch.cuda.is_available():
             self.device = "cuda"
@@ -26,7 +26,8 @@ class DDQN_Agent:
         """
             Memory
         """
-        self.memory = deque(maxlen=400000)
+        self.deque_size = 400
+        self.memory = deque(maxlen=self.deque_size)
         self.batch_size = 256
         self.save_every = 5e5  # no. of experiences between saving Mario Net
 
@@ -43,6 +44,8 @@ class DDQN_Agent:
         self.burnin = 1e4  # min. experiences before training
         self.learn_every = 3  # no. of experiences between updates to Q_online
         self.sync_every = 1e3  # no. of experiences between Q_target & Q_online sync
+
+        self.saveHyperParameters()
 
     def act(self, state):
         """
@@ -169,19 +172,19 @@ class DDQN_Agent:
         print(f"Loading model at {path} with exploration rate {self.exploration_rate}")
 
     def saveHyperParameters(self):
-        save_HyperParameters = self.save_dir / "hyperparameters"
+        save_HyperParameters = os.path.join(self.save_dir, "hyperparameters.txt")
         with open(save_HyperParameters, "w") as f:
-            f.write(f"exploration_rate = {self.config.exploration_rate}\n")
-            f.write(f"exploration_rate_decay = {self.config.exploration_rate_decay}\n")
-            f.write(f"exploration_rate_min = {self.config.exploration_rate_min}\n")
-            f.write(f"deque_size = {self.config.deque_size}\n")
-            f.write(f"batch_size = {self.config.batch_size}\n")
-            f.write(f"gamma (discount parameter) = {self.config.gamma}\n")
-            f.write(f"learning_rate = {self.config.learning_rate}\n")
-            f.write(f"learning_rate_decay = {self.config.learning_rate_decay}\n")
-            f.write(f"burnin = {self.config.burnin}\n")
-            f.write(f"learn_every = {self.config.learn_every}\n")
-            f.write(f"sync_every = {self.config.sync_every}")
+            f.write(f"exploration_rate = {self.exploration_rate}\n")
+            f.write(f"exploration_rate_decay = {self.exploration_rate_decay}\n")
+            f.write(f"exploration_rate_min = {self.exploration_rate_min}\n")
+            f.write(f"deque_size = {self.deque_size}\n")
+            f.write(f"batch_size = {self.batch_size}\n")
+            f.write(f"gamma (discount parameter) = {self.gamma}\n")
+            f.write(f"learning_rate = {self.learning_rate}\n")
+            f.write(f"learning_rate_decay = {self.learning_rate_decay}\n")
+            f.write(f"burnin = {self.burnin}\n")
+            f.write(f"learn_every = {self.learn_every}\n")
+            f.write(f"sync_every = {self.sync_every}")
 
     def save(self):
         """

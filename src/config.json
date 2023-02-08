@@ -1,16 +1,6 @@
 {
-    "train": {
-        "batchsize": 10,
-        "shuffle": true,
-        "epochs": 100,
-        "lr": 1e-5
-    },
-    "validation": {
-        "batchsize": 10,
-        "shuffle": true
-    },
-    "test": {
-        "batchsize": 10,
-        "shuffle": true
-    }
+    "batchsize": 10,
+    "shuffle": true,
+    "epochs": 100,
+    "lr": 1e-5
 }

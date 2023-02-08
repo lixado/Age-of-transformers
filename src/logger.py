@@ -4,10 +4,10 @@ import shutil
 
 
 class Logger():
-    def __init__(self):
+    def __init__(self, workingDir):
         # create folder for results
-        self.folder_path = "./results/" + time.strftime("%Y%m%d-%H-%M-%S")
-        os.mkdir(self.folder_path)
+        self.folder_path = os.path.join(workingDir, "results", time.strftime("%Y%m%d-%H-%M-%S"))
+        os.makedirs(self.folder_path, exist_ok=True)
 
         # copy configs
         shutil.copy2("./src/config.json", self.folder_path)

@@ -27,13 +27,13 @@ Transformers based AI to learn to play deep-rts
 ```
 python -m venv env
 source env/bin/activate && pip install -r requirements.txt 
+sudo xargs apt-get install -y <packages.txt
 ```
 
 ####  1.1.2. <a name='Downloadandcompiledeep-rts'></a>Download and compile deep-rts
 ```
 git submodule init && git submodule update
 cd deep-rts && git submodule init && git submodule update
-sudo xargs apt-get install -y <packages.txt
 pip install .
 ```
 

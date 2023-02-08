@@ -81,11 +81,13 @@ while not game.is_terminal():
     player1.do_action(16) # 16 = do nothing
 
     game.update()
-    state = game.state
-    image = game.render()
+    print(player0.statistic_damage_done)
+    state = game.state # 10x10x10 not sure
+    image = game.render() # 4x320x320 image
     #im = cv2.imread(image,mode='RGB')
     
     rgb_image = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
+
     canvas.blit(pygame.surfarray.make_surface(rgb_image), (0,0))
     pygame.display.update()
 
