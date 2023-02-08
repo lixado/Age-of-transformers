@@ -20,17 +20,17 @@ Transformers based AI to learn to play deep-rts
 <!-- /vscode-markdown-toc -->
 
 
-##  1. <a name='Setup'></a>Setup
+##  <a name='Setup'></a>Setup
 
-###  1.1. <a name='Ubuntu'></a>Ubuntu
-####  1.1.1. <a name='Createenviromentanddownloaddependencies'></a>Create enviroment and download dependencies
+###  <a name='Ubuntu'></a>Ubuntu
+####  <a name='Createenviromentanddownloaddependencies'></a>Create enviroment and download dependencies
 ```
 python -m venv env
 source env/bin/activate && pip install -r requirements.txt 
 sudo xargs apt-get install -y <packages.txt
 ```
 
-####  1.1.2. <a name='Downloadandcompiledeep-rts'></a>Download and compile deep-rts
+####  <a name='Downloadandcompiledeep-rts'></a>Download and compile deep-rts
 ```
 git submodule init && git submodule update
 cd deep-rts && git submodule init && git submodule update
@@ -38,18 +38,21 @@ pip install .
 ```
 
 
-###  1.2. <a name='Windows'></a>Windows
+###  <a name='Windows'></a>Windows
 TODO
 
-###  1.3. <a name='Mac'></a>Mac
+###  <a name='Mac'></a>Mac
 TODO
 
-###  1.4. <a name='Docker'></a>Docker
+###  <a name='Docker'></a>Docker
+```
 sudo docker build .
+```
 
-##  2. <a name='TODOs'></a>TODOs
+##  <a name='TODOs'></a>TODOs
+TODO
 
-##  3. <a name='Extracommands'></a>Extra commands
+##  <a name='Extracommands'></a>Extra commands
 
 - To save all dependencies: `pip freeze > requirements.txt`
 - Remove all pip packages: `pip freeze | xargs pip uninstall -y` if error `pip uninstall DeepRTS`

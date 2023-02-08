@@ -82,6 +82,7 @@ while not game.is_terminal():
 
     game.update()
     print(player0.statistic_damage_done)
+    print(player0.statistic_damage_done)
     state = game.state # 10x10x10 not sure
     image = game.render() # 4x320x320 image
     #im = cv2.imread(image,mode='RGB')
