@@ -1,11 +1,23 @@
 import random
 import os
 import sys
+import cv2
+import numpy as np
 from DeepRTS import Engine, Constants
 from logger import Logger
 from functions import GetConfigDict
 from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
+
+STATE_SHAPE = (20, 16)
+
+def TransformImage(image):
+    rgb = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
+    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    resize = cv2.resize(gray, STATE_SHAPE[::-1])
+    framestack = np.expand_dims(resize, 0)
+    
+    return framestack
 
 
 if __name__ == "__main__":
@@ -38,7 +50,7 @@ if __name__ == "__main__":
     """
         Start agent
     """
-    state_sizes = (320, 320, 4)
+    state_sizes = (1, ) + STATE_SHAPE # number of image stacked
     agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(action_space_ids), save_dir=logger.getSaveSolver())
 
 
@@ -46,13 +58,12 @@ if __name__ == "__main__":
         Training loop
     """
     for e in range(config["epochs"]):
-        if e % 10 == 0:
-            print(e)
 
         game.start()
-        observation = game.render()
+        observation = TransformImage(game.render())
         i = 0
-        while not game.is_terminal():
+        done = False
+        while done:
             i += 1
 
             # AI make action
@@ -61,27 +72,30 @@ if __name__ == "__main__":
 
             # Next frame
             game.update()
-            next_observation = game.render()
+            next_observation = TransformImage(game.render())
 
             # reward function
-            reward = player0.statistic_damage_done # the more dmg done the more reward
+            reward = player0.statistic_damage_done - 1 # the more dmg done the more reward but each tick is -1 to kill faster
+
+            done = not game.is_terminal() and i < 20000 # limit time playable
 
             # AI Save memory
-            agent.cache(observation, next_observation, actionId, reward, game.is_terminal())
+            agent.cache(observation, next_observation, actionId, reward, done)
 
             # Learn
             q, loss = agent.learn()
             
             # Logging
-			#logger.log_step(reward, loss, q, player.scheduler.get_last_lr())
+            logger.log_step(reward, loss, q)
 
             # Update state
             observation = next_observation
 
-            if i % 100000000:
+            if i % 600 == 2:
                 print(f'Working on it. {reward}, action: {inv_action_space[action_space_ids[actionId]]}')
 
         game.reset()
+        logger.log_epoch(e, agent.exploration_rate)
 
     # save model
     agent.save()

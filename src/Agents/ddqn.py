@@ -19,29 +19,29 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.9999995
+        self.exploration_rate_decay = 0.9995
         self.exploration_rate_min = 0.001
         self.curr_step = 0
 
         """
             Memory
         """
-        self.deque_size = 400
+        self.deque_size = 800
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 256
+        self.batch_size = 100
         self.save_every = 5e5  # no. of experiences between saving Mario Net
 
         """
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.000250
-        self.learning_rate_decay = 0.99999985
+        self.learning_rate = 0.0250
+        self.learning_rate_decay = 0.999985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
-        self.burnin = 1e4  # min. experiences before training
+        self.burnin = 256#1e4  # min. experiences before training
         self.learn_every = 3  # no. of experiences between updates to Q_online
         self.sync_every = 1e3  # no. of experiences between Q_target & Q_online sync
 
@@ -55,15 +55,12 @@ class DDQN_Agent:
             Outputs:
             action_idx (int): An integer representing which action Mario will perform
         """
-        # EXPLORE
-        if (random.random() < self.exploration_rate):
+        if (random.random() < self.exploration_rate): # EXPLORE
             actionIdx = random.randint(0, self.action_space_dim-1)
-        # EXPLOIT
-        else:
+        else: # EXPLOIT
             state = np.array(state)
             state = torch.tensor(state).float().to(device=self.device)
-            state = state.unsqueeze(0)
-            
+            state = state.unsqueeze(0) # create extra dim for batch
 
             neuralNetOutput = self.net(state, model="online")
             actionIdx = torch.argmax(neuralNetOutput, axis=1).item()
@@ -115,10 +112,10 @@ class DDQN_Agent:
             self.save()
 
         if self.curr_step < self.burnin:
-            return None, None
+            return 0, 0 # None, None
 
         if self.curr_step % self.learn_every != 0:
-            return None, None
+            return 0, 0 # None, None
 
         # Sample from memory get self.batch_size number of memories
         state, next_state, action, reward, done = self.recall()
@@ -190,7 +187,7 @@ class DDQN_Agent:
         """
             Save the state to directory
         """
-        save_path = (self.save_dir / f"mario_net_0{int(self.curr_step // self.save_every)}.chkpt")
+        save_path = (self.save_dir / f"model.chkpt")
         torch.save(
             dict(model=self.net.state_dict(), exploration_rate=self.exploration_rate),
             save_path,
