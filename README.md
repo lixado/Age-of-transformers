@@ -50,7 +50,8 @@ sudo docker build .
 ```
 
 ##  <a name='TODOs'></a>TODOs
-TODO
+better save video
+docker test
 
 ##  <a name='Extracommands'></a>Extra commands
 

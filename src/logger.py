@@ -59,6 +59,17 @@ class Logger():
         self.actions.append(self.epochTotalActions)
         self.qs.append(self.epochTotalQ)
 
+        print(
+            f"Epoch {epoch} - "
+            f"Actions this epoch {self.epochTotalActions} - "
+            f"Epsilon {epsilon} - "
+            f"Reward this epoch {self.epochTotalReward} - "
+            f"Loss this epoch {self.epochTotalLoss} - "
+            f"Q Value this epoch {self.epochTotalQ} - "
+            f"Time Delta {tDelta} - "
+            f"Time {datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}"
+        )
+
         with open(self.save_log, "a") as f:
             f.write(
                 f"{epoch:8d}{self.epochTotalActions:8d}{epsilon:10.3f}"
@@ -74,5 +85,5 @@ class Logger():
 
         self.initEpochVariables()
 
-    def getSaveSolver(self):
+    def getSaveFolderPath(self):
         return self.folder_path

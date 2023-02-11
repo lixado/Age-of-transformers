@@ -187,12 +187,12 @@ class DDQN_Agent:
         """
             Save the state to directory
         """
-        save_path = (self.save_dir / f"model.chkpt")
+        save_path = os.path.join(self.save_dir, "model.chkpt")
         torch.save(
             dict(model=self.net.state_dict(), exploration_rate=self.exploration_rate),
             save_path,
         )
-        print(f"MarioNet saved to {save_path} at step {self.curr_step}")
+        print(f"Model saved to {save_path}")
 
 
 class DDQN(nn.Module):

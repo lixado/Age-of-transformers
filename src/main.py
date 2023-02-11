@@ -1,24 +1,12 @@
-import random
 import os
 import sys
-import cv2
-import numpy as np
 from DeepRTS import Engine, Constants
 from logger import Logger
-from functions import GetConfigDict
+from functions import GetConfigDict, TransformImage, CreateVideoFromTempImages, SaveTempImage
 from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
 
 STATE_SHAPE = (20, 16)
-
-def TransformImage(image):
-    rgb = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
-    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
-    resize = cv2.resize(gray, STATE_SHAPE[::-1])
-    framestack = np.expand_dims(resize, 0)
-    
-    return framestack
-
 
 if __name__ == "__main__":
     workingDir = os.getcwd()
@@ -51,20 +39,32 @@ if __name__ == "__main__":
         Start agent
     """
     state_sizes = (1, ) + STATE_SHAPE # number of image stacked
-    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(action_space_ids), save_dir=logger.getSaveSolver())
+    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(action_space_ids), save_dir=logger.getSaveFolderPath())
 
 
     """
         Training loop
     """
+    record_steps = int(config["epochs"] / 2) # record game every (total_epochs/x) epochs
     for e in range(config["epochs"]):
 
         game.start()
-        observation = TransformImage(game.render())
+        observation = TransformImage(game.render(), STATE_SHAPE)
         i = 0
-        done = False
+        recording_images = []
+        record = (e % record_steps == 0) or (e == config["epochs"]-1) # last part to always record last
+        if record:
+            print("Recording this epoch")
+        done = True
+        prevDmg = 0
         while done:
             i += 1
+
+            # Record game
+            if record:
+                image = game.render()
+                SaveTempImage(logger.getSaveFolderPath(), image, i)
+
 
             # AI make action
             actionId = agent.act(observation) # choose what to do
@@ -72,12 +72,14 @@ if __name__ == "__main__":
 
             # Next frame
             game.update()
-            next_observation = TransformImage(game.render())
+            next_observation = TransformImage(game.render(), STATE_SHAPE)
 
-            # reward function
-            reward = player0.statistic_damage_done - 1 # the more dmg done the more reward but each tick is -1 to kill faster
+            # reward 
+            reward = (player0.statistic_damage_done - prevDmg)/(i) + int(player0.evaluate_player_state == Constants.PlayerState.Victory)*100 # if win +1 otherwise 0
+            prevDmg = player0.statistic_damage_done
 
-            done = not game.is_terminal() and i < 20000 # limit time playable
+
+            done = not game.is_terminal() #not game.is_terminal() and i < 1000 # limit time playable
 
             # AI Save memory
             agent.cache(observation, next_observation, actionId, reward, done)
@@ -91,11 +93,13 @@ if __name__ == "__main__":
             # Update state
             observation = next_observation
 
-            if i % 600 == 2:
-                print(f'Working on it. {reward}, action: {inv_action_space[action_space_ids[actionId]]}')
 
         game.reset()
         logger.log_epoch(e, agent.exploration_rate)
+
+        # Record game
+        if record:
+            CreateVideoFromTempImages(os.path.join(logger.getSaveFolderPath(), "temp"), (e+1))
 
     # save model
     agent.save()
