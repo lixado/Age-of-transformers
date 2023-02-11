@@ -12,9 +12,7 @@ class DDQN_Agent:
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
         self.save_dir = save_dir
-        self.device = "cpu"
-        if torch.cuda.is_available():
-            self.device = "cuda"
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
 

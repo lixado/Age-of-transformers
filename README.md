@@ -45,16 +45,19 @@ TODO
 TODO
 
 ###  <a name='Docker'></a>Docker
+* Pull all submodules before building
 ```
 sudo docker build .
+sudo docker run --gpus all -it --entrypoint bash <image hash> # runs with cuda
+sudo docker container cp <container_hash>:/results/ ./results/ # copy files to outside container
 ```
 
 ##  <a name='TODOs'></a>TODOs
-better save video
-docker test
+TODO
 
 ##  <a name='Extracommands'></a>Extra commands
 
 - To save all dependencies: `pip freeze > requirements.txt`
 - Remove all pip packages: `pip freeze | xargs pip uninstall -y` if error `pip uninstall DeepRTS`
 - To update submodules: `git submodule sync`
+- Get files from server: `scp -r <username>@10.225.148.248:/home/pedron18/Age-of-transformers-pedro/results/ results/`

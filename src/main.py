@@ -1,6 +1,7 @@
 import os
 import sys
 from DeepRTS import Engine, Constants
+import torch
 from logger import Logger
 from functions import GetConfigDict, TransformImage, CreateVideoFromTempImages, SaveTempImage
 from constants import inv_action_space
@@ -15,6 +16,8 @@ if __name__ == "__main__":
 
     config = GetConfigDict(workingDir)
     print("Config: ", config)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print("Device: ", device)
 
     logger = Logger(workingDir)
 
@@ -40,7 +43,7 @@ if __name__ == "__main__":
     """
     state_sizes = (1, ) + STATE_SHAPE # number of image stacked
     agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(action_space_ids), save_dir=logger.getSaveFolderPath())
-
+    agent.device = device
 
     """
         Training loop
