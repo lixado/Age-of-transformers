@@ -60,11 +60,10 @@ sudo docker container cp <container_hash>:/results/ ./results/ # copy files to o
 ```
 
 ##  <a name='TODOs'></a>TODOs
-stackframe, skipframe
-
-gym env 
-
-reward and others need to be per action? at least comment plots
+- stackframe, skipframe
+- reward and others need to be per action? at least give titles plots and a little explanation maybe and x y labeling axes
+- deep-rts fix GUI
+- state machine
 
 ##  <a name='Extracommands'></a>Extra commands
 
