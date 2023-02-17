@@ -1,11 +1,11 @@
-# syntax=docker/dockerfile:1
-
 FROM ubuntu:22.04
 
-WORKDIR /age-of-transformers
-
-RUN apt-get update && apt-get install -y curl wget ca-certificates zip python3-pip git ccache libgtk-3-dev bison cmake
-
-COPY requirements.txt requirements.txt
-
 COPY . .
+
+RUN apt-get update
+RUN xargs apt-get install -y <packages.txt
+
+RUN pip install -r requirements.txt
+RUN pip install deep-rts/
+
+RUN python3 src/main.py

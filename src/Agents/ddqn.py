@@ -1,3 +1,4 @@
+import os
 import torch.nn as nn
 import copy
 from collections import deque
@@ -7,42 +8,42 @@ import torch
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
 class DDQN_Agent:
-    def __init__(self, state_dim, action_space_dim, save_dir, date):
+    def __init__(self, state_dim, action_space_dim, save_dir):
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
         self.save_dir = save_dir
-        self.date = date
-        self.device = "cpu"
-        if torch.cuda.is_available():
-            self.device = "cuda"
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.9999995
+        self.exploration_rate_decay = 0.9995
         self.exploration_rate_min = 0.001
         self.curr_step = 0
 
         """
             Memory
         """
-        self.memory = deque(maxlen=400000)
-        self.batch_size = 256
+        self.deque_size = 800
+        self.memory = deque(maxlen=self.deque_size)
+        self.batch_size = 100
         self.save_every = 5e5  # no. of experiences between saving Mario Net
 
         """
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.000250
-        self.learning_rate_decay = 0.99999985
+        self.learning_rate = 0.0250
+        self.learning_rate_decay = 0.999985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
-        self.burnin = 1e4  # min. experiences before training
+        self.burnin = 256#1e4  # min. experiences before training
         self.learn_every = 3  # no. of experiences between updates to Q_online
         self.sync_every = 1e3  # no. of experiences between Q_target & Q_online sync
+
+        self.saveHyperParameters()
 
     def act(self, state):
         """
@@ -52,15 +53,12 @@ class DDQN_Agent:
             Outputs:
             action_idx (int): An integer representing which action Mario will perform
         """
-        # EXPLORE
-        if (random.random() < self.exploration_rate):
+        if (random.random() < self.exploration_rate): # EXPLORE
             actionIdx = random.randint(0, self.action_space_dim-1)
-        # EXPLOIT
-        else:
+        else: # EXPLOIT
             state = np.array(state)
             state = torch.tensor(state).float().to(device=self.device)
-            state = state.unsqueeze(0)
-            
+            state = state.unsqueeze(0) # create extra dim for batch
 
             neuralNetOutput = self.net(state, model="online")
             actionIdx = torch.argmax(neuralNetOutput, axis=1).item()
@@ -112,10 +110,10 @@ class DDQN_Agent:
             self.save()
 
         if self.curr_step < self.burnin:
-            return None, None
+            return 0, 0 # None, None
 
         if self.curr_step % self.learn_every != 0:
-            return None, None
+            return 0, 0 # None, None
 
         # Sample from memory get self.batch_size number of memories
         state, next_state, action, reward, done = self.recall()
@@ -169,30 +167,30 @@ class DDQN_Agent:
         print(f"Loading model at {path} with exploration rate {self.exploration_rate}")
 
     def saveHyperParameters(self):
-        save_HyperParameters = self.save_dir / "hyperparameters"
+        save_HyperParameters = os.path.join(self.save_dir, "hyperparameters.txt")
         with open(save_HyperParameters, "w") as f:
-            f.write(f"exploration_rate = {self.config.exploration_rate}\n")
-            f.write(f"exploration_rate_decay = {self.config.exploration_rate_decay}\n")
-            f.write(f"exploration_rate_min = {self.config.exploration_rate_min}\n")
-            f.write(f"deque_size = {self.config.deque_size}\n")
-            f.write(f"batch_size = {self.config.batch_size}\n")
-            f.write(f"gamma (discount parameter) = {self.config.gamma}\n")
-            f.write(f"learning_rate = {self.config.learning_rate}\n")
-            f.write(f"learning_rate_decay = {self.config.learning_rate_decay}\n")
-            f.write(f"burnin = {self.config.burnin}\n")
-            f.write(f"learn_every = {self.config.learn_every}\n")
-            f.write(f"sync_every = {self.config.sync_every}")
+            f.write(f"exploration_rate = {self.exploration_rate}\n")
+            f.write(f"exploration_rate_decay = {self.exploration_rate_decay}\n")
+            f.write(f"exploration_rate_min = {self.exploration_rate_min}\n")
+            f.write(f"deque_size = {self.deque_size}\n")
+            f.write(f"batch_size = {self.batch_size}\n")
+            f.write(f"gamma (discount parameter) = {self.gamma}\n")
+            f.write(f"learning_rate = {self.learning_rate}\n")
+            f.write(f"learning_rate_decay = {self.learning_rate_decay}\n")
+            f.write(f"burnin = {self.burnin}\n")
+            f.write(f"learn_every = {self.learn_every}\n")
+            f.write(f"sync_every = {self.sync_every}")
 
     def save(self):
         """
             Save the state to directory
         """
-        save_path = (self.save_dir / f"mario_net_0{int(self.curr_step // self.save_every)}.chkpt")
+        save_path = os.path.join(self.save_dir, "model.chkpt")
         torch.save(
             dict(model=self.net.state_dict(), exploration_rate=self.exploration_rate),
             save_path,
         )
-        print(f"MarioNet saved to {save_path} at step {self.curr_step}")
+        print(f"Model saved to {save_path}")
 
 
 class DDQN(nn.Module):
