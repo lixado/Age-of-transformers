@@ -1,9 +1,12 @@
-action_space = {"PreviousUnit": 1,
+action_space = {
+            "PreviousUnit": 1,
             "NextUnit": 2,
+
             "MoveLeft": 3,
             "MoveRight": 4,
             "MoveUp": 5,
             "MoveDown": 6,
+
             "MoveUpLeft": 7,
             "MoveUpRight": 8,
             "MoveDownLeft": 9,

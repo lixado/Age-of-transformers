@@ -4,7 +4,7 @@ FROM ubuntu:22.04
 
 WORKDIR /age-of-transformers
 
-RUN apt-get update && apt-get install -y curl wget ca-certificates zip python3-pip git ccache libgtk-3-dev bison cmake
+RUN apt-get update && apt-get install -y curl wget ca-certificates zip python3-pip git ccache libgtk-3-dev bison cmake nano
 
 COPY requirements.txt requirements.txt
 
