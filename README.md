@@ -16,8 +16,17 @@ Transformers based AI to learn to play deep-rts
  - `cd age-of-transformers`
  - `docker build --tag age-of-transformers .`
  - `docker run -it age-of-transformers`
+   - For GUI (MacOS):
+     - `docker run -i -t -e DISPLAY=<your-ip>:0 age-of-transformers /bin/bash` 
+     - `brew install socat`
+     - `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:/tmp/.X11-unix/X0`
+     - Start XQuartz (worked on version 2.7.11)
+     - Enable "Allow connections from network clients" in XQuartz settings
+     - run `xhost +` in a terminal (`xhost -` to stop connections)
  - When the container has started run: `pip install deep-rts/`
    - If this command fails after some time, try to run the command again and it should install successfully (DeepRTS should show up after running `pip list`)
+- Extras:
+  - If you want to edit files within the container for development, you can add the volume parameter to the docker run command: `--volume /path/to/Age-of-transformers:/age-of-transformers`
 
 
 # Extra commands
