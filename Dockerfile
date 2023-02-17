@@ -1,4 +1,4 @@
-FROM nvidia/cuda
+FROM nvidia/cuda:12.0.1-runtime-ubuntu22.04
 
 COPY . .
 
