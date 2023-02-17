@@ -78,7 +78,7 @@ if __name__ == "__main__":
             next_observation = TransformImage(game.render(), STATE_SHAPE)
 
             # reward 
-            reward = (player0.statistic_damage_done - prevDmg)/(i) + int(player0.evaluate_player_state == Constants.PlayerState.Victory)*100 # if win +1 otherwise 0
+            reward = (player0.statistic_damage_done - prevDmg)/(i) + int(player1.evaluate_player_state() == Constants.PlayerState.Defeat)*10000 # if win +1 otherwise 0
             prevDmg = player0.statistic_damage_done
 
 
