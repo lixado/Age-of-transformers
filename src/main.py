@@ -6,6 +6,7 @@ from logger import Logger
 from functions import GetConfigDict, TransformImage, CreateVideoFromTempImages, SaveTempImage
 from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
+from math import exp
 
 STATE_SHAPE = (20, 16)
 
@@ -53,20 +54,19 @@ if __name__ == "__main__":
 
         game.start()
         observation = TransformImage(game.render(), STATE_SHAPE)
-        i = 0
+        steps = 0
         recording_images = []
         record = (e % record_steps == 0) or (e == config["epochs"]-1) # last part to always record last
         if record:
             print("Recording this epoch")
         done = True
-        prevDmg = 0
         while done:
-            i += 1
+            steps += 1
 
             # Record game
             if record:
                 image = game.render()
-                SaveTempImage(logger.getSaveFolderPath(), image, i)
+                SaveTempImage(logger.getSaveFolderPath(), image, steps)
 
 
             # AI make action
@@ -78,11 +78,10 @@ if __name__ == "__main__":
             next_observation = TransformImage(game.render(), STATE_SHAPE)
 
             # reward 
-            reward = (player0.statistic_damage_done - prevDmg)/(i) + int(player1.evaluate_player_state() == Constants.PlayerState.Defeat)*10000 # if win +1 otherwise 0
-            prevDmg = player0.statistic_damage_done
+            reward = (player0.statistic_damage_done / 100) - steps/4000 + int(player1.evaluate_player_state() == Constants.PlayerState.Defeat) # if win +1 otherwise 0
 
 
-            done = not game.is_terminal() #not game.is_terminal() and i < 1000 # limit time playable
+            done = not game.is_terminal() and steps < 4000 #not game.is_terminal() and i < 1000 # limit time playable
 
             # AI Save memory
             agent.cache(observation, next_observation, actionId, reward, done)

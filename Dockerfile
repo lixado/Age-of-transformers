@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM nvidia/cuda
 
 COPY . .
 
