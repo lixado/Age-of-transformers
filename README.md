@@ -53,7 +53,11 @@ sudo docker container cp <container_hash>:/results/ ./results/ # copy files to o
 ```
 
 ##  <a name='TODOs'></a>TODOs
-TODO
+stackframe, skipframe
+
+gym env 
+
+reward and others need to be per action? at least comment plots
 
 ##  <a name='Extracommands'></a>Extra commands
 
