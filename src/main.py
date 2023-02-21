@@ -1,6 +1,7 @@
 import os
 import sys
 from DeepRTS import Engine, Constants
+import cv2
 import torch
 from Gyms.Simple1v1 import Simple1v1Gym
 from logger import Logger
@@ -35,7 +36,7 @@ if __name__ == "__main__":
     # gym wrappers
     gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
     gym = GrayScaleObservation(gym)
-    gym = NormalizeObservation(gym)  # normalize the values
+    #gym = NormalizeObservation(gym)  # normalize the values this makes the image impossible to read for humans
     gym = FrameStack(gym, num_stack=FRAME_STACK)
 
     """
@@ -69,6 +70,10 @@ if __name__ == "__main__":
             
             # Act
             next_observation, reward, done, _, info = gym.step(actionIndex)
+
+            # use this to see image example
+            #cv2.imshow('image', next_observation[0])
+            #cv2.waitKey(3)
 
             # AI Save memory
             agent.cache(observation, next_observation, actionIndex, reward, done)
