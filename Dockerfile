@@ -8,8 +8,7 @@ RUN apt install software-properties-common -y
 RUN add-apt-repository ppa:deadsnakes/ppa -y
 RUN apt install python3.10 -y
 # install requirements
-# Set timezone:
-RUN ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
+ARG DEBIAN_FRONTEND=noninteractive
 RUN xargs apt-get install -y <packages.txt
 
 RUN pip3 install -r requirements.txt
