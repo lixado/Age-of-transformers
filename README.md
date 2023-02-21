@@ -56,6 +56,7 @@ TODO
 ```
 sudo docker build .
 sudo docker run --gpus all -it --entrypoint bash <image hash> # runs with cuda
+sudo docker run --gpus all -it --entrypoint bash $(sudo docker build -q .) # build and run
 sudo docker container cp <container_hash>:/results/ ./results/ # copy files to outside container
 ```
 
