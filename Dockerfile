@@ -1,5 +1,5 @@
 FROM nvidia/cuda:11.6.0-devel-ubuntu18.04
-
+# should problably change to pytorch
 COPY . .
 
 RUN apt-get update

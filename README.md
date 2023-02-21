@@ -65,7 +65,7 @@ sudo docker container cp <container_hash>:/results/ ./results/ # copy files to o
 - deep-rts fix GUI
 - state machine
 - victory if all other players defeated (DeepRts)
-
+- remove repeated constants
 
 ##  <a name='Extracommands'></a>Extra commands
 
