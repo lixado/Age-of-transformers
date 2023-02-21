@@ -13,7 +13,7 @@ class Simple1v1Gym(gym.Env):
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
         self.game: Engine.Game = Engine.Game(map, engineConfig)
-        self.game.set_max_fps(60)  # 0 = unlimited
+        self.game.set_max_fps(0)  # 0 = unlimited
         # add 2 players
         self.player0: Engine.Player = self.game.add_player()
         self.player1: Engine.Player = self.game.add_player()
