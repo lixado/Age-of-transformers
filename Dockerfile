@@ -11,7 +11,7 @@ RUN add-apt-repository ppa:deadsnakes/ppa -y
 RUN apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget -y
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add
 RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main' -y
-RUN apt-get apt-get update
+RUN apt-get update
 
 
 # install requirements
