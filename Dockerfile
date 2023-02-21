@@ -13,7 +13,10 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Moscow
 RUN xargs apt-get install -y <packages.txt
 
-RUN pip3 install -r requirements.txt
-RUN pip3 install deep-rts/
+RUN curl -O https://bootstrap.pypa.io/get-pip.py
+RUN python3.10 get-pip.py
+
+RUN pip install -r requirements.txt
+RUN pip install deep-rts/
 
 RUN python3.10 src/main.py
