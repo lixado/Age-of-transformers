@@ -67,10 +67,12 @@ sudo docker container cp <container_hash>:/results/ ./results/ # copy files to o
 - state machine
 - victory if all other players defeated (DeepRts)
 - remove repeated constants
+- only allow action every x frames
+- implement skip frames wrapper
 
 ##  <a name='Extracommands'></a>Extra commands
 
 - To save all dependencies: `pip freeze > requirements.txt`
 - Remove all pip packages: `pip freeze | xargs pip uninstall -y` if error `pip uninstall DeepRTS`
 - To update submodules: `git submodule sync`
-- Get files from server: `scp -r <username>@10.225.148.248:/home/pedron18/Age-of-transformers-pedro/results/ results/`
+- Get files from server: `scp -r <username>@10.225.148.248:/home/pedron18/Age-of-transformers/results/ results/`

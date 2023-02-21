@@ -1,5 +1,5 @@
 {
-    "batchsize": 10,
+    "batchsize": 100,
     "shuffle": true,
     "epochs": 10,
     "lr": 1e-5
