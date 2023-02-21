@@ -24,7 +24,7 @@ class DDQN_Agent:
         """
             Memory
         """
-        self.deque_size = 1000
+        self.deque_size = 20000
         self.memory = deque(maxlen=self.deque_size)
         self.batch_size = 256
         self.save_every = 5e5  # no. of experiences between saving model

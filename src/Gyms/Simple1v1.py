@@ -34,7 +34,7 @@ class Simple1v1Gym(gym.Env):
         # reward 
         winnerReward = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat)*10 - int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)*10 # if win then +10 if loss -10
         dmgReward = 1 - ((100 - self.player0.statistic_damage_done) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
-        timeConservation = (4000 - self.steps) / 4000 # * the dmg reward, higher the lesser time has passed
+        timeConservation = (8000 - self.steps) / 8000 # * the dmg reward, higher the lesser time has passed
         reward = dmgReward * timeConservation + winnerReward
 
         truncated = False # useless value needs to be here for frame stack wrapper
