@@ -34,7 +34,7 @@ class DDQN_Agent:
         """
         self.gamma = 0.9
         self.learning_rate = 0.000250
-        self.learning_rate_decay = 0.9999985
+        self.learning_rate_decay = 0.99999985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
