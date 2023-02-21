@@ -1,6 +1,5 @@
-apt-utils
 python3.10
-python3.10-pip
+python3.10-distutils
 git
 xvfb
 build-essential
