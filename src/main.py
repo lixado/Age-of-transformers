@@ -49,7 +49,7 @@ if __name__ == "__main__":
     """
         Training loop
     """
-    record_epochs = int(config["epochs"] / 2) # record game every (total_epochs/x) epochs
+    record_epochs = 5 # record game every x epochs
     for e in range(config["epochs"]):
         observation, info = gym.reset()
         ticks = 0

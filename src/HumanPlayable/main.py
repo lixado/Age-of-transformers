@@ -45,6 +45,7 @@ player1: Engine.Player = game.add_player()
 """
 game.start()
 old = time()
+ba = False
 while not game.is_terminal():
 
     # event loop
@@ -58,11 +59,11 @@ while not game.is_terminal():
                 case pygame.K_UP:
                     action = 5
                 case pygame.K_LEFT:
-                    action = 3         
+                    action = 3      
                 case pygame.K_RIGHT:
                     action = 4
                 case pygame.K_SPACE:
-                    action = 11
+                    game.reset()
                 case pygame.K_x:
                     action = 12
                 case pygame.K_c:
@@ -77,12 +78,14 @@ while not game.is_terminal():
             break # only 1 action per loop
 
     
-    player0.do_action(action)
+    if (player0.statistic_damage_done > 0):
+        player0.do_action(16)
+    else:
+        player0.do_action(action)
     player1.do_action(16) # 16 = do nothing
 
     game.update()
-    print(player0.statistic_damage_done)
-    print(player0.statistic_damage_done)
+
     state = game.state # 10x10x10 not sure
     image = game.render() # 4x320x320 image
     #im = cv2.imread(image,mode='RGB')
@@ -94,6 +97,7 @@ while not game.is_terminal():
 
     temp = time()
     if (temp - old) >= 1:
+        print(player0.statistic_damage_done)
         game.caption()
         old = temp
 
