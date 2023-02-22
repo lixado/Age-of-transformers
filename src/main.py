@@ -13,7 +13,7 @@ from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, Gr
 from wrappers import SkipFrame
 
 STATE_SHAPE = (84, 84) # model input shapes
-FRAME_STACK = 4 # how many frames to stack
+FRAME_STACK = 1#4 # how many frames to stack
 SKIP_FRAME = 4
 MAP = "10x10-2p-ffa-Eblil.json"
 
@@ -37,10 +37,10 @@ if __name__ == "__main__":
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
-    gym = SkipFrame(gym, SKIP_FRAME)
+    #gym = SkipFrame(gym, SKIP_FRAME)
     gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
     gym = GrayScaleObservation(gym)
-    gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values this makes the image impossible to read for humans
+    gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
     gym = FrameStack(gym, num_stack=FRAME_STACK)
 
     """
@@ -67,19 +67,19 @@ if __name__ == "__main__":
         while not done and not truncated:
             ticks += 1
 
-            # Record game
-            if record:
-                SaveTempImage(logger.getSaveFolderPath(), gym.render(), ticks)
-
             # AI choose action
             actionIndex = agent.act(observation)
             
             # Act
             next_observation, reward, done, truncated, info = gym.step(actionIndex)
 
+            # Record game
+            if record:
+                SaveTempImage(logger.getSaveFolderPath(), gym.render(), ticks)
+
             # use this to see image example
-            cv2.imshow('image', next_observation[0])
-            cv2.waitKey(3)
+            #cv2.imshow('image', next_observation[0])
+            #cv2.waitKey(3)
 
             # AI Save memory
             agent.cache(observation, next_observation, actionIndex, reward, done)

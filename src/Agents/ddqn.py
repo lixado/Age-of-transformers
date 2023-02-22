@@ -17,7 +17,7 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.9995
+        self.exploration_rate_decay = 0.999995
         self.exploration_rate_min = 0.001
         self.curr_step = 0
 
@@ -34,7 +34,7 @@ class DDQN_Agent:
         """
         self.gamma = 0.9
         self.learning_rate = 0.0250
-        self.learning_rate_decay = 0.99999985
+        self.learning_rate_decay = 0.99985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)

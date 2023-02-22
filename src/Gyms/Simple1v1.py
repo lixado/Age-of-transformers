@@ -10,6 +10,7 @@ class Simple1v1Gym(gym.Env):
         self.max_episode_steps = max_episode_steps
         self.elapsed_steps = None
 
+        self.shape = (320, 320, 3) # W, H, C
         """
             Start engine
         """
@@ -25,35 +26,53 @@ class Simple1v1Gym(gym.Env):
         # max actions = list(range(Engine.Constants.ACTION_MIN, Engine.Constants.ACTION_MAX + 1))
 
         self.game.start()
-        self.observation_space = Box(low=0, high=255, shape=(320, 320, 3), dtype=np.uint8)
-
-        self.prevDmg = 0
+        self.observation_space = Box(low=0, high=255, shape=self.shape, dtype=np.uint8)
 
 
     def step(self, actionIndex):
         self.elapsed_steps += 1
+        self.action = actionIndex
 
         self.player0.do_action(self.action_space[actionIndex])
         self.player1.do_action(16) # do nothing
         self.game.update()
 
         # reward 
-        winnerReward = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat)*1 # if win +1
-        dmgReward = 1 - ((100 - (self.player0.statistic_damage_done - self.prevDmg)) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
+        winnerReward = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat) - int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)*1 # if win +1
+        dmgReward = 1 - ((100 - self.player0.statistic_damage_done) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
         timeConservation = (self.max_episode_steps - self.elapsed_steps) / self.max_episode_steps # * the dmg reward, higher the lesser time has passed
-        reward = dmgReward * timeConservation + winnerReward
-
-        self.prevDmg = int(self.player0.statistic_damage_done)
+        self.reward = dmgReward * timeConservation + winnerReward
 
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
 
-        return self._get_obs(), reward, self.game.is_terminal(), truncated, self._get_info()
+        return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
 
     def render(self):
         """
             Return RGB image but this one will not be changed by wrappers
         """
-        return cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
+        image = cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
+        dashboard = np.zeros(self.shape,dtype=np.uint8)
+        dashboard.fill(255)
+        
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        org = (10, self.shape[1]-10)
+        fontScale = 0.5
+        spacing = int(40 * fontScale)
+        color = (0, 0, 0)
+        thickness = 1
+
+        texts = [f"player0.statistic_damage_done: {self.player0.statistic_damage_done}",
+                f"Reward: {self.reward}",
+                f"Action: {inv_action_space[self.action_space[self.action]]}"]
+
+        for text in texts[::-1]:        
+            dashboard = cv2.putText(dashboard, text, org, font, fontScale, color, thickness, cv2.LINE_AA, False)
+            org = (org[0], org[1] - spacing)
+
+        image = cv2.hconcat([dashboard, image])
+        return image
 
 
     def _get_obs(self):
