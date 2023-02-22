@@ -64,7 +64,12 @@ sudo docker container cp <container_hash>:/results/ ./results/ # copy files to o
 - reward and others need to be per action? at least give titles plots and a little explanation maybe and x y labeling axes
 - deep-rts fix GUI
 - state machine
+<<<<<<< HEAD
 - docker image of deep rts to speed up testing
+=======
+- victory if all other players defeated (DeepRts)
+
+>>>>>>> pedro
 
 ##  <a name='Extracommands'></a>Extra commands
 
