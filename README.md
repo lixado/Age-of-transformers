@@ -56,6 +56,7 @@ TODO
 ```
 sudo docker build .
 sudo docker run --gpus all -it --entrypoint bash <image hash> # runs with cuda
+sudo docker run --gpus all -it --entrypoint bash $(sudo docker build -q .) # build and run
 sudo docker container cp <container_hash>:/results/ ./results/ # copy files to outside container
 ```
 
@@ -68,7 +69,13 @@ sudo docker container cp <container_hash>:/results/ ./results/ # copy files to o
 - docker image of deep rts to speed up testing
 =======
 - victory if all other players defeated (DeepRts)
+<<<<<<< HEAD
 
+>>>>>>> pedro
+=======
+- remove repeated constants
+- only allow action every x frames
+- implement skip frames wrapper
 >>>>>>> pedro
 
 ##  <a name='Extracommands'></a>Extra commands
@@ -76,4 +83,4 @@ sudo docker container cp <container_hash>:/results/ ./results/ # copy files to o
 - To save all dependencies: `pip freeze > requirements.txt`
 - Remove all pip packages: `pip freeze | xargs pip uninstall -y` if error `pip uninstall DeepRTS`
 - To update submodules: `git submodule sync`
-- Get files from server: `scp -r <username>@10.225.148.248:/home/pedron18/Age-of-transformers-pedro/results/ results/`
+- Get files from server: `scp -r <username>@10.225.148.248:/home/pedron18/Age-of-transformers/results/ results/`

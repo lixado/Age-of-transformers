@@ -24,24 +24,25 @@ class DDQN_Agent:
         """
             Memory
         """
-        self.deque_size = 800
+        self.deque_size = 20000
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 100
-        self.save_every = 5e5  # no. of experiences between saving Mario Net
+        self.batch_size = 256
+        self.save_every = 5e5  # no. of experiences between saving model
 
         """
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.0250
-        self.learning_rate_decay = 0.999985
+        self.learning_rate = 0.000250
+        self.learning_rate_decay = 0.99999985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
-        self.burnin = 256#1e4  # min. experiences before training
-        self.learn_every = 3  # no. of experiences between updates to Q_online
-        self.sync_every = 1e3  # no. of experiences between Q_target & Q_online sync
+        self.burnin = 1e3  # min. experiences before training
+        assert( self.burnin >  self.batch_size)
+        self.learn_every = 1  # no. of experiences between updates to Q_online
+        self.sync_every = 1e1  # no. of experiences between Q_target & Q_online sync
 
         self.saveHyperParameters()
 
@@ -199,14 +200,14 @@ class DDQN(nn.Module):
         c, h, w = input_dim
     
         self.online = nn.Sequential(
-            nn.Conv2d(in_channels=c, out_channels=16, kernel_size=4, stride=1),
+            nn.Conv2d(in_channels=c, out_channels=32, kernel_size=8, stride=4),
             nn.ReLU(),
-            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=1),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.ReLU(),
-            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=2, stride=1),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(3744, 512),
+            nn.Linear(3136, 512),
             nn.ReLU(),
             nn.Linear(512, output_dim)
         )

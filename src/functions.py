@@ -51,6 +51,4 @@ def SaveTempImage(resultsFolder, image, number):
     path_to_image = os.path.join(resultsFolder, "temp")
     os.makedirs(path_to_image, exist_ok=True) # create temp folder if not exist
     path_to_image = os.path.join(path_to_image, f'image{number}.png')
-
-    rgb_image = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
-    cv2.imwrite(path_to_image, rgb_image)
+    cv2.imwrite(path_to_image, image)
