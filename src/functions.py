@@ -4,6 +4,7 @@ import shutil
 import cv2
 import numpy as np
 from tqdm import tqdm
+import requests
 
 
 def GetConfigDict(workingDirPath):
@@ -52,3 +53,10 @@ def SaveTempImage(resultsFolder, image, number):
     os.makedirs(path_to_image, exist_ok=True) # create temp folder if not exist
     path_to_image = os.path.join(path_to_image, f'image{number}.png')
     cv2.imwrite(path_to_image, image)
+    
+def NotifyDiscord(message):
+    data = {
+        "content": message
+    }
+    url = "https://discord.com/api/webhooks/1076092503238922290/Rtdbr-HBf7O2mzAUwz95xW8Qjrgp12bloT0ygA6qICtoA9uwozY4X4DzYEMGPJLKUE91"
+    result = requests.post(url, json=data)
