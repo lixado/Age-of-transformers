@@ -3,7 +3,8 @@ import gym
 import numpy as np
 from constants import inv_action_space
 from DeepRTS import Engine, Constants
-from gym.spaces import Box 
+from gym.spaces import Box
+from functions import get_reward, PlayerState
 
 class Simple1v1Gym(gym.Env):
     def __init__(self, map):
@@ -28,14 +29,13 @@ class Simple1v1Gym(gym.Env):
     def step(self, actionIndex):
         self.steps += 1
 
+        previousPlayer0 = PlayerState(player0)
+
         self.player0.do_action(self.action_space[actionIndex])
         self.game.update()
 
         # reward 
-        winnerReward = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat)*10 - int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)*10 # if win then +10 if loss -10
-        dmgReward = 1 - ((100 - self.player0.statistic_damage_done) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
-        timeConservation = (8000 - self.steps) / 8000 # * the dmg reward, higher the lesser time has passed
-        reward = dmgReward * timeConservation + winnerReward
+        reward = get_reward(0, self.player0, previousPlayer0, self.player1, self.steps)
 
         truncated = False # useless value needs to be here for frame stack wrapper
 
