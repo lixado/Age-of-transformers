@@ -29,7 +29,7 @@ class Simple1v1Gym(gym.Env):
     def step(self, actionIndex):
         self.steps += 1
 
-        previousPlayer0 = PlayerState(player0)
+        previousPlayer0 = PlayerState(self.player0)
 
         self.player0.do_action(self.action_space[actionIndex])
         self.game.update()
