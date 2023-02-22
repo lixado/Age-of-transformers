@@ -8,7 +8,7 @@ from logger import Logger
 from functions import GetConfigDict, CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
-from gym.wrappers import FrameStack, NormalizeObservation, ResizeObservation, GrayScaleObservation
+from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, GrayScaleObservation
 
 from wrappers import SkipFrame
 
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     gym = SkipFrame(gym, SKIP_FRAME)
     gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
     gym = GrayScaleObservation(gym)
-    #gym = NormalizeObservation(gym)  # normalize the values this makes the image impossible to read for humans
+    gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values this makes the image impossible to read for humans
     gym = FrameStack(gym, num_stack=FRAME_STACK)
 
     """
