@@ -80,6 +80,9 @@ class Logger():
             
         for metric in ["rewards", "losses", "actions", "qs"]:
             plt.plot(getattr(self, metric))
+            plt.title(f"Sum of {metric} this epoch")
+            plt.xlabel("Epochs")
+            plt.ylabel(metric)
             plt.savefig(getattr(self, f"{metric}_plot"))
             plt.clf()
 

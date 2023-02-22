@@ -33,7 +33,7 @@ class DDQN_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.000250
+        self.learning_rate = 0.0250
         self.learning_rate_decay = 0.99999985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
@@ -42,7 +42,7 @@ class DDQN_Agent:
         self.burnin = 1e3  # min. experiences before training
         assert( self.burnin >  self.batch_size)
         self.learn_every = 1  # no. of experiences between updates to Q_online
-        self.sync_every = 1e1  # no. of experiences between Q_target & Q_online sync
+        self.sync_every = 1e2  # no. of experiences between Q_target & Q_online sync
 
         self.saveHyperParameters()
 

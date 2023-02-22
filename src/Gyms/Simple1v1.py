@@ -6,7 +6,10 @@ from DeepRTS import Engine, Constants
 from gym.spaces import Box 
 
 class Simple1v1Gym(gym.Env):
-    def __init__(self, map):
+    def __init__(self, map, max_episode_steps):
+        self.max_episode_steps = max_episode_steps
+        self.elapsed_steps = None
+
         """
             Start engine
         """
@@ -24,20 +27,25 @@ class Simple1v1Gym(gym.Env):
         self.game.start()
         self.observation_space = Box(low=0, high=255, shape=(320, 320, 3), dtype=np.uint8)
 
+        self.prevDmg = 0
+
 
     def step(self, actionIndex):
-        self.steps += 1
+        self.elapsed_steps += 1
 
         self.player0.do_action(self.action_space[actionIndex])
+        self.player1.do_action(16) # do nothing
         self.game.update()
 
         # reward 
-        winnerReward = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat)*10 - int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)*10 # if win then +10 if loss -10
-        dmgReward = 1 - ((100 - self.player0.statistic_damage_done) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
-        timeConservation = (8000 - self.steps) / 8000 # * the dmg reward, higher the lesser time has passed
+        winnerReward = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat)*1 # if win +1
+        dmgReward = 1 - ((100 - (self.player0.statistic_damage_done - self.prevDmg)) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
+        timeConservation = (self.max_episode_steps - self.elapsed_steps) / self.max_episode_steps # * the dmg reward, higher the lesser time has passed
         reward = dmgReward * timeConservation + winnerReward
 
-        truncated = False # useless value needs to be here for frame stack wrapper
+        self.prevDmg = int(self.player0.statistic_damage_done)
+
+        truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
 
         return self._get_obs(), reward, self.game.is_terminal(), truncated, self._get_info()
 
@@ -53,11 +61,11 @@ class Simple1v1Gym(gym.Env):
 
 
     def _get_info(self):
-        return {"steps": self.steps}
+        return {}
 
 
     def reset(self):
-        self.steps = 0
+        self.elapsed_steps = 0
         self.game.reset()
 
         return self._get_obs(), self._get_info()
