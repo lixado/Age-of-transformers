@@ -35,7 +35,7 @@ class Simple1v1Gym(gym.Env):
         self.game.update()
 
         # reward 
-        reward = get_reward(0, self.player0, previousPlayer0, self.player1, self.steps)
+        reward = get_reward(1, self.player0, previousPlayer0, self.player1, self.steps)
 
         truncated = False # useless value needs to be here for frame stack wrapper
 
