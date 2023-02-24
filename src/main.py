@@ -5,7 +5,7 @@ import cv2
 import torch
 from Gyms.Simple1v1 import Simple1v1Gym
 from logger import Logger
-from functions import GetConfigDict, CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
+from functions import GetConfigDict
 from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
 from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, GrayScaleObservation
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         folders = os.listdir(results)
         paths = [os.path.join(results, basename) for basename in folders]
         latestFolder = max(paths, key=os.path.getctime)
-        modelPath = os.path.join(latestFolder, "model.pth")
+        modelPath = os.path.join(latestFolder, "model.chkpt")
         evaluate(agent, gym, modelPath)
     elif mode == 2:
         playground()
