@@ -47,7 +47,7 @@ class Simple1v1Gym(gym.Env):
 
         return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
 
-    def render(self):
+    def render(self, q_values):
         """
             Return RGB image but this one will not be changed by wrappers
         """
@@ -63,9 +63,16 @@ class Simple1v1Gym(gym.Env):
         color = (0, 0, 0)
         thickness = 1
 
-        texts = [f"player0.statistic_damage_done: {self.player0.statistic_damage_done}",
-                f"Reward: {self.reward}",
-                f"Action: {inv_action_space[self.action_space[self.action]]}"]
+        texts = [f"Q_values:",
+                 f"Q_Left: {q_values[0]}",
+                 f"Q_Right: {q_values[1]}",
+                 f"Q_Up: {q_values[2]}",
+                 f"Q_Down: {q_values[3]}",
+                 f"Q_Attack: {q_values[4]}",
+                 f"Q_None: {q_values[5]}",
+                 f"player0.statistic_damage_done: {self.player0.statistic_damage_done}",
+                 f"Reward: {self.reward}",
+                 f"Action: {inv_action_space[self.action_space[self.action]]}"]
 
         for text in texts[::-1]:        
             dashboard = cv2.putText(dashboard, text, org, font, fontScale, color, thickness, cv2.LINE_AA, False)

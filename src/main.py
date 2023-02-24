@@ -10,12 +10,14 @@ from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
 from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, GrayScaleObservation
 
-from wrappers import SkipFrame
+from wrappers import SkipFrame, RepeatFrame
 
 STATE_SHAPE = (84, 84) # model input shapes
-FRAME_STACK = 1#4 # how many frames to stack
-SKIP_FRAME = 4
+FRAME_STACK = 1 #4 # how many frames to stack gets last x frames
+SKIP_FRAME = 0#20 # do action and then do nothing for x frames
+REPEAT_FRAME = 0 # same action for x frames 
 MAP = "10x10-2p-ffa-Eblil.json"
+
 
 if __name__ == "__main__":
     workingDir = os.getcwd()
@@ -37,7 +39,10 @@ if __name__ == "__main__":
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
-    #gym = SkipFrame(gym, SKIP_FRAME)
+    if SKIP_FRAME != 0:
+        gym = SkipFrame(gym, SKIP_FRAME)
+    if REPEAT_FRAME != 0:
+        gym = RepeatFrame(gym, REPEAT_FRAME)
     gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
     gym = GrayScaleObservation(gym)
     gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
@@ -53,7 +58,7 @@ if __name__ == "__main__":
     """
         Training loop
     """
-    record_epochs = 20 # record game every x epochs
+    record_epochs = 5 # record game every x epochs
     epochs = config["epochs"]
     for e in range(epochs):
         observation, info = gym.reset()
@@ -68,14 +73,14 @@ if __name__ == "__main__":
             ticks += 1
 
             # AI choose action
-            actionIndex = agent.act(observation)
+            actionIndex, q_values = agent.act(observation)
             
             # Act
             next_observation, reward, done, truncated, info = gym.step(actionIndex)
 
             # Record game
             if record:
-                SaveTempImage(logger.getSaveFolderPath(), gym.render(), ticks)
+                SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values), ticks)
 
             # use this to see image example
             #cv2.imshow('image', next_observation[0])

@@ -17,14 +17,14 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.999995
+        self.exploration_rate_decay = 0.995
         self.exploration_rate_min = 0.001
         self.curr_step = 0
 
         """
             Memory
         """
-        self.deque_size = 20000
+        self.deque_size = 15000
         self.memory = deque(maxlen=self.deque_size)
         self.batch_size = 256
         self.save_every = 5e5  # no. of experiences between saving model
@@ -54,6 +54,7 @@ class DDQN_Agent:
             Outputs:
             action_idx (int): An integer representing which action Mario will perform
         """
+        pred_arr = [None for _ in range(self.action_space_dim)]
         if (random.random() < self.exploration_rate): # EXPLORE
             actionIdx = random.randint(0, self.action_space_dim-1)
         else: # EXPLOIT
@@ -63,6 +64,7 @@ class DDQN_Agent:
 
             neuralNetOutput = self.net(state, model="online")
             actionIdx = torch.argmax(neuralNetOutput, axis=1).item()
+            pred_arr = neuralNetOutput[0].detach().cpu().numpy()
 
         # decrease exploration_rate
         self.exploration_rate *= self.exploration_rate_decay
@@ -71,7 +73,7 @@ class DDQN_Agent:
         # increment step
         self.curr_step += 1
 
-        return actionIdx
+        return actionIdx, pred_arr
 
     def cache(self, state, next_state, action, reward, done):
         """
