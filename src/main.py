@@ -32,8 +32,6 @@ if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Device: ", device)
 
-    logger = Logger(workingDir)
-
     """
         Handle input default train
         0 = Train
@@ -46,7 +44,7 @@ if __name__ == "__main__":
 
     mode = (int(input("Select mode[1-%s]: " % cnt)) - 1) if "mode" not in config else config["mode"] # get from config file if exists
 
-    print(f"{modes[mode]} mode.")
+    print(f"{modes[mode]} mode.") if "mode" not in config else print(f"{modes[mode]} mode. Auto from config.json file.")
 
     
     """
@@ -69,13 +67,14 @@ if __name__ == "__main__":
         Start agent
     """
     state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
-    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), save_dir=logger.getSaveFolderPath())
+    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space))
     agent.device = device
 
     """
         Training loop
     """
     if mode == 0:
+        logger = Logger(workingDir)
         train(config, agent, gym, logger)
     elif mode == 1:
         # get latest model path

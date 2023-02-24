@@ -8,6 +8,7 @@ from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 
 def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
     agent.net.train()
+    agent.saveHyperParameters(logger.getSaveFolderPath())
 
     record_epochs = 5 # record game every x epochs
     epochs = config["epochs"]
@@ -55,6 +56,6 @@ def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
             CreateVideoFromTempImages(os.path.join(logger.getSaveFolderPath(), "temp"), (e))
 
     # save model
-    agent.save()
+    agent.save(logger.getSaveFolderPath())
     NotifyDiscord(f"Training finished. Epochs: {epochs} Name: {logger.getSaveFolderPath()}")
     gym.close()

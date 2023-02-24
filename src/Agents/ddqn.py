@@ -8,10 +8,9 @@ import torch
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
 class DDQN_Agent:
-    def __init__(self, state_dim, action_space_dim, save_dir):
+    def __init__(self, state_dim, action_space_dim):
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
-        self.save_dir = save_dir
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
@@ -43,8 +42,6 @@ class DDQN_Agent:
         assert( self.burnin >  self.batch_size)
         self.learn_every = 1  # no. of experiences between updates to Q_online
         self.sync_every = 1e2  # no. of experiences between Q_target & Q_online sync
-
-        self.saveHyperParameters()
 
     def act(self, state):
         """
@@ -169,8 +166,8 @@ class DDQN_Agent:
         self.exploration_rate = dt["exploration_rate"]
         print(f"Loading model at {path} with exploration rate {self.exploration_rate}")
 
-    def saveHyperParameters(self):
-        save_HyperParameters = os.path.join(self.save_dir, "hyperparameters.txt")
+    def saveHyperParameters(self, save_dir):
+        save_HyperParameters = os.path.join(save_dir, "hyperparameters.txt")
         with open(save_HyperParameters, "w") as f:
             f.write(f"exploration_rate = {self.exploration_rate}\n")
             f.write(f"exploration_rate_decay = {self.exploration_rate_decay}\n")
@@ -184,11 +181,11 @@ class DDQN_Agent:
             f.write(f"learn_every = {self.learn_every}\n")
             f.write(f"sync_every = {self.sync_every}")
 
-    def save(self):
+    def save(self, save_dir):
         """
             Save the state to directory
         """
-        save_path = os.path.join(self.save_dir, "model.chkpt")
+        save_path = os.path.join(save_dir, "model.chkpt")
         torch.save(
             dict(model=self.net.state_dict(), exploration_rate=self.exploration_rate),
             save_path,

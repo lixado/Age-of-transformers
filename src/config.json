@@ -1,5 +1,4 @@
 {
     "epochs": 5,
-    "stepsMax": 8000,
-    "mode": 0
+    "stepsMax": 8000
 }
