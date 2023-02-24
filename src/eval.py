@@ -40,6 +40,9 @@ def action(ev):
                     action = 14
                 case pygame.K_5:
                     action = 15
+
+        if event.type == pygame.KEYUP:
+            match event.key:
                 case pygame.K_ESCAPE:
                     return -1
     return action
@@ -53,7 +56,6 @@ def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
     #logger = Logger(workingDir) might be needed
 
     pygame.init()
-
     pygame.display.set_caption('DeepRTS v3.0')  # set the pygame window name
 
     WIDTH = gym.shape[0]*2 # because of dashboard
@@ -70,7 +72,8 @@ def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
         done = False
         j = 0
         start = time.time()
-        while not done:
+        action1 = 16
+        while True:#not done:
             j += 1
             #Actions
             action0, q_values = agent.act(state)
@@ -79,7 +82,10 @@ def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
 
             image = gym.render(q_values)
 
-            canvas.blit(pygame.surfarray.make_surface(image), (0, 0))
+            img = pygame.transform.rotate(pygame.surfarray.make_surface(image), -90)
+            img = pygame.transform.flip(img, True, False)
+
+            canvas.blit(img, (0, 0))
             pygame.display.update()
 
 
@@ -96,4 +102,6 @@ def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
                 break
             
         print("Done")
+    gym.close()
+    pygame.quit()
 
