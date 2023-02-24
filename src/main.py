@@ -9,6 +9,9 @@ from functions import GetConfigDict, CreateVideoFromTempImages, SaveTempImage, N
 from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
 from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, GrayScaleObservation
+from train import train
+from eval import evaluate
+from HumanPlayable.main import playground
 
 from wrappers import SkipFrame, RepeatFrame
 
@@ -17,60 +20,6 @@ FRAME_STACK = 1 #4 # how many frames to stack gets last x frames
 SKIP_FRAME = 0#20 # do action and then do nothing for x frames
 REPEAT_FRAME = 0 # same action for x frames 
 MAP = "10x10-2p-ffa-Eblil.json"
-
-
-def train(config: dict, agent: DDQN_Agent, gym: Simple1v1Gym):
-    agent.net.train()
-
-    record_epochs = 5 # record game every x epochs
-    epochs = config["epochs"]
-    for e in range(epochs):
-        observation, info = gym.reset()
-        ticks = 0
-        record = (e % record_epochs == 0) or (e == epochs-1) # last part to always record last
-        if record:
-            print("Recording this epoch")
-        done = False
-        truncated = False
-        while not done and not truncated:
-            ticks += 1
-
-            # AI choose action
-            actionIndex, q_values = agent.act(observation)
-            
-            # Act
-            next_observation, reward, done, truncated, info = gym.step(actionIndex)
-
-            # Record game
-            if record:
-                SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values), ticks)
-
-            # use this to see image example
-            #cv2.imshow('image', next_observation[0])
-            #cv2.waitKey(3)
-
-            # AI Save memory
-            agent.cache(observation, next_observation, actionIndex, reward, done)
-
-            # Learn
-            q, loss = agent.learn()
-            
-            # Logging
-            logger.log_step(reward, loss, q)
-
-            # Update state
-            observation = next_observation
-
-        logger.log_epoch(e, agent.exploration_rate)
-
-        # Record game
-        if record:
-            CreateVideoFromTempImages(os.path.join(logger.getSaveFolderPath(), "temp"), (e))
-
-    # save model
-    agent.save()
-    NotifyDiscord(f"Training finished. Epochs: {epochs} Name: {logger.getSaveFolderPath()}")
-    gym.close()
 
 
 if __name__ == "__main__":
@@ -91,7 +40,13 @@ if __name__ == "__main__":
         1 = Eval
         2 = Playground
     """
-    mode = 0
+    modes = ["Train", "Eval", "Playground"]
+    for cnt, modeName in enumerate(modes, 1):
+        sys.stdout.write("[%d] %s\n\r" % (cnt, modeName))
+
+    mode = (int(input("Select mode[1-%s]: " % cnt)) - 1) if "mode" not in config else config["mode"] # get from config file if exists
+
+    print(f"{modes[mode]} mode.")
 
     
     """
@@ -121,4 +76,16 @@ if __name__ == "__main__":
         Training loop
     """
     if mode == 0:
-        train(config, agent, gym)
+        train(config, agent, gym, logger)
+    elif mode == 1:
+        # get latest model path
+        results = os.path.join(workingDir, "results")
+        folders = os.listdir(results)
+        paths = [os.path.join(results, basename) for basename in folders]
+        latestFolder = max(paths, key=os.path.getctime)
+        modelPath = os.path.join(latestFolder, "model.pth")
+        evaluate(agent, gym, modelPath)
+    elif mode == 2:
+        playground()
+    else:
+        print("Mode not avaliable")

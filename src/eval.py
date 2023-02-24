@@ -1,6 +1,9 @@
 import os
 import random
+import string
 import sys
+
+import gym
 from Agents.ddqn import DDQN_Agent
 from DeepRTS import Engine, Constants
 import pygame
@@ -45,55 +48,59 @@ def action(ev):
                     action = 14
                 case pygame.K_5:
                     action = 15
+                case pygame.K_ESCAPE:
+                    return -1
     return action
 
-def evaluate(env, agent, modelPath):
+def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
     workingDir = os.getcwd()
     if not os.path.exists(os.path.join(workingDir, "src")):
         sys.exit(
             f'Working directory: {workingDir} not correct, should be "Age-of-transformers/" not "{os.path.basename(os.path.normpath(workingDir))}"')
 
-    episodes = 100
-
-    logger = Logger(workingDir)
+    #logger = Logger(workingDir) might be needed
 
     pygame.init()
 
     pygame.display.set_caption('DeepRTS v3.0')  # set the pygame window name
-    mapSize = [10, 10]
-    tileSize = 32
-    WIDTH = mapSize[0] * tileSize
-    HEIGHT = mapSize[1] * tileSize
+
+    WIDTH = gym.shape[0]
+    HEIGHT = gym.shape[1]
     canvas = pygame.display.set_mode((WIDTH, HEIGHT))
 
-    print("Action space: ", [inv_action_space[i] for i in env.action_space])
+    print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     #Set agent model and evaluation mode
     agent.loadModel(modelPath)
     agent.net.eval()
 
-    for i in range(episodes):
-        state, info = env.reset()
+    play = True
+    while play:
+        state, info = gym.reset()
         done = False
         j = 0
         start = time.time()
         while not done:
             j += 1
-            image = env.render()
+            image = gym.render()
 
             canvas.blit(pygame.surfarray.make_surface(image), (0, 0))
             pygame.display.update()
 
             #Actions
             action0 = agent.act(state)
-            state, reward, done, _, _ = env.step(action0)
+            state, reward, done, _, _ = gym.step(action0)
 
             ev = pygame.event.get()
+            if ev == -1: # pressed escape leave
+                play = False
+                break
+
             action1 = action(ev)
-            env.player1.do_action(action1)
+            gym.player1.do_action(action1)
 
             if done:
                 break
+            
         print("Done")
-        end = time.time() - start
 

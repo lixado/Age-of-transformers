@@ -34,7 +34,7 @@ def NotifyDiscord(message):
     url = "https://discord.com/api/webhooks/1076092503238922290/Rtdbr-HBf7O2mzAUwz95xW8Qjrgp12bloT0ygA6qICtoA9uwozY4X4DzYEMGPJLKUE91"
     result = requests.post(url, json=data)
 
-def GetConfigDict(workingDirPath):
+def GetConfigDict(workingDirPath) -> dict:
     configPath = os.path.join(workingDirPath, "src", "config.json")
     try:
         with open(configPath) as json_file:
