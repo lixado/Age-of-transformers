@@ -5,14 +5,19 @@ import cv2
 import torch
 from Gyms.Simple1v1 import Simple1v1Gym
 from logger import Logger
-from functions import GetConfigDict, TransformImage, CreateVideoFromTempImages, SaveTempImage
+from functions import GetConfigDict, CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
-from gym.wrappers import FrameStack, NormalizeObservation, ResizeObservation, GrayScaleObservation
+from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, GrayScaleObservation
+
+from wrappers import SkipFrame, RepeatFrame
 
 STATE_SHAPE = (84, 84) # model input shapes
-FRAME_STACK = 4 # how many frames to stack
+FRAME_STACK = 1 #4 # how many frames to stack gets last x frames
+SKIP_FRAME = 0#20 # do action and then do nothing for x frames
+REPEAT_FRAME = 0 # same action for x frames 
 MAP = "10x10-2p-ffa-Eblil.json"
+
 
 if __name__ == "__main__":
     workingDir = os.getcwd()
@@ -30,13 +35,17 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = Simple1v1Gym(MAP, 0)
+    gym = Simple1v1Gym(MAP, 0, config["stepsMax"])
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
+    if SKIP_FRAME != 0:
+        gym = SkipFrame(gym, SKIP_FRAME)
+    if REPEAT_FRAME != 0:
+        gym = RepeatFrame(gym, REPEAT_FRAME)
     gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
     gym = GrayScaleObservation(gym)
-    #gym = NormalizeObservation(gym)  # normalize the values this makes the image impossible to read for humans
+    gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
     gym = FrameStack(gym, num_stack=FRAME_STACK)
 
     """
@@ -50,26 +59,28 @@ if __name__ == "__main__":
         Training loop
     """
     record_epochs = 5 # record game every x epochs
-    for e in range(config["epochs"]):
+    epochs = config["epochs"]
+    for e in range(epochs):
         observation, info = gym.reset()
         ticks = 0
         recording_images = []
-        record = (e % record_epochs == 0) or (e == config["epochs"]-1) # last part to always record last
+        record = (e % record_epochs == 0) or (e == epochs-1) # last part to always record last
         if record:
             print("Recording this epoch")
         done = False
-        while not done and ticks < 8000:
+        truncated = False
+        while not done and not truncated:
             ticks += 1
+
+            # AI choose action
+            actionIndex, q_values = agent.act(observation)
+            
+            # Act
+            next_observation, reward, done, truncated, info = gym.step(actionIndex)
 
             # Record game
             if record:
-                SaveTempImage(logger.getSaveFolderPath(), gym.render(), ticks)
-
-            # AI choose action
-            actionIndex = agent.act(observation)
-            
-            # Act
-            next_observation, reward, done, _, info = gym.step(actionIndex)
+                SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values), ticks)
 
             # use this to see image example
             #cv2.imshow('image', next_observation[0])
@@ -91,8 +102,9 @@ if __name__ == "__main__":
 
         # Record game
         if record:
-            CreateVideoFromTempImages(os.path.join(logger.getSaveFolderPath(), "temp"), (e+1))
+            CreateVideoFromTempImages(os.path.join(logger.getSaveFolderPath(), "temp"), (e))
 
     # save model
     agent.save()
+    NotifyDiscord(f"Training finished. Epochs: {epochs} Name: {logger.getSaveFolderPath()}")
     gym.close()

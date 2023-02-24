@@ -27,6 +27,13 @@ class PlayerState():
     def evaluate_player_state(self):
         return self.player_state
 
+def NotifyDiscord(message):
+    data = {
+        "content": message
+    }
+    url = "https://discord.com/api/webhooks/1076092503238922290/Rtdbr-HBf7O2mzAUwz95xW8Qjrgp12bloT0ygA6qICtoA9uwozY4X4DzYEMGPJLKUE91"
+    result = requests.post(url, json=data)
+
 def GetConfigDict(workingDirPath):
     configPath = os.path.join(workingDirPath, "src", "config.json")
     try:
@@ -35,15 +42,6 @@ def GetConfigDict(workingDirPath):
             return data
     except:
         print(f'Could not read config file in {configPath}')
-        
-
-def TransformImage(image, image_shape):
-    rgb = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
-    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
-    resize = cv2.resize(gray, image_shape[::-1])
-    framestack = np.expand_dims(resize, 0) # fake framestack for neural network dimentions
-    
-    return framestack
 
 
 def CreateVideoFromTempImages(images_folder, epoch):
@@ -54,7 +52,7 @@ def CreateVideoFromTempImages(images_folder, epoch):
 
     log_folder = os.path.dirname(images_folder) # get parent dir
     path = os.path.join(log_folder, f"video{epoch}.avi")
-    video = cv2.VideoWriter(path, fourcc=cv2.VideoWriter_fourcc(*'DIVX'), fps=240, frameSize=(width, height))
+    video = cv2.VideoWriter(path, fourcc=cv2.VideoWriter_fourcc(*'DIVX'), fps=1, frameSize=(width, height))
 
     for image in tqdm(images, desc="Processing images"):
         video.write(cv2.imread(image))

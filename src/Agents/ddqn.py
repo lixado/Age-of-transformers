@@ -17,14 +17,14 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.9995
+        self.exploration_rate_decay = 0.995
         self.exploration_rate_min = 0.001
         self.curr_step = 0
 
         """
             Memory
         """
-        self.deque_size = 20000
+        self.deque_size = 15000
         self.memory = deque(maxlen=self.deque_size)
         self.batch_size = 256
         self.save_every = 5e5  # no. of experiences between saving model
@@ -33,8 +33,8 @@ class DDQN_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.000250
-        self.learning_rate_decay = 0.99999985
+        self.learning_rate = 0.0250
+        self.learning_rate_decay = 0.99985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
@@ -42,7 +42,7 @@ class DDQN_Agent:
         self.burnin = 1e3  # min. experiences before training
         assert( self.burnin >  self.batch_size)
         self.learn_every = 1  # no. of experiences between updates to Q_online
-        self.sync_every = 1e1  # no. of experiences between Q_target & Q_online sync
+        self.sync_every = 1e2  # no. of experiences between Q_target & Q_online sync
 
         self.saveHyperParameters()
 
@@ -54,6 +54,7 @@ class DDQN_Agent:
             Outputs:
             action_idx (int): An integer representing which action Mario will perform
         """
+        pred_arr = [None for _ in range(self.action_space_dim)]
         if (random.random() < self.exploration_rate): # EXPLORE
             actionIdx = random.randint(0, self.action_space_dim-1)
         else: # EXPLOIT
@@ -63,6 +64,7 @@ class DDQN_Agent:
 
             neuralNetOutput = self.net(state, model="online")
             actionIdx = torch.argmax(neuralNetOutput, axis=1).item()
+            pred_arr = neuralNetOutput[0].detach().cpu().numpy()
 
         # decrease exploration_rate
         self.exploration_rate *= self.exploration_rate_decay
@@ -71,7 +73,7 @@ class DDQN_Agent:
         # increment step
         self.curr_step += 1
 
-        return actionIdx
+        return actionIdx, pred_arr
 
     def cache(self, state, next_state, action, reward, done):
         """
