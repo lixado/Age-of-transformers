@@ -19,52 +19,14 @@ REPEAT_FRAME = 0 # same action for x frames
 MAP = "10x10-2p-ffa-Eblil.json"
 
 
-if __name__ == "__main__":
-    workingDir = os.getcwd()
-    if not os.path.exists(os.path.join(workingDir, "src")):
-        sys.exit(f'Working directory: {workingDir} not correct, should be "Age-of-transformers/" not "{os.path.basename(os.path.normpath(workingDir))}"')
-
-    config = GetConfigDict(workingDir)
-    print("Config: ", config)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print("Device: ", device)
-
-    logger = Logger(workingDir)
-
-    
-    """
-        Start gym
-    """
-    gym = Simple1v1Gym(MAP, 0, config["stepsMax"])
-    print("Action space: ", [inv_action_space[i] for i in gym.action_space])
-
-    # gym wrappers
-    if SKIP_FRAME != 0:
-        gym = SkipFrame(gym, SKIP_FRAME)
-    if REPEAT_FRAME != 0:
-        gym = RepeatFrame(gym, REPEAT_FRAME)
-    gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
-    gym = GrayScaleObservation(gym)
-    gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
-    gym = FrameStack(gym, num_stack=FRAME_STACK)
-
-    """
-        Start agent
-    """
-    state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
-    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), save_dir=logger.getSaveFolderPath())
-    agent.device = device
+def train(config: dict, agent: DDQN_Agent, gym: Simple1v1Gym):
     agent.net.train()
 
-    """
-        Training loop
-    """
     record_epochs = 5 # record game every x epochs
     epochs = config["epochs"]
     for e in range(epochs):
         observation, info = gym.reset()
         ticks = 0
-        recording_images = []
         record = (e % record_epochs == 0) or (e == epochs-1) # last part to always record last
         if record:
             print("Recording this epoch")
@@ -83,7 +45,7 @@ if __name__ == "__main__":
             if record:
                 SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values), ticks)
 
-             # use this to see image example
+            # use this to see image example
             #cv2.imshow('image', next_observation[0])
             #cv2.waitKey(3)
 
@@ -109,3 +71,54 @@ if __name__ == "__main__":
     agent.save()
     NotifyDiscord(f"Training finished. Epochs: {epochs} Name: {logger.getSaveFolderPath()}")
     gym.close()
+
+
+if __name__ == "__main__":
+    workingDir = os.getcwd()
+    if not os.path.exists(os.path.join(workingDir, "src")):
+        sys.exit(f'Working directory: {workingDir} not correct, should be "Age-of-transformers/" not "{os.path.basename(os.path.normpath(workingDir))}"')
+
+    config = GetConfigDict(workingDir)
+    print("Config: ", config)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print("Device: ", device)
+
+    logger = Logger(workingDir)
+
+    """
+        Handle input default train
+        0 = Train
+        1 = Eval
+        2 = Playground
+    """
+    mode = 0
+
+    
+    """
+        Start gym
+    """
+    gym = Simple1v1Gym(MAP, 0, config["stepsMax"])
+    print("Action space: ", [inv_action_space[i] for i in gym.action_space])
+
+    # gym wrappers
+    if SKIP_FRAME != 0:
+        gym = SkipFrame(gym, SKIP_FRAME)
+    if REPEAT_FRAME != 0:
+        gym = RepeatFrame(gym, REPEAT_FRAME)
+    gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
+    gym = GrayScaleObservation(gym)
+    gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
+    gym = FrameStack(gym, num_stack=FRAME_STACK)
+
+    """
+        Start agent
+    """
+    state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
+    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), save_dir=logger.getSaveFolderPath())
+    agent.device = device
+
+    """
+        Training loop
+    """
+    if mode == 0:
+        train(config, agent, gym)
