@@ -1,17 +1,6 @@
-import os
-import random
-from Agents.ddqn import DDQN_Agent
-from DeepRTS import Engine, Constants
 import pygame
-import cv2
-import math
 import time
-import copy
-from logger import Logger
 from constants import inv_action_space
-from Gyms.Simple1v1 import Simple1v1Gym
-from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, GrayScaleObservation
-from functions import SaveTempImage
 
 
 def action(ev):
@@ -46,15 +35,8 @@ def action(ev):
                     action = 15
     return action
 
-def evaluate(env, agent, modelPath):
-    workingDir = os.getcwd()
-    if not os.path.exists(os.path.join(workingDir, "src")):
-        sys.exit(
-            f'Working directory: {workingDir} not correct, should be "Age-of-transformers/" not "{os.path.basename(os.path.normpath(workingDir))}"')
-
+def evaluate(env, agent, logger, modelPath):
     episodes = 100
-
-    logger = Logger(workingDir)
 
     pygame.init()
 

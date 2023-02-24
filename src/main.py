@@ -1,14 +1,14 @@
 import os
 import sys
-from DeepRTS import Engine, Constants
-import cv2
 import torch
 from Gyms.Simple1v1 import Simple1v1Gym
 from logger import Logger
-from functions import GetConfigDict, TransformImage, CreateVideoFromTempImages, SaveTempImage
+from functions import GetConfigDict
 from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
 from gym.wrappers import FrameStack, NormalizeObservation, ResizeObservation, GrayScaleObservation
+from eval import evaluate
+from train import train
 
 STATE_SHAPE = (84, 84) # model input shapes
 FRAME_STACK = 4 # how many frames to stack
@@ -23,76 +23,39 @@ if __name__ == "__main__":
     print("Config: ", config)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Device: ", device)
-
     logger = Logger(workingDir)
 
     
     """
         Start gym
     """
-    gym = Simple1v1Gym(MAP, 0)
-    print("Action space: ", [inv_action_space[i] for i in gym.action_space])
+    env = Simple1v1Gym(MAP, 0)
+    print("Action space: ", [inv_action_space[i] for i in env.action_space])
 
     # gym wrappers
-    gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
-    gym = GrayScaleObservation(gym)
-    #gym = NormalizeObservation(gym)  # normalize the values this makes the image impossible to read for humans
-    gym = FrameStack(gym, num_stack=FRAME_STACK)
+    env = ResizeObservation(env, STATE_SHAPE)  # reshape
+    env = GrayScaleObservation(env)
+    #env = NormalizeObservation(env)  # normalize the values this makes the image impossible to read for humans
+    env = FrameStack(env, num_stack=FRAME_STACK)
 
     """
         Start agent
     """
     state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
-    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), save_dir=logger.getSaveFolderPath())
+    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(env.action_space), save_dir=logger.getSaveFolderPath())
     agent.device = device
+
+    option = input(f"(0) Train\n(1) Evaluate")
 
     """
         Training loop
     """
-    record_epochs = 5 # record game every x epochs
-    for e in range(config["epochs"]):
-        observation, info = gym.reset()
-        ticks = 0
-        recording_images = []
-        record = (e % record_epochs == 0) or (e == config["epochs"]-1) # last part to always record last
-        if record:
-            print("Recording this epoch")
-        done = False
-        while not done and ticks < 8000:
-            ticks += 1
+    if option == 0:
+        train(env, agent, logger, config)
+    """
+        Evaluation
+    """
+    if option==1:
+        modelPath = "/age-of-transformers/results/20230222-14-14-04/model.chkpt"
+        evaluate(env, agent, logger, modelPath)
 
-            # Record game
-            if record:
-                SaveTempImage(logger.getSaveFolderPath(), gym.render(), ticks)
-
-            # AI choose action
-            actionIndex = agent.act(observation)
-            
-            # Act
-            next_observation, reward, done, _, info = gym.step(actionIndex)
-
-            # use this to see image example
-            #cv2.imshow('image', next_observation[0])
-            #cv2.waitKey(3)
-
-            # AI Save memory
-            agent.cache(observation, next_observation, actionIndex, reward, done)
-
-            # Learn
-            q, loss = agent.learn()
-            
-            # Logging
-            logger.log_step(reward, loss, q)
-
-            # Update state
-            observation = next_observation
-
-        logger.log_epoch(e, agent.exploration_rate)
-
-        # Record game
-        if record:
-            CreateVideoFromTempImages(os.path.join(logger.getSaveFolderPath(), "temp"), (e+1))
-
-    # save model
-    agent.save()
-    gym.close()
