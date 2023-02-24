@@ -27,29 +27,6 @@ class PlayerState():
     def evaluate_player_state(self):
         return self.player_state
 
-def get_reward(mode, player0, previousPlayer0, player1, steps):
-    if mode==0:
-        return calc_reward(player0, player1, steps)
-    if mode==1:
-        return conditional_reward(player0, previousPlayer0, player1)
-    return 0
-
-def calc_reward(player0, player1, steps):
-    winnerReward = int(player1.evaluate_player_state() == Constants.PlayerState.Defeat) * 10 - int(
-        player0.evaluate_player_state() == Constants.PlayerState.Defeat) * 10  # if win then +10 if loss -10
-    dmgReward = 1 - ((100 - player0.statistic_damage_done) / 100) ** 0.5  # exponentially based on dmg done, 100=max dmg
-    timeConservation = (8000 - steps) / 8000  # * the dmg reward, higher the lesser time has passed
-    return dmgReward * timeConservation + winnerReward
-
-def conditional_reward(player0, previousPlayer0: PlayerState, player1):
-    if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
-        return 1000
-    if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
-        return -100
-    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
-        return 100
-    return 0
-
 def GetConfigDict(workingDirPath):
     configPath = os.path.join(workingDirPath, "src", "config.json")
     try:
