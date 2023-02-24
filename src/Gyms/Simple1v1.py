@@ -7,13 +7,6 @@ from gym.spaces import Box
 
 from functions import PlayerState
 
-def calc_reward(player0, player1, steps):
-    winnerReward = int(player1.evaluate_player_state() == Constants.PlayerState.Defeat) * 10 - \
-                   int(player0.evaluate_player_state() == Constants.PlayerState.Defeat) * 10  # if win then +10 if loss -10
-    dmgReward = 1 - ((100 - player0.statistic_damage_done) / 100) ** 0.5  # exponentially based on dmg done, 100=max dmg
-    timeConservation = (8000 - steps) / 8000  # * the dmg reward, higher the lesser time has passed
-    return dmgReward * timeConservation + winnerReward
-
 def conditional_reward(player0, previousPlayer0: PlayerState, player1):
     if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
         return 1000
@@ -59,12 +52,14 @@ class Simple1v1Gym(gym.Env):
         # reward
         self.reward = 0
         if self.mode == 0:
-            self.reward = calc_reward(self.player0, self.player1, self.steps)
+            winnerReward = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat) - int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)*1 # if win +1
+            dmgReward = 1 - ((100 - self.player0.statistic_damage_done) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
+            timeConservation = (self.max_episode_steps - self.elapsed_steps) / self.max_episode_steps # * the dmg reward, higher the lesser time has passed
+            self.reward = dmgReward * timeConservation + winnerReward          
         if self.mode == 1:
             self.reward = conditional_reward(self.player0, previousPlayer0, self.player1)
 
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
-
         return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
 
     def render(self, q_values):
@@ -103,7 +98,7 @@ class Simple1v1Gym(gym.Env):
 
 
     def _get_obs(self):
-        return  cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
+        return cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
 
 
     def _get_info(self):

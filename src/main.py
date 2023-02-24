@@ -54,6 +54,7 @@ if __name__ == "__main__":
     state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
     agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), save_dir=logger.getSaveFolderPath())
     agent.device = device
+    agent.net.train()
 
     """
         Training loop
@@ -82,7 +83,7 @@ if __name__ == "__main__":
             if record:
                 SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values), ticks)
 
-            # use this to see image example
+             # use this to see image example
             #cv2.imshow('image', next_observation[0])
             #cv2.waitKey(3)
 
