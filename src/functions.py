@@ -5,7 +5,27 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 import requests
+from DeepRTS import Engine, Constants
 
+class PlayerState():
+    def __init__(self, player):
+        # Current states
+        self.player_state = player.evaluate_player_state()  # Defeat, victory or playing
+        self.gold = player.gold
+        self.lumber = player.lumber
+        self.stone = player.stone
+        self.food = player.food
+
+        # Statistics
+        self.statistic_damage_done = player.statistic_damage_done
+        self.statistic_damage_taken = player.statistic_damage_taken
+        self.statistic_gathered_gold = player.statistic_gathered_gold
+        self.statistic_gathered_lumber = player.statistic_gathered_lumber
+        self.statistic_gathered_stone = player.statistic_gathered_stone
+        self.statistic_units_created = player.statistic_units_created
+
+    def evaluate_player_state(self):
+        return self.player_state
 
 def GetConfigDict(workingDirPath):
     configPath = os.path.join(workingDirPath, "src", "config.json")

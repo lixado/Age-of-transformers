@@ -3,10 +3,25 @@ import gym
 import numpy as np
 from constants import inv_action_space
 from DeepRTS import Engine, Constants
-from gym.spaces import Box 
+from gym.spaces import Box
+
+def calc_reward(player0, player1, steps):
+    winnerReward = int(player1.evaluate_player_state() == Constants.PlayerState.Defeat) * 10 - \
+                   int(player0.evaluate_player_state() == Constants.PlayerState.Defeat) * 10  # if win then +10 if loss -10
+    dmgReward = 1 - ((100 - player0.statistic_damage_done) / 100) ** 0.5  # exponentially based on dmg done, 100=max dmg
+    timeConservation = (8000 - steps) / 8000  # * the dmg reward, higher the lesser time has passed
+    return dmgReward * timeConservation + winnerReward
+
+def conditional_reward(player0, previousPlayer0: PlayerState, player1):
+    if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
+        return 1000
+    if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
+        return -100
+    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
+        return 100
 
 class Simple1v1Gym(gym.Env):
-    def __init__(self, map):
+    def __init__(self, map, mode):
         """
             Start engine
         """
@@ -20,7 +35,7 @@ class Simple1v1Gym(gym.Env):
         
         self.action_space = [3, 4, 5, 6, 11, 16] # move and attack simple
         # max actions = list(range(Engine.Constants.ACTION_MIN, Engine.Constants.ACTION_MAX + 1))
-
+        self.mode = mode
         self.game.start()
         self.observation_space = Box(low=0, high=255, shape=(320, 320, 3), dtype=np.uint8)
 
@@ -28,14 +43,17 @@ class Simple1v1Gym(gym.Env):
     def step(self, actionIndex):
         self.steps += 1
 
+        previousPlayer0 = PlayerState(self.player0)
+
         self.player0.do_action(self.action_space[actionIndex])
         self.game.update()
 
-        # reward 
-        winnerReward = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat)*10 - int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)*10 # if win then +10 if loss -10
-        dmgReward = 1 - ((100 - self.player0.statistic_damage_done) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
-        timeConservation = (8000 - self.steps) / 8000 # * the dmg reward, higher the lesser time has passed
-        reward = dmgReward * timeConservation + winnerReward
+        # reward
+        reward = 0
+        if self.mode == 0:
+            reward = calc_reward(self.player0, self.player1, self.steps)
+        if self.mode == 1:
+            reward = conditional_reward(self.player0, previousPlayer0, self.player1)
 
         truncated = False # useless value needs to be here for frame stack wrapper
 
