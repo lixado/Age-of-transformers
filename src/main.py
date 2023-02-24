@@ -30,7 +30,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = Simple1v1Gym(MAP)
+    gym = Simple1v1Gym(MAP, 0)
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
