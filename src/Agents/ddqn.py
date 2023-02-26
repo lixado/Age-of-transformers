@@ -12,7 +12,6 @@ class DDQN_Agent:
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.save_dir = ""
         self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
 
         self.exploration_rate = 1
@@ -101,13 +100,13 @@ class DDQN_Agent:
         state, next_state, action, reward, done = map(torch.stack, zip(*batch))
         return state, next_state, action.squeeze(), reward.squeeze(), done.squeeze()
 
-    def learn(self):
+    def learn(self, save_dir):
         """Update online action value (Q) function with a batch of experiences"""
         if self.curr_step % self.sync_every == 0:
             self.sync_Q_target()
 
         if self.curr_step % self.save_every == 0:
-            self.save(self.save_dir)
+            self.save(save_dir)
 
         if self.curr_step < self.burnin:
             return 0, 0 # None, None
