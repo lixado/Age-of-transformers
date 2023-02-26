@@ -12,7 +12,7 @@ class DDQN_Agent:
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-
+        self.save_dir = ""
         self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
 
         self.exploration_rate = 1
@@ -107,7 +107,7 @@ class DDQN_Agent:
             self.sync_Q_target()
 
         if self.curr_step % self.save_every == 0:
-            self.save()
+            self.save(self.save_dir)
 
         if self.curr_step < self.burnin:
             return 0, 0 # None, None
