@@ -8,7 +8,9 @@ from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 
 def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
     agent.net.train()
-    agent.saveHyperParameters(logger.getSaveFolderPath())
+    save_dir = logger.getSaveFolderPath()
+    agent.saveHyperParameters(save_dir)
+    agent.save_dir = save_dir
 
     record_epochs = 5 # record game every x epochs
     epochs = config["epochs"]
