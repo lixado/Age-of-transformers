@@ -46,6 +46,13 @@ def GetConfigDict(workingDirPath) -> dict:
 
 def CreateVideoFromTempImages(images_folder, epoch):
     images = [os.path.join(images_folder, img) for img in os.listdir(images_folder) if img.endswith(".png")]
+    # order arrays
+    def sortFunc(imgPath) -> int:
+            basepath = str(os.path.basename(imgPath))
+            nr = basepath.split(".")[0] # remove extention
+            return int(nr)
+    
+    images.sort(key=sortFunc)
 
     frame = cv2.imread(images[0])
     height, width, layers = frame.shape
@@ -69,7 +76,7 @@ def CreateVideoFromTempImages(images_folder, epoch):
 def SaveTempImage(resultsFolder, image, number):
     path_to_image = os.path.join(resultsFolder, "temp")
     os.makedirs(path_to_image, exist_ok=True) # create temp folder if not exist
-    path_to_image = os.path.join(path_to_image, f'image{number}.png')
+    path_to_image = os.path.join(path_to_image, f'{number}.png')
     cv2.imwrite(path_to_image, image)
     
 def NotifyDiscord(message):

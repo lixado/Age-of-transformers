@@ -15,8 +15,8 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.995
-        self.exploration_rate_min = 0.001
+        self.exploration_rate_decay = 0.99995
+        self.exploration_rate_min = 0.0001
         self.curr_step = 0
 
         """
@@ -24,7 +24,7 @@ class DDQN_Agent:
         """
         self.deque_size = 15000
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 256
+        self.batch_size = 512
         self.save_every = 5e5  # no. of experiences between saving model
 
         """
@@ -32,7 +32,7 @@ class DDQN_Agent:
         """
         self.gamma = 0.9
         self.learning_rate = 0.0250
-        self.learning_rate_decay = 0.99985
+        self.learning_rate_decay = 0.9999985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
@@ -81,11 +81,12 @@ class DDQN_Agent:
         reward (float),
         done(bool))
         """
+
         state = np.array(state)
         next_state = np.array(next_state)
-
         state = torch.tensor(state).float().to(device=self.device)
         next_state = torch.tensor(next_state).float().to(device=self.device)
+
         action = torch.tensor([action]).to(device=self.device)
         reward = torch.tensor([reward]).to(device=self.device)
         done = torch.tensor([done]).to(device=self.device)
@@ -98,6 +99,7 @@ class DDQN_Agent:
         """
         batch = random.sample(self.memory, self.batch_size)
         state, next_state, action, reward, done = map(torch.stack, zip(*batch))
+
         return state, next_state, action.squeeze(), reward.squeeze(), done.squeeze()
 
     def learn(self, save_dir):
@@ -134,7 +136,7 @@ class DDQN_Agent:
         loss.backward()
         self.optimizer.step()
 
-        self.scheduler.step() #
+        self.scheduler.step() # 
 
         return loss.item()
 

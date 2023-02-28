@@ -11,7 +11,7 @@ def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
     save_dir = logger.getSaveFolderPath()
     agent.saveHyperParameters(save_dir)
 
-    record_epochs = 5 # record game every x epochs
+    record_epochs = 20 # record game every x epochs
     epochs = config["epochs"]
     for e in range(epochs):
         observation, info = gym.reset()
@@ -50,7 +50,7 @@ def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
             # Update state
             observation = next_observation
 
-        logger.log_epoch(e, agent.exploration_rate)
+        logger.log_epoch(e, agent.exploration_rate, agent.optimizer.param_groups[0]["lr"])
 
         # Record game
         if record:
