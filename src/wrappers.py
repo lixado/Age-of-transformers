@@ -34,13 +34,12 @@ class SkipFrame(gym.Wrapper):
         """Repeat action, and sum reward"""
         total_reward = 0.0
         done = False
-
-        obs, reward, done, truncated, info = self.env.step(action) # do action
-        total_reward += reward
         for _ in range(self._skip):
             # Accumulate reward and repeat the same action
             obs, reward, done, truncated, info = self.env.step(-1) # do nothing for skip frames
             total_reward += reward
             if done or truncated:
                 break
-        return obs, total_reward, done, truncated, info
+
+        obs, reward, done, truncated, info = self.env.step(action) # do action
+        return obs, total_reward+reward, done, truncated, info

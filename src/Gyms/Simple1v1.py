@@ -26,6 +26,7 @@ class Simple1v1Gym(gym.Env):
         """
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
+        engineConfig.set_auto_attack(False)
         self.game: Engine.Game = Engine.Game(map, engineConfig)
         self.game.set_max_fps(0)  # 0 = unlimited
         # add 2 players
@@ -52,10 +53,9 @@ class Simple1v1Gym(gym.Env):
         # reward
         self.reward = 0
         if self.mode == 0:
-            winnerReward = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat) - int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)*1 # if win +1
             dmgReward = 1 - ((100 - self.player0.statistic_damage_done) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
             timeConservation = (self.max_episode_steps - self.elapsed_steps) / self.max_episode_steps # * the dmg reward, higher the lesser time has passed
-            self.reward = dmgReward * timeConservation + winnerReward          
+            self.reward = dmgReward * timeConservation          
         if self.mode == 1:
             self.reward = conditional_reward(self.player0, previousPlayer0, self.player1)
 
@@ -78,7 +78,8 @@ class Simple1v1Gym(gym.Env):
         color = (0, 0, 0)
         thickness = 1
 
-        texts = [f"Q_values:",
+        texts = [f"Update Nr.: {self.elapsed_steps}",
+                 f"Q_values:",
                  f"Q_Left: {q_values[0]}",
                  f"Q_Right: {q_values[1]}",
                  f"Q_Up: {q_values[2]}",

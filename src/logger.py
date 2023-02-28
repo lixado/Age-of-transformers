@@ -50,7 +50,7 @@ class Logger():
         self.epochTotalActions += 1
         self.epochTotalQ += q
 
-    def log_epoch(self, epoch, epsilon):
+    def log_epoch(self, epoch, epsilon, lr):
         tNow = time.time()
         tDelta = tNow - self.record_time
 
@@ -63,6 +63,7 @@ class Logger():
             f"Epoch {epoch} - "
             f"Actions this epoch {self.epochTotalActions} - "
             f"Epsilon {epsilon} - "
+            f"Lr {lr:.5f} - "
             f"Reward this epoch {self.epochTotalReward} - "
             f"Loss this epoch {self.epochTotalLoss} - "
             f"Q Value this epoch {self.epochTotalQ} - "

@@ -16,8 +16,8 @@ from HumanPlayable.main import playground
 from wrappers import SkipFrame, RepeatFrame
 
 STATE_SHAPE = (84, 84) # model input shapes
-FRAME_STACK = 1 #4 # how many frames to stack gets last x frames
-SKIP_FRAME = 0#20 # do action and then do nothing for x frames
+FRAME_STACK = 5 # get latest 10 frames into model
+SKIP_FRAME = 10 # do no action for 10 frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
 MAP = "10x10-2p-ffa-Eblil.json"
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
     gym = GrayScaleObservation(gym)
     gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
-    gym = FrameStack(gym, num_stack=FRAME_STACK)
+    gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=True)
 
     """
         Start agent
