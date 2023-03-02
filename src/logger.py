@@ -5,12 +5,14 @@ import datetime
 import matplotlib
 matplotlib.use("agg") # dix main thread bug https://github.com/matplotlib/matplotlib/issues/23419#issuecomment-1182530883
 import matplotlib.pyplot as plt
+import numpy as np
 
 class Logger():
     def __init__(self, workingDir):
         # create folder for results
         self.folder_path = os.path.join(workingDir, "results", time.strftime("%Y%m%d-%H-%M-%S"))
         os.makedirs(self.folder_path, exist_ok=True)
+        self.movingAvgNumber = 100 # take last 100 and average for plotting
 
         # copy configs
         shutil.copy2(os.path.join(workingDir, "src", "config.json"), self.folder_path)
@@ -31,6 +33,10 @@ class Logger():
         self.losses = []
         self.actions = []
         self.qs = []
+        self.movingAvgrewards = []
+        self.movingAvglosses = []
+        self.movingAvgactions = []
+        self.movingAvgqs = []
         self.rewards_plot = os.path.join(self.folder_path, "rewards.jpg")
         self.losses_plot = os.path.join(self.folder_path, "losses.jpg")
         self.actions_plot = os.path.join(self.folder_path, "actions.jpg")
@@ -54,19 +60,28 @@ class Logger():
         tNow = time.time()
         tDelta = tNow - self.record_time
 
+        avgReward = np.round(self.epochTotalReward / self.epochTotalActions, 5)
+        avgQ = np.round(self.epochTotalQ / self.epochTotalActions, 5)
+        avgLoss = np.round(self.epochTotalLoss / self.epochTotalActions, 5)
+
         self.rewards.append(self.epochTotalReward)
         self.losses.append(self.epochTotalLoss)
         self.actions.append(self.epochTotalActions)
         self.qs.append(self.epochTotalQ)
+
+        self.movingAvgrewards.append(np.round(np.mean(self.rewards[-self.movingAvgNumber:]), 4))
+        self.movingAvglosses.append(np.round(np.mean(self.losses[-self.movingAvgNumber:]), 4))
+        self.movingAvgactions.append(np.round(np.mean(self.actions[-self.movingAvgNumber:]), 4))
+        self.movingAvgqs.append(np.round(np.mean(self.qs[-self.movingAvgNumber:]), 4))
 
         print(
             f"Epoch {epoch} - "
             f"Actions this epoch {self.epochTotalActions} - "
             f"Epsilon {epsilon} - "
             f"Lr {lr:.5f} - "
-            f"Reward this epoch {self.epochTotalReward} - "
-            f"Loss this epoch {self.epochTotalLoss} - "
-            f"Q Value this epoch {self.epochTotalQ} - "
+            f"Avg reward {avgReward} - "
+            f"Avg loss {avgLoss} - "
+            f"Avg Q {avgQ} - "
             f"Time Delta {tDelta} - "
             f"Time {datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}"
         )
@@ -74,14 +89,14 @@ class Logger():
         with open(self.save_log, "a") as f:
             f.write(
                 f"{epoch:8d}{self.epochTotalActions:8d}{epsilon:10.3f}"
-                f"{self.epochTotalReward:15.3f}{self.epochTotalLoss:15.3f}{self.epochTotalQ:15.3f}"
+                f"{(np.mean(self.rewards[-self.movingAvgNumber:])):15.3f}{(np.mean(self.losses[-self.movingAvgNumber:])):15.3f}{(np.mean(self.qs[-self.movingAvgNumber:])):15.3f}"
                 f"{tDelta:15.3f}"
                 f"{datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'):>20}\n"
             )
             
         for metric in ["rewards", "losses", "actions", "qs"]:
-            plt.plot(getattr(self, metric))
-            plt.title(f"Sum of {metric} this epoch")
+            plt.plot(getattr(self, f"movingAvg{metric}"))
+            plt.title(f"Avg of previous {self.movingAvgNumber} epochs of sum of {metric} per epoch")
             plt.xlabel("Epochs")
             plt.ylabel(metric)
             plt.savefig(getattr(self, f"{metric}_plot"))
