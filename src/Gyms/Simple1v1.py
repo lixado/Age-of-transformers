@@ -15,19 +15,25 @@ def conditional_reward(player0, previousPlayer0: PlayerState, player1):
     if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
         return 100
 
+MAP = "10x10-2p-ffa-Eblil.json"
+
 class Simple1v1Gym(gym.Env):
-    def __init__(self, map, mode, max_episode_steps):
+    def __init__(self, mode, max_episode_steps):
         self.max_episode_steps = max_episode_steps
         self.elapsed_steps = None
 
-        self.shape = (320, 320, 3) # W, H, C
+        tilesize = 32
+        mapSize = MAP.split("-")[0].split("x")
+
+        self.initial_shape = (int(mapSize[0])*tilesize, int(mapSize[1])*tilesize, 3) # W, H, C
+        print("Initial_shape: ", self.initial_shape)
         """
             Start engine
         """
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
         engineConfig.set_auto_attack(False)
-        self.game: Engine.Game = Engine.Game(map, engineConfig)
+        self.game: Engine.Game = Engine.Game(MAP, engineConfig)
         self.game.set_max_fps(0)  # 0 = unlimited
         # add 2 players
         self.player0: Engine.Player = self.game.add_player()
@@ -37,7 +43,7 @@ class Simple1v1Gym(gym.Env):
         # max actions = list(range(Engine.Constants.ACTION_MIN, Engine.Constants.ACTION_MAX + 1))
         self.mode = mode
         self.game.start()
-        self.observation_space = Box(low=0, high=255, shape=self.shape, dtype=np.uint8)
+        self.observation_space = Box(low=0, high=255, shape=self.initial_shape, dtype=np.uint8)
 
 
     def step(self, actionIndex):
@@ -62,17 +68,18 @@ class Simple1v1Gym(gym.Env):
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
         return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
 
+
     def render(self, q_values):
         """
             Return RGB image but this one will not be changed by wrappers
         """
         image = cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
-        dashboard = np.zeros(self.shape,dtype=np.uint8)
+        dashboard = np.zeros(self.initial_shape,dtype=np.uint8)
         dashboard.fill(255)
         
 
         font = cv2.FONT_HERSHEY_SIMPLEX
-        org = (10, self.shape[1]-10)
+        org = (10, self.initial_shape[1]-10)
         fontScale = 0.5
         spacing = int(40 * fontScale)
         color = (0, 0, 0)

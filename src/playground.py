@@ -12,19 +12,14 @@ from constants import action_space, inv_action_space
 """
     Constants
 """
-tileSize = 32
-
-map = "10x10-2p-ffa-Eblil.json"
-mapsize = (int(map.split("x")[0]), int(map.split("x")[1].split("-")[0]))
-
 def playground(gym: gym.Env):
     """
         Start pygame GUI
     """
     pygame.init()
     pygame.display.set_caption('DeepRTS v3.0') # set the pygame window name
-    canvas = pygame.display.set_mode((gym.shape[0]*5, gym.shape[1]*5))
-    
+    size = (gym.initial_shape[0], gym.initial_shape[1])
+    canvas = pygame.display.set_mode(size) # pygame.FULLSCREEN
 
     """
         Start engine
@@ -54,7 +49,6 @@ def playground(gym: gym.Env):
 
 
             gym.player0.do_action(action)
-
             gym.game.update()
 
             state = gym.game.state # 10x10x10 not sure
@@ -70,6 +64,7 @@ def playground(gym: gym.Env):
                 print(gym.player0.statistic_damage_done)
                 gym.game.caption()
                 old = temp
+
         result = "LOST" if (gym.player0.evaluate_player_state() == Constants.PlayerState.Defeat) else "WON"
         print(f"Done you {result}")
 
