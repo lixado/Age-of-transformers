@@ -11,7 +11,7 @@ from Agents.ddqn import DDQN_Agent
 from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, GrayScaleObservation
 from train import train
 from eval import evaluate
-from HumanPlayable.main import playground
+from human_playable import playground
 
 from wrappers import SkipFrame, RepeatFrame
 
@@ -85,6 +85,6 @@ if __name__ == "__main__":
         modelPath = os.path.join(latestFolder, "model.chkpt")
         evaluate(agent, gym, modelPath)
     elif mode == 2:
-        playground()
+        playground(gym)
     else:
         print("Mode not avaliable")

@@ -96,7 +96,7 @@ class Simple1v1Gym(gym.Env):
 
         image = cv2.hconcat([dashboard, image])
         return image
-
+    
 
     def _get_obs(self):
         return cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
