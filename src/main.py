@@ -3,6 +3,7 @@ import sys
 from DeepRTS import Engine, Constants
 import cv2
 import torch
+from Gyms.AllActions1v1 import AllActions1v1
 from Gyms.Simple1v1 import Simple1v1Gym
 from logger import Logger
 from functions import GetConfigDict
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = Simple1v1Gym(0, config["stepsMax"])
+    gym = AllActions1v1(0, config["stepsMax"])
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers

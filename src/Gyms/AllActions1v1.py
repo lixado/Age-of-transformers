@@ -12,7 +12,11 @@ class AllActions1v1(gym.Env):
         self.max_episode_steps = max_episode_steps
         self.elapsed_steps = None
 
-        self.shape = (320, 320, 3) # W, H, C
+        tilesize = 32
+        mapSize = MAP.split("-")[0].split("x")
+        self.initial_shape = (int(mapSize[0])*tilesize, int(mapSize[1])*tilesize, 3) # W, H, C
+        print("Initial_shape: ", self.initial_shape)
+        
         """
             Start engine
         """
@@ -34,7 +38,7 @@ class AllActions1v1(gym.Env):
         self.action_space = range(1,17) # 1-16, all actions, (see deep-rts/bindings/Constants.cpp)
         self.mode = mode
         self.game.start()
-        self.observation_space = Box(low=0, high=255, shape=self.shape, dtype=np.uint8)
+        self.observation_space = Box(low=0, high=255, shape=self.initial_shape, dtype=np.uint8)
 
     def step(self, actionIndex):
         self.elapsed_steps += 1
