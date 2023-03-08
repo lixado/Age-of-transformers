@@ -4,6 +4,7 @@ import time
 from DeepRTS import Engine, Constants
 import cv2
 import torch
+from Gyms.AllActions1v1 import AllActions1v1
 from Gyms.Simple1v1 import Simple1v1Gym
 from logger import Logger
 from functions import GetConfigDict
@@ -12,7 +13,7 @@ from Agents.ddqn import DDQN_Agent
 from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, GrayScaleObservation
 from train import train
 from eval import evaluate
-from HumanPlayable.main import playground
+from playground import playground
 
 from wrappers import SkipFrame, RepeatFrame
 
@@ -20,8 +21,6 @@ STATE_SHAPE = (64, 64) # model input shapes
 FRAME_STACK = 3 # get latest x frames into model
 SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
-MAP = "10x10-2p-ffa-Eblil.json"
-
 
 if __name__ == "__main__":
     workingDir = os.getcwd()
@@ -51,7 +50,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = Simple1v1Gym(MAP, 0, config["stepsMax"])
+    gym = AllActions1v1(0, config["stepsMax"])
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
@@ -62,7 +61,7 @@ if __name__ == "__main__":
     gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
     gym = GrayScaleObservation(gym)
     gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
-    gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=True)
+    gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
     """
         Start agent
@@ -86,6 +85,6 @@ if __name__ == "__main__":
         modelPath = os.path.join(latestFolder, "model.chkpt")
         evaluate(agent, gym, modelPath)
     elif mode == 2:
-        playground()
+        playground(gym)
     else:
         print("Mode not avaliable")
