@@ -5,7 +5,7 @@ from collections import deque
 import random
 import numpy as np
 import torch
-import numpy as np
+from torchvision.models import resnet50
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
 class DDQN_Agent:
@@ -17,7 +17,7 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.999995
+        self.exploration_rate_decay = 0.9995
         self.exploration_rate_min = 0.0001
         self.curr_step = 0
 
@@ -29,7 +29,7 @@ class DDQN_Agent:
         totalSizeInBytes = (arr.size * arr.itemsize * self.deque_size)
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 256
+        self.batch_size = 512
         #self.save_every = 5e5  # no. of experiences between saving model
 
         """
@@ -37,15 +37,15 @@ class DDQN_Agent:
         """
         self.gamma = 0.9
         self.learning_rate = 0.0025
-        self.learning_rate_decay = 0.99999985
+        self.learning_rate_decay = 0.999985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
         self.burnin = 1e3  # min. experiences before training
         assert( self.burnin >  self.batch_size)
-        self.learn_every = 3  # no. of experiences between updates to Q_online
-        self.sync_every = 1e4  # no. of experiences between Q_target & Q_online sync
+        self.learn_every = 1  # no. of experiences between updates to Q_online
+        self.sync_every = 1e6  # no. of experiences between Q_target & Q_online sync
 
     def act(self, state):
         """
@@ -89,12 +89,12 @@ class DDQN_Agent:
         # not make to np array ans use lazyframes
         state = np.array(state)
         next_state = np.array(next_state)
-        state = torch.tensor(state).float()
-        next_state = torch.tensor(next_state).float()
+        state = torch.tensor(state).float()#.to(device=self.device)
+        next_state = torch.tensor(next_state).float()#.to(device=self.device)
 
-        action = torch.tensor([action])
-        reward = torch.tensor([reward])
-        done = torch.tensor([done])
+        action = torch.tensor([action])#.to(device=self.device)
+        reward = torch.tensor([reward])#.to(device=self.device)
+        done = torch.tensor([done])#.to(device=self.device)
 
         try:
             self.memory.append((state, next_state, action, reward, done))
@@ -125,7 +125,7 @@ class DDQN_Agent:
         # Sample from memory get self.batch_size number of memories
         state, next_state, action, reward, done = self.recall()
 
-        # move everything to gpu here
+        # move everything to gpu here to use less gpu memory but slower training
         state, next_state, action, reward, done = state.to(device=self.device), next_state.to(device=self.device), action.to(device=self.device), reward.to(device=self.device), done.to(device=self.device)
 
         # Get TD Estimate, make predictions for the each memory
@@ -210,16 +210,8 @@ class DDQN(nn.Module):
         c, h, w = input_dim
     
         self.online = nn.Sequential(
-            nn.Conv2d(in_channels=c, out_channels=32, kernel_size=8, stride=4),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
-            nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(3136, 512),
-            nn.ReLU(),
-            nn.Linear(512, output_dim)
+            resnet50(),
+            nn.Linear(1000, output_dim)
         )
 
         self.target = copy.deepcopy(self.online)

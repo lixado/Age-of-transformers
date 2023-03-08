@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from DeepRTS import Engine, Constants
 import cv2
 import torch
@@ -15,9 +16,9 @@ from HumanPlayable.main import playground
 
 from wrappers import SkipFrame, RepeatFrame
 
-STATE_SHAPE = (84, 84) # model input shapes
-FRAME_STACK = 5 # get latest 10 frames into model
-SKIP_FRAME = 10 # do no action for 10 frames then do action
+STATE_SHAPE = (64, 64) # model input shapes
+FRAME_STACK = 3 # get latest x frames into model
+SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
 MAP = "10x10-2p-ffa-Eblil.json"
 

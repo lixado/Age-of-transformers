@@ -53,12 +53,9 @@ class Simple1v1Gym(gym.Env):
         # reward
         self.reward = 0
         if self.mode == 0:
-            #dmgReward = 1 - ((100 - self.player0.statistic_damage_done) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
-            #timeConservation = (self.max_episode_steps - self.elapsed_steps) / self.max_episode_steps # * the dmg reward, higher the lesser time has passed
-            #self.reward = max([dmgReward * timeConservation, int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat)])   # 1 reward if win       
-            win = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat)
-            loss = int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)
-            self.reward = win
+            dmgReward = 1 - ((100 - self.player0.statistic_damage_done) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
+            timeConservation = (self.max_episode_steps - self.elapsed_steps) / self.max_episode_steps # * the dmg reward, higher the lesser time has passed
+            self.reward = max([dmgReward * timeConservation, int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat)])   # 1 reward if win       
         if self.mode == 1:
             self.reward = conditional_reward(self.player0, previousPlayer0, self.player1)
 
