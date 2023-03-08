@@ -5,8 +5,10 @@ from constants import inv_action_space
 from DeepRTS import Engine, Constants
 from gym.spaces import Box
 
+MAP = "15x15-2p-ffa-Cresal.json"
+
 class AllActions1v1(gym.Env):
-    def __init__(self, map, mode, max_episode_steps):
+    def __init__(self, mode, max_episode_steps):
         self.max_episode_steps = max_episode_steps
         self.elapsed_steps = None
 
@@ -23,7 +25,7 @@ class AllActions1v1(gym.Env):
         engineConfig.set_start_lumber(1000)
         engineConfig.set_start_gold(1000)
         engineConfig.set_start_stone(1000)
-        self.game: Engine.Game = Engine.Game(map, engineConfig)
+        self.game: Engine.Game = Engine.Game(MAP, engineConfig)
         self.game.set_max_fps(0)  # 0 = unlimited
         # add 2 players
         self.player0: Engine.Player = self.game.add_player()
