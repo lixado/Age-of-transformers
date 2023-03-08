@@ -15,7 +15,7 @@ class DDQN_Agent:
         self.action_space_dim = action_space_dim
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.net = DecisionTransformerModel.from_pretrained("edbeeching/decision-transformer-gym-hopper-medium")
+        self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
 
         self.exploration_rate = 1
         self.exploration_rate_decay = 0.99995
@@ -196,3 +196,23 @@ class DDQN_Agent:
         )
         print(f"Model saved to {save_path}")
 
+
+
+class DDQN(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super().__init__()
+        c, h, w = input_dim
+    
+        self.online = DecisionTransformerModel()
+
+        self.target = copy.deepcopy(self.online)
+
+        # Q_target parameters are frozen.
+        for p in self.target.parameters():
+           p.requires_grad = False
+
+    def forward(self, input, model):
+        if model == "online":
+            return self.online(input)
+        elif model == "target":
+            return self.target(input)
