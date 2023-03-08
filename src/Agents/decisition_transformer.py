@@ -9,7 +9,7 @@ from transformers import DecisionTransformerModel, DecisionTransformerConfig
 
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
-class DDQN_Agent:
+class QN_DecisionTransformer:
     def __init__(self, state_dim, action_space_dim):
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
