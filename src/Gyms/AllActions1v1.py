@@ -59,16 +59,18 @@ class AllActions1v1(gym.Env):
             Return RGB image but this one will not be changed by wrappers
         """
         image = cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
-        dashboard = np.zeros(self.shape,dtype=np.uint8)
+        dashboard = np.zeros(self.initial_shape,dtype=np.uint8)
         dashboard.fill(255)
 
 
         font = cv2.FONT_HERSHEY_SIMPLEX
-        org = (10, self.shape[1]-10)
+        org = (10, self.initial_shape[1]-10)
         fontScale = 0.5
         spacing = int(40 * fontScale)
         color = (0, 0, 0)
         thickness = 1
+
+        q_values = [str(i).format(np.round(i, 3)) for i in q_values] if type(q_values[0]) != type(None) else q_values
 
         texts = [f"Update Nr.: {self.elapsed_steps}",
                  f"Q_values:",
@@ -78,7 +80,7 @@ class AllActions1v1(gym.Env):
                  f"Q_Down: {q_values[3]}",
                  f"Q_Attack: {q_values[4]}",
                  f"Q_None: {q_values[5]}",
-                 f"player0.statistic_damage_done: {self.player0.statistic_damage_done}",
+                 f"player0.damage_done: {self.player0.statistic_damage_done}",
                  f"Reward: {self.reward}",
                  f"Action: {inv_action_space[self.action_space[self.action]]}"]
 

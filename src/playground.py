@@ -76,26 +76,34 @@ def Controls(ev: List[pygame.event.Event]):
     for event in ev:
         if event.type == pygame.KEYDOWN: # if some key was pressed
             match event.key:
-                case pygame.K_DOWN:
-                    return 4
+                case pygame.K_1:
+                    action = 1
+                case pygame.K_2:
+                    action = 2
+
                 case pygame.K_UP:
-                    return 3
+                    action = 3
+                case pygame.K_DOWN:
+                    action = 4
                 case pygame.K_LEFT:
-                    return 5      
+                    action = 5
                 case pygame.K_RIGHT:
-                    return 6
+                    action = 6
+
                 case pygame.K_SPACE:
-                    return 11
+                    action = 11
                 case pygame.K_x:
-                    return 12
-                case pygame.K_c:
-                    return 13
-                case pygame.K_v:
-                    return 14
-                case pygame.K_b:
-                    return 15
+                    action = 12
+
+                case pygame.K_3:
+                    action = 13
+                case pygame.K_4:
+                    action = 14
+                case pygame.K_5:
+                    action = 15
+            return action
         if event.type == pygame.KEYUP:
             match event.key:
                 case pygame.K_ESCAPE:
-                    return -1
+                    action = -1
     return 16 # default
