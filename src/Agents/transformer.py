@@ -7,6 +7,10 @@ import numpy as np
 import torch
 import math
 
+class AddAndNorm(nn.Module):
+    def __init__(self):
+        super().__init__()
+
 class PositionalEncoding(nn.Module):
     def __init__(self, model_dim, k_length):
         super(PositionalEncoding, self).__init__()
@@ -30,10 +34,11 @@ def ScaledDotProduct(Q, K, V, d):
    return torch.nn.Softmax(dim=-1)(inner) @ V
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, emb):
+    def __init__(self, d_model):
         super().__init__()
-        self.linear1 = nn.Linear(emb, 3 * emb)
-        self.emb = emb
+        self.linear1 = nn.Linear(d_model, 3 * d_model)
+        self.d_model = d_model
+        self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
 
     def forward(self, x):
         B, T, C = x.size()
@@ -44,7 +49,18 @@ class MultiHeadAttention(nn.Module):
         key = key.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
         value = value.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
 
-        sdp = ScaledDotProduct(query, key, value, self.emb)
+        sdp = ScaledDotProduct(query, key, value, self.d_model)
+
+        x += sdp # Add
+        x = self.layer_norm(x) # Norm
+
+        return x
+
+class FeedForward(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+
 
 class Transformer(nn.Module):
     def __init__(self):
