@@ -33,7 +33,7 @@ def simulate(config: dict, gym: gym.Env, save_path: str):
                 SaveTempImage(save_path, gym.render(), ticks)
 
             # save data
-            memory.append([observation, actionIndex, reward, done])
+            memory.append([observation, actionIndex, reward])
 
             # Update state
             observation = next_observation

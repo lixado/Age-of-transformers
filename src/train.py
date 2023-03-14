@@ -1,9 +1,10 @@
 import gym
 import os
-
+import torch.utils.data
 from Agents.ddqn import DDQN_Agent
 from logger import Logger
 from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
+from src.data import AllActions1v1Dataset
 
 
 def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
@@ -55,6 +56,17 @@ def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
         # Record game
         if record:
             CreateVideoFromTempImages(os.path.join(logger.getSaveFolderPath(), "temp"), (e))
+    data = AllActions1v1Dataset(data_path)
+    trainingData = data[0:len(data)*0.8]
+    trainingLoader = torch.utils.data.DataLoader(trainingData, batch_size=config["batchSize"], shuffle=False, )
+
+    testingData = data[len(data)*0.8:len(data)-len(data)*0.2]
+    games=[]
+    for e in range(epochs):
+        for game in games:
+            for batch in game:
+                pass
+
 
     # save model
     agent.save(logger.getSaveFolderPath())
