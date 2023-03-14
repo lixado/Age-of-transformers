@@ -92,6 +92,8 @@ class EncoderLayer(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, n_layers, d_model, d_inner):
         super().__init__()
+
+        self.src_state_emb = nn.Embedding()
         self.layers = nn.ModuleList([
             EncoderLayer(d_model, d_inner) for _ in range(n_layers) # *N
         ])
