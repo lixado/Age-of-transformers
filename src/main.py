@@ -50,7 +50,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = AllActions1v1(0, config["stepsMax"])
+    gym = Simple1v1Gym(0, config["stepsMax"])
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers

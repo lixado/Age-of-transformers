@@ -7,13 +7,6 @@ from gym.spaces import Box
 
 from functions import PlayerState
 
-def conditional_reward(player0, previousPlayer0: PlayerState, player1):
-    if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
-        return 1000
-    if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
-        return -100
-    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
-        return 100
 
 MAP = "10x10-2p-ffa-Eblil.json"
 
@@ -58,12 +51,11 @@ class Simple1v1Gym(gym.Env):
 
         # reward
         self.reward = 0
-        if self.mode == 0:
-            dmgReward = 1 - ((100 - self.player0.statistic_damage_done) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
-            timeConservation = (self.max_episode_steps - self.elapsed_steps) / self.max_episode_steps # * the dmg reward, higher the lesser time has passed
-            self.reward = max([dmgReward * timeConservation, int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat)])   # 1 reward if win       
-        if self.mode == 1:
-            self.reward = conditional_reward(self.player0, previousPlayer0, self.player1)
+        dmgReward = 1 - ((100 - self.player0.statistic_damage_done) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
+        timeConservation = (self.max_episode_steps - self.elapsed_steps) / self.max_episode_steps # * the dmg reward, higher the lesser time has passed
+        win = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat) # +1
+        loss = int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)/3 # +0.1
+        self.reward = dmgReward + win + loss   # 1 reward if win       
 
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
         return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()

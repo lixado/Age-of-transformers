@@ -13,17 +13,18 @@ class DDQN_Agent:
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
         self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.9995
+        self.exploration_rate_decay = 0.99995
         self.exploration_rate_min = 0.0001
         self.curr_step = 0
 
         """
             Memory
         """
-        self.deque_size = 40000
+        self.deque_size = 4000
         arr = np.zeros(state_dim)
         totalSizeInBytes = (arr.size * arr.itemsize * self.deque_size)
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
@@ -35,11 +36,11 @@ class DDQN_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.0025
+        self.learning_rate = 0.025
         self.learning_rate_decay = 0.999985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
-        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
+        #self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
         self.burnin = 1e3  # min. experiences before training
         assert( self.burnin >  self.batch_size)
@@ -88,12 +89,12 @@ class DDQN_Agent:
         # not make to np array ans use lazyframes
         state = np.array(state)
         next_state = np.array(next_state)
-        state = torch.tensor(state).float()#.to(device=self.device)
-        next_state = torch.tensor(next_state).float()#.to(device=self.device)
+        state = torch.tensor(state).float().to(device=self.device)
+        next_state = torch.tensor(next_state).float().to(device=self.device)
 
-        action = torch.tensor([action])#.to(device=self.device)
-        reward = torch.tensor([reward])#.to(device=self.device)
-        done = torch.tensor([done])#.to(device=self.device)
+        action = torch.tensor([action]).to(device=self.device)
+        reward = torch.tensor([reward]).to(device=self.device)
+        done = torch.tensor([done]).to(device=self.device)
 
         try:
             self.memory.append((state, next_state, action, reward, done))
@@ -110,7 +111,7 @@ class DDQN_Agent:
 
         return state, next_state, action.squeeze(), reward.squeeze(), done.squeeze()
 
-    def learn(self, save_dir):
+    def learn(self):
         """Update online action value (Q) function with a batch of experiences"""
         if self.curr_step % self.sync_every == 0:
             self.sync_Q_target()
@@ -125,7 +126,7 @@ class DDQN_Agent:
         state, next_state, action, reward, done = self.recall()
 
         # move everything to gpu here to use less gpu memory but slower training
-        state, next_state, action, reward, done = state.to(device=self.device), next_state.to(device=self.device), action.to(device=self.device), reward.to(device=self.device), done.to(device=self.device)
+        #state, next_state, action, reward, done = state.to(device=self.device), next_state.to(device=self.device), action.to(device=self.device), reward.to(device=self.device), done.to(device=self.device)
 
         # Get TD Estimate, make predictions for the each memory
         td_est = self.td_estimate(state, action)
@@ -145,7 +146,7 @@ class DDQN_Agent:
         loss.backward()
         self.optimizer.step()
 
-        self.scheduler.step() # 
+        #self.scheduler.step() # 
 
         return loss.item()
 
