@@ -13,6 +13,7 @@ from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, Gr
 from train import train
 from eval import evaluate
 from playground import playground
+from simulate import simulate
 
 from wrappers import SkipFrame, RepeatFrame
 
@@ -36,8 +37,9 @@ if __name__ == "__main__":
         0 = Train
         1 = Eval
         2 = Playground
+        3 = Simulate games
     """
-    modes = ["Train", "Eval", "Playground"]
+    modes = ["Train", "Eval", "Playground", "Simulate"]
     for cnt, modeName in enumerate(modes, 1):
         sys.stdout.write("[%d] %s\n\r" % (cnt, modeName))
 
@@ -85,5 +87,8 @@ if __name__ == "__main__":
         evaluate(agent, gym, modelPath)
     elif mode == 2:
         playground(gym)
+    elif mode == 3:
+        logger = Logger(workingDir)
+        simulate(config, gym, logger.getSaveFolderPath())
     else:
         print("Mode not avaliable")
