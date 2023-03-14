@@ -1,10 +1,7 @@
 import random
 import pickle
-
 import gym
 import os
-
-from logger import Logger
 from functions import CreateVideoFromTempImages, SaveTempImage
 
 
@@ -13,8 +10,8 @@ def simulate(config: dict, gym: gym.Env, save_path: str):
     os.makedirs(data_path, exist_ok=True) # create temp folder if not exist
 
     record_epochs = config["recordEvery"] # record game every x epochs
-    epochs = config["epochs"]+1528
-    for e in range(1528, epochs):
+    epochs = config["epochs"]
+    for e in range(epochs):
         observation, info = gym.reset()
         ticks = 0
         record = (e % record_epochs == 0) or (e == epochs-1) # last part to always record last
@@ -36,7 +33,7 @@ def simulate(config: dict, gym: gym.Env, save_path: str):
                 SaveTempImage(save_path, gym.render(), ticks)
 
             # save data
-            memory.append([observation, next_observation, actionIndex, reward, done])
+            memory.append([observation, actionIndex, reward, done])
 
             # Update state
             observation = next_observation
