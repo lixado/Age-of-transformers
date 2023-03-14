@@ -19,7 +19,7 @@ from wrappers import SkipFrame, RepeatFrame
 
 STATE_SHAPE = (64, 64) # model input shapes
 FRAME_STACK = 3 # get latest x frames into model
-SKIP_FRAME = 10 # do no action for x frames then do action
+SKIP_FRAME = 5 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
 
 if __name__ == "__main__":
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = AllActions1v1(0, config["stepsMax"])
+    gym = Simple1v1Gym(0, config["stepsMax"])
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
