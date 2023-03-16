@@ -14,6 +14,7 @@ from train import train
 from eval import evaluate
 from playground import playground
 from simulate import simulate
+import src.train_transformer
 
 from wrappers import SkipFrame, RepeatFrame
 
@@ -76,7 +77,8 @@ if __name__ == "__main__":
     """
     if mode == 0:
         logger = Logger(workingDir)
-        train(config, agent, gym, logger)
+        #train(config, agent, gym, logger)
+        src.train_transformer.train(config, agent, gym, logger, workingDir)
     elif mode == 1:
         # get latest model path
         results = os.path.join(workingDir, "results")
