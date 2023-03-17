@@ -1,3 +1,5 @@
+from time import sleep
+import cv2
 import gym
 import os
 
@@ -35,8 +37,12 @@ def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
                 SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values), ticks)
 
             # use this to see image example
-            #cv2.imshow('image', next_observation[0])
-            #cv2.waitKey(3)
+            #cv2.namedWindow("image", cv2.WND_PROP_FULLSCREEN)
+            #cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
+            #all = cv2.hconcat([next_observation[0], next_observation[1], next_observation[2]])
+            #cv2.imshow("image",all)
+            #cv2.waitKey(3000)
+
 
             # AI Save memory
             agent.cache(observation, next_observation, actionIndex, reward, done)
