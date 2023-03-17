@@ -4,6 +4,7 @@ import time
 from DeepRTS import Engine, Constants
 import cv2
 import torch
+from Agents.decision_transformer import DecisionTransformer_Agent
 from Gyms.AllActions1v1 import AllActions1v1
 from Gyms.Simple1v1 import Simple1v1Gym
 from logger import Logger
@@ -67,7 +68,7 @@ if __name__ == "__main__":
         Start agent
     """
     state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
-    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space))
+    agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space))
     agent.device = device
 
     """

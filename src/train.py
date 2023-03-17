@@ -4,14 +4,15 @@ import gym
 import os
 
 from Agents.ddqn import DDQN_Agent
+from Agents.decision_transformer import DecisionTransformer_Agent
 from logger import Logger
 from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 
 
-def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
+def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger):
     agent.net.train()
     save_dir = logger.getSaveFolderPath()
-    agent.saveHyperParameters(save_dir)
+    #agent.saveHyperParameters(save_dir)
 
     record_epochs = config["recordEvery"] # record game every x epochs
     epochs = config["epochs"]
