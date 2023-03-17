@@ -46,10 +46,10 @@ def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: 
 
 
             # AI Save memory
-            agent.cache(observation, next_observation, actionIndex, reward, done)
+            agent.cache(observation, next_observation, actionIndex, reward, done, ticks)
 
             # Learn
-            q, loss = agent.learn(save_dir)
+            q, loss = 0,0#agent.learn(save_dir)
             
             # Logging
             logger.log_step(reward, loss, q)

@@ -1,5 +1,6 @@
 import os
 import json
+import random
 import shutil
 import cv2
 import numpy as np
@@ -26,6 +27,11 @@ class PlayerState():
 
     def evaluate_player_state(self):
         return self.player_state
+    
+def sample_with_order(population, max_sequence_length):
+    k = random.randint(1, max_sequence_length)
+    k_start = random.randint(0, len(population)-k)
+    return population[k_start: k_start+k]
 
 def NotifyDiscord(message):
     data = {

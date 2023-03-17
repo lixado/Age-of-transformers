@@ -7,6 +7,8 @@ import numpy as np
 import torch
 from transformers import DecisionTransformerModel, DecisionTransformerConfig
 
+from functions import sample_with_order
+
 
 class DecisionTransformer_Agent:
     def __init__(self, state_dim, action_space_dim):
@@ -14,25 +16,25 @@ class DecisionTransformer_Agent:
         self.action_space_dim = action_space_dim
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        state_dim_flatten = state_dim[0]*state_dim[1]*state_dim[2]
-        max_ep_length = 4096
-        config = DecisionTransformerConfig(state_dim_flatten, action_space_dim, max_ep_len=max_ep_length)
+        self.state_dim_flatten = state_dim[0]*state_dim[1]*state_dim[2]
+        self.max_ep_length = 4096
+        config = DecisionTransformerConfig(self.state_dim_flatten, action_space_dim, max_ep_len=self.max_ep_length)
         self.net = DecisionTransformerModel(config).to(device=self.device)
 
-        self.exploration_rate = 1
-        self.exploration_rate_decay = 0.9995
+        self.exploration_rate = 1 # 1
+        self.exploration_rate_decay = 0.995
         self.exploration_rate_min = 0.0001
         self.curr_step = 0
 
         """
             Memory
         """
-        self.deque_size = 40000
+        self.deque_size = 4000
         arr = np.zeros(state_dim)
-        totalSizeInBytes = (arr.size * arr.itemsize * self.deque_size)
+        totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # * 2 because 2 states are saved in line
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 64
+        self.batch_size = 16
         #self.save_every = 5e5  # no. of experiences between saving model
 
         """
@@ -62,13 +64,30 @@ class DecisionTransformer_Agent:
         if (random.random() < self.exploration_rate): # EXPLORE
             actionIdx = random.randint(0, self.action_space_dim-1)
         else: # EXPLOIT
-            state = np.array(state)
-            state = torch.tensor(state).float().to(device=self.device)
-            state = state.unsqueeze(0) # create extra dim for batch
+            with torch.no_grad():
+                state = np.array(state)
+                #state = state.unsqueeze(0) # create extra dim for batch
 
-            neuralNetOutput = self.net(state, model="online")
-            actionIdx = torch.argmax(neuralNetOutput, axis=1).item()
-            pred_arr = neuralNetOutput[0].detach().cpu().numpy()
+                # need to save previous states and actions to send here
+                # search in memory up to self.max_ep_length for previous stuff and send in here
+
+                target_return = torch.tensor(1, device=self.device, dtype=torch.float32).reshape(1, 1)
+                states = torch.tensor(state, device=self.device, dtype=torch.float32).reshape(1, 1, self.state_dim_flatten) # prev states
+                actions = torch.rand((1, self.action_space_dim), device=self.device, dtype=torch.float32) # prev q values
+                rewards = torch.rand((1, 1), device=self.device, dtype=torch.float32) # prev rewards
+                timesteps = torch.tensor(0, device=self.device, dtype=torch.long).reshape(1, 1) # 
+                attention_mask = None#torch.zeros(1, 1, device=self.device, dtype=torch.float32) #
+
+                state_preds, action_preds, return_preds = self.net(states=states,
+                    actions=actions,
+                    rewards=rewards,
+                    returns_to_go=target_return,
+                    timesteps=timesteps,
+                    attention_mask=attention_mask,
+                    return_dict=False)
+
+                actionIdx = torch.argmax(action_preds).item()
+                pred_arr = torch.squeeze(action_preds).detach().cpu().numpy()
 
         # decrease exploration_rate
         self.exploration_rate *= self.exploration_rate_decay
@@ -79,7 +98,7 @@ class DecisionTransformer_Agent:
 
         return actionIdx, pred_arr
 
-    def cache(self, state, next_state, action, reward, done):
+    def cache(self, state, next_state, action, reward, done, t):
         """
         Store the experience to self.memory (replay buffer)
         Inputs:
@@ -98,21 +117,23 @@ class DecisionTransformer_Agent:
         action = torch.tensor([action])#.to(device=self.device)
         reward = torch.tensor([reward])#.to(device=self.device)
         done = torch.tensor([done])#.to(device=self.device)
+        t = torch.tensor([t])
 
         try:
-            self.memory.append((state, next_state, action, reward, done))
+            self.memory.append((state, next_state, action, reward, done, t))
         except:
             print("Need more memory or decrease Deque size in agent.")
             quit()
+
 
     def recall(self):
         """
         Retrieve a batch of experiences from memory
         """
-        batch = random.sample(self.memory, self.batch_size)
-        state, next_state, action, reward, done = map(torch.stack, zip(*batch))
+        batch = sample_with_order(self.memory, self.batch_size)
+        state, next_state, action, reward, done, t = map(torch.stack, zip(*batch))
 
-        return state, next_state, action.squeeze(), reward.squeeze(), done.squeeze()
+        return state, next_state, action.squeeze(), reward.squeeze(), done.squeeze(), t.squeeze()
 
     def learn(self, save_dir):
         """Update online action value (Q) function with a batch of experiences"""
