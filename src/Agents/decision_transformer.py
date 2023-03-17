@@ -29,12 +29,12 @@ class DecisionTransformer_Agent:
         """
             Memory
         """
-        self.deque_size = 4000
+        self.deque_size = 4096
         arr = np.zeros(state_dim)
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # * 2 because 2 states are saved in line
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 16
+        self.batch_size = self.max_ep_length
         #self.save_every = 5e5  # no. of experiences between saving model
 
         """
@@ -150,8 +150,24 @@ class DecisionTransformer_Agent:
         state, next_state, action, reward, done = self.recall()
 
         # move everything to gpu here to use less gpu memory but slower training
-        state, next_state, action, reward, done = state.to(device=self.device), next_state.to(device=self.device), action.to(device=self.device), reward.to(device=self.device), done.to(device=self.device)
+        state, next_state, action, reward, done, t = state.to(device=self.device), next_state.to(device=self.device), action.to(device=self.device), reward.to(device=self.device), done.to(device=self.device), t.to(device=self.device)
 
+
+        # må rydde dette sån at target return er fasit?
+        target_return = torch.tensor(1, device=self.device, dtype=torch.float32).reshape(self.batch_size, 1)
+        states = torch.tensor(state, device=self.device, dtype=torch.float32).reshape(1, 1, self.state_dim_flatten) # prev states
+        actions = torch.rand((1, self.action_space_dim), device=self.device, dtype=torch.float32) # prev q values
+        rewards = torch.rand((1, 1), device=self.device, dtype=torch.float32) # prev rewards
+        timesteps = torch.tensor(0, device=self.device, dtype=torch.long).reshape(1, 1) # 
+        attention_mask = None#torch.zeros(1, 1, device=self.device, dtype=torch.float32) #
+
+        state_preds, action_preds, return_preds = self.net(states=states,
+            actions=actions,
+            rewards=rewards,
+            returns_to_go=target_return,
+            timesteps=timesteps,
+            attention_mask=attention_mask,
+            return_dict=False)
 
 
         #return (td_est.mean().item(), loss)
