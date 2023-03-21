@@ -1,3 +1,5 @@
+import random
+
 import cv2
 import gym
 import numpy as np
@@ -35,7 +37,7 @@ class AllActions1v1(gym.Env):
         self.player0: Engine.Player = self.game.add_player()
         self.player1: Engine.Player = self.game.add_player()
         
-        self.action_space = range(1,17) # 1-16, all actions, (see deep-rts/bindings/Constants.cpp)
+        self.action_space = list(range(Engine.Constants.ACTION_MIN, Engine.Constants.ACTION_MAX + 1))
         self.mode = mode
         self.game.start()
         self.observation_space = Box(low=0, high=255, shape=self.initial_shape, dtype=np.uint8)
@@ -44,27 +46,34 @@ class AllActions1v1(gym.Env):
         self.elapsed_steps += 1
         self.action = actionIndex
 
+
         self.player0.do_action(self.action_space[actionIndex])
-        self.player1.do_action(16) # do nothing
+
+        actionIndex2 = random.randint(0, len(self.action_space)-1)
+        self.player1.do_action(self.action_space[actionIndex2]) # do random moves
+
         self.game.update()
 
-        # reward
-        self.reward = 0 ## TODO
+        self.reward = 0
+        dmgReward = self.player0.statistic_damage_done # rewards exponentioally based on dmg done ehre 100 = max dmg
+        win = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat) # +1
+        loss = int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)/3 # +0.1
+        self.reward = dmgReward + win + loss   # 1 reward if win       
 
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
         return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
-
+    
     def render(self, q_values):
         """
             Return RGB image but this one will not be changed by wrappers
         """
         image = cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
-        dashboard = np.zeros(self.shape,dtype=np.uint8)
+        dashboard = np.zeros(self.initial_shape,dtype=np.uint8)
         dashboard.fill(255)
-
+        
 
         font = cv2.FONT_HERSHEY_SIMPLEX
-        org = (10, self.shape[1]-10)
+        org = (10, self.initial_shape[1]-10)
         fontScale = 0.5
         spacing = int(40 * fontScale)
         color = (0, 0, 0)
