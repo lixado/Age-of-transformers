@@ -22,6 +22,8 @@ FRAME_STACK = 3 # get latest x frames into model
 SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
 
+torch.set_float32_matmul_precision('high')
+
 if __name__ == "__main__":
     workingDir = os.getcwd()
     if not os.path.exists(os.path.join(workingDir, "src")):

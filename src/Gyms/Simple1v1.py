@@ -51,9 +51,9 @@ class Simple1v1Gym(gym.Env):
 
         # reward
         self.reward = 0
-        dmgReward = max(0, self.player0.statistic_damage_done - previousPlayer0.statistic_damage_done)/100 # rewards exponentioally based on dmg done ehre 100 = max dmg
+        dmgReward = max(0, self.player0.statistic_damage_done - previousPlayer0.statistic_damage_done)/10 # rewards exponentioally based on dmg done ehre 100 = max dmg
         win = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat) # +1
-        loss = int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)/10000 # +1/10000
+        loss = int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)/100 # +1/10000
         self.reward = dmgReward + win + loss   # 1 reward if win       
 
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper

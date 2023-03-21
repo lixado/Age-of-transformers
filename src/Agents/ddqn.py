@@ -14,22 +14,23 @@ class DDQN_Agent:
         self.action_space_dim = action_space_dim
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
+        self.net = torch.compile(DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device))
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.9999975
-        self.exploration_rate_min = 0.0001
+        self.exploration_rate_decay = 0.99999975
+        self.exploration_rate_min = 0.001
         self.curr_step = 0
 
         """
             Memory
         """
-        self.deque_size = 100000
+        self.deque_size = 50000
         arr = np.zeros(state_dim)
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 32
+        self.batch_size = 256
+        print(f"Need {((arr.size * arr.itemsize * 2 * self.batch_size)*(1e-9)):.2f} Gb VRAM")
         #self.save_every = 5e5  # no. of experiences between saving model
 
         """
@@ -37,10 +38,10 @@ class DDQN_Agent:
         """
         self.gamma = 0.9
         self.learning_rate = 0.00025
-        self.learning_rate_decay = 0.999995
+        self.learning_rate_decay = 0.999999975
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
-        #self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
+        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
         self.burnin = 1e5  # min. experiences before training
         assert( self.burnin >  self.batch_size)
@@ -146,7 +147,7 @@ class DDQN_Agent:
         loss.backward()
         self.optimizer.step()
 
-        #self.scheduler.step() # 
+        self.scheduler.step() # 
 
         return loss.item()
 
