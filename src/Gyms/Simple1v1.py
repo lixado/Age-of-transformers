@@ -10,6 +10,15 @@ from functions import PlayerState
 
 MAP = "10x10-2p-ffa-Eblil.json"
 
+def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
+    if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
+        return 100/ticks
+    if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
+        return -1
+    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
+        return 10/ticks
+    return 0
+
 class Simple1v1Gym(gym.Env):
     def __init__(self, mode, max_episode_steps):
         self.max_episode_steps = max_episode_steps
@@ -25,7 +34,7 @@ class Simple1v1Gym(gym.Env):
         """
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
-        engineConfig.set_auto_attack(False)
+        engineConfig.set_auto_attack(True)
         self.game: Engine.Game = Engine.Game(MAP, engineConfig)
         self.game.set_max_fps(0)  # 0 = unlimited
         # add 2 players
@@ -50,11 +59,7 @@ class Simple1v1Gym(gym.Env):
         self.game.update()
 
         # reward
-        self.reward = 0
-        dmgReward = max(0, self.player0.statistic_damage_done - previousPlayer0.statistic_damage_done)/10 # rewards exponentioally based on dmg done ehre 100 = max dmg
-        win = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat) # +1
-        loss = int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)/100 # +1/10000
-        self.reward = dmgReward + win + loss   # 1 reward if win       
+        self.reward = conditional_reward(self.player0, previousPlayer0, self.player1, self.elapsed_steps)
 
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
         return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
