@@ -14,8 +14,8 @@ class DDQN_Agent:
         self.action_space_dim = action_space_dim
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.net = torch.compile(DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device))
-
+        #self.net = torch.compile(DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device))
+        self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
         self.exploration_rate = 1
         self.exploration_rate_decay = 0.99999
         self.exploration_rate_min = 0.001
