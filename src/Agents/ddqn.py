@@ -24,7 +24,7 @@ class DDQN_Agent:
         """
             Memory
         """
-        self.deque_size = 100000
+        self.deque_size = 50000
         arr = np.zeros(state_dim)
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
