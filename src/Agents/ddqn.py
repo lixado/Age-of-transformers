@@ -17,7 +17,7 @@ class DDQN_Agent:
         self.net = torch.compile(DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device))
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.99999975
+        self.exploration_rate_decay = 0.9999975
         self.exploration_rate_min = 0.001
         self.curr_step = 0
 
@@ -37,13 +37,13 @@ class DDQN_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.00025
-        self.learning_rate_decay = 0.999999975
+        self.learning_rate = 0.0025
+        self.learning_rate_decay = 0.999975
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
-        self.burnin = 1e5  # min. experiences before training
+        self.burnin = 1e3  # min. experiences before training
         assert( self.burnin >  self.batch_size)
         self.learn_every = 3  # no. of experiences between updates to Q_online
         self.sync_every = 1e4  # no. of experiences between Q_target & Q_online sync
