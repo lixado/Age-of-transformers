@@ -15,6 +15,7 @@ class DDQN_Agent:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.net = torch.compile(DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device))
+
         self.exploration_rate = 1
         self.exploration_rate_decay = 0.999999
         self.exploration_rate_min = 0.001
@@ -23,12 +24,12 @@ class DDQN_Agent:
         """
             Memory
         """
-        self.deque_size = 10000
+        self.deque_size = 50000
         arr = np.zeros(state_dim)
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 64
+        self.batch_size = 256
         print(f"Need {((arr.size * arr.itemsize * 2 * self.batch_size)*(1e-9)):.2f} Gb VRAM")
         #self.save_every = 5e5  # no. of experiences between saving model
 
@@ -42,7 +43,7 @@ class DDQN_Agent:
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
-        self.burnin = 1e5  # min. experiences before training
+        self.burnin = 5e4  # min. experiences before training
         assert( self.burnin >  self.batch_size)
         self.learn_every = 3  # no. of experiences between updates to Q_online
         self.sync_every = 1e4  # no. of experiences between Q_target & Q_online sync
