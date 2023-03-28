@@ -37,11 +37,11 @@ class DDQN_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.0025
+        self.learning_rate = 0.025
         self.learning_rate_decay = 0.999975
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
-        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
+        #self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
         self.burnin = 5e4  # min. experiences before training
         assert( self.burnin >  self.batch_size)
@@ -147,7 +147,7 @@ class DDQN_Agent:
         loss.backward()
         self.optimizer.step()
 
-        self.scheduler.step() # 
+        #self.scheduler.step() #
 
         return loss.item()
 
@@ -212,6 +212,7 @@ class DDQN(nn.Module):
     
         self.online = nn.Sequential(
             resnet50(),
+            nn.ReLU(),
             nn.Linear(1000, output_dim)
         )
 
