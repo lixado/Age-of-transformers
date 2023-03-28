@@ -1,173 +1,173 @@
-import gym
+import os
+import torch.nn as nn
+import copy
+from collections import deque
+import random
 import numpy as np
 import torch
-from mujoco_py import GlfwContext
+from transformers import DecisionTransformerModel, DecisionTransformerConfig
 
-from transformers import DecisionTransformerModel
-
-
-GlfwContext(offscreen=True)  # Create a window to init GLFW.
+from functions import sample_with_order
 
 
-def get_action(model, states, actions, rewards, returns_to_go, timesteps):
-    # we don't care about the past rewards in this model
+class DecisionTransformer_Agent:
+    def __init__(self, state_dim, action_space_dim):
+        self.state_dim = state_dim
+        self.action_space_dim = action_space_dim
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    states = states.reshape(1, -1, model.config.state_dim)
-    actions = actions.reshape(1, -1, model.config.act_dim)
-    returns_to_go = returns_to_go.reshape(1, -1, 1)
-    timesteps = timesteps.reshape(1, -1)
+        self.state_dim_flatten = state_dim[0]*state_dim[1]*state_dim[2]
+        self.max_ep_length = 4096
+        config = DecisionTransformerConfig(self.state_dim_flatten, action_space_dim, max_ep_len=self.max_ep_length)
+        self.net = DecisionTransformerModel(config).to(device=self.device)
 
-    if model.config.max_length is not None:
-        states = states[:, -model.config.max_length :]
-        actions = actions[:, -model.config.max_length :]
-        returns_to_go = returns_to_go[:, -model.config.max_length :]
-        timesteps = timesteps[:, -model.config.max_length :]
+        self.exploration_rate = 1 # 1
+        self.exploration_rate_decay = 0.995
+        self.exploration_rate_min = 0.0001
+        self.curr_step = 0
 
-        # pad all tokens to sequence length
-        attention_mask = torch.cat(
-            [torch.zeros(model.config.max_length - states.shape[1]), torch.ones(states.shape[1])]
-        )
-        attention_mask = attention_mask.to(dtype=torch.long, device=states.device).reshape(1, -1)
-        states = torch.cat(
-            [
-                torch.zeros(
-                    (states.shape[0], model.config.max_length - states.shape[1], model.config.state_dim),
-                    device=states.device,
-                ),
-                states,
-            ],
-            dim=1,
-        ).to(dtype=torch.float32)
-        actions = torch.cat(
-            [
-                torch.zeros(
-                    (actions.shape[0], model.config.max_length - actions.shape[1], model.config.act_dim),
-                    device=actions.device,
-                ),
-                actions,
-            ],
-            dim=1,
-        ).to(dtype=torch.float32)
-        returns_to_go = torch.cat(
-            [
-                torch.zeros(
-                    (returns_to_go.shape[0], model.config.max_length - returns_to_go.shape[1], 1),
-                    device=returns_to_go.device,
-                ),
-                returns_to_go,
-            ],
-            dim=1,
-        ).to(dtype=torch.float32)
-        timesteps = torch.cat(
-            [
-                torch.zeros(
-                    (timesteps.shape[0], model.config.max_length - timesteps.shape[1]), device=timesteps.device
-                ),
-                timesteps,
-            ],
-            dim=1,
-        ).to(dtype=torch.long)
-    else:
-        attention_mask = None
+        """
+            Memory
+        """
+        self.deque_size = 4096
+        arr = np.zeros(state_dim)
+        totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # * 2 because 2 states are saved in line
+        print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
+        self.memory = deque(maxlen=self.deque_size)
+        self.batch_size = self.max_ep_length
+        #self.save_every = 5e5  # no. of experiences between saving model
 
-    _, action_preds, _ = model(
-        states=states,
-        actions=actions,
-        rewards=rewards,
-        returns_to_go=returns_to_go,
-        timesteps=timesteps,
-        attention_mask=attention_mask,
-        return_dict=False,
-    )
+        """
+            Q learning
+        """
+        self.gamma = 0.9
+        self.learning_rate = 0.0025
+        self.learning_rate_decay = 0.999985
 
-    return action_preds[0, -1]
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
+        #self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
+        self.loss_fn = torch.nn.SmoothL1Loss()
+        self.burnin = 1e3  # min. experiences before training
+        assert( self.burnin >  self.batch_size)
+        self.learn_every = 1  # no. of experiences between updates to Q_online
+        self.sync_every = 1e6  # no. of experiences between Q_target & Q_online sync
+
+    def act(self, state):
+        """
+            Given a state, choose an epsilon-greedy action and update value of step.
+            Inputs:
+            state(LazyFrame): A single observation of the current state, dimension is (state_dim)
+            Outputs:
+            action_idx (int): An integer representing which action Mario will perform
+        """
+        pred_arr = [None for _ in range(self.action_space_dim)]
+        if (random.random() < self.exploration_rate): # EXPLORE
+            actionIdx = random.randint(0, self.action_space_dim-1)
+        else: # EXPLOIT
+            with torch.no_grad():
+                state = np.array(state)
+                #state = state.unsqueeze(0) # create extra dim for batch
+
+                # need to save previous states and actions to send here
+                # search in memory up to self.max_ep_length for previous stuff and send in here
+
+                target_return = torch.tensor(1, device=self.device, dtype=torch.float32).reshape(1, 1)
+                states = torch.tensor(state, device=self.device, dtype=torch.float32).reshape(1, 1, self.state_dim_flatten) # prev states
+                actions = torch.rand((1, self.action_space_dim), device=self.device, dtype=torch.float32) # prev q values
+                rewards = torch.rand((1, 1), device=self.device, dtype=torch.float32) # prev rewards
+                timesteps = torch.tensor(0, device=self.device, dtype=torch.long).reshape(1, 1) # 
+                attention_mask = None#torch.zeros(1, 1, device=self.device, dtype=torch.float32) #
+
+                state_preds, action_preds, return_preds = self.net(states=states,
+                    actions=actions,
+                    rewards=rewards,
+                    returns_to_go=target_return,
+                    timesteps=timesteps,
+                    attention_mask=attention_mask,
+                    return_dict=False)
+
+                actionIdx = torch.argmax(action_preds).item()
+                pred_arr = torch.squeeze(action_preds).detach().cpu().numpy()
+
+        # decrease exploration_rate
+        self.exploration_rate *= self.exploration_rate_decay
+        self.exploration_rate = max(self.exploration_rate_min, self.exploration_rate)
+
+        # increment step
+        self.curr_step += 1
+
+        return actionIdx, pred_arr
+
+    def cache(self, state, next_state, action, reward, done, t):
+        """
+        Store the experience to self.memory (replay buffer)
+        Inputs:
+        state (LazyFrame),
+        next_state (LazyFrame),
+        action (int),
+        reward (float),
+        done(bool))
+        """
+        # not make to np array ans use lazyframes
+        state = np.array(state)
+        next_state = np.array(next_state)
+        state = torch.tensor(state).float()#.to(device=self.device)
+        next_state = torch.tensor(next_state).float()#.to(device=self.device)
+
+        action = torch.tensor([action])#.to(device=self.device)
+        reward = torch.tensor([reward])#.to(device=self.device)
+        done = torch.tensor([done])#.to(device=self.device)
+        t = torch.tensor([t])
+
+        try:
+            self.memory.append((state, next_state, action, reward, done, t))
+        except:
+            print("Need more memory or decrease Deque size in agent.")
+            quit()
 
 
-# build the environment
+    def recall(self):
+        """
+        Retrieve a batch of experiences from memory
+        """
+        batch = sample_with_order(self.memory, self.batch_size)
+        state, next_state, action, reward, done, t = map(torch.stack, zip(*batch))
 
-env = gym.make("Hopper-v3")
-state_dim = env.observation_space.shape[0]
-act_dim = env.action_space.shape[0]
-max_ep_len = 1000
-device = "cuda"
-scale = 1000.0  # normalization for rewards/returns
-TARGET_RETURN = 3600 / scale  # evaluation conditioning targets, 3600 is reasonable from the paper LINK
-state_mean = np.array(
-    [
-        1.311279,
-        -0.08469521,
-        -0.5382719,
-        -0.07201576,
-        0.04932366,
-        2.1066856,
-        -0.15017354,
-        0.00878345,
-        -0.2848186,
-        -0.18540096,
-        -0.28461286,
-    ]
-)
-state_std = np.array(
-    [
-        0.17790751,
-        0.05444621,
-        0.21297139,
-        0.14530419,
-        0.6124444,
-        0.85174465,
-        1.4515252,
-        0.6751696,
-        1.536239,
-        1.6160746,
-        5.6072536,
-    ]
-)
-state_mean = torch.from_numpy(state_mean).to(device=device)
-state_std = torch.from_numpy(state_std).to(device=device)
+        return state, next_state, action.squeeze(), reward.squeeze(), done.squeeze(), t.squeeze()
 
-# Create the decision transformer model
-model = DecisionTransformerModel.from_pretrained("edbeeching/decision-transformer-gym-hopper-medium")
-model = model.to(device)
-model.eval()
+    def learn(self, save_dir):
+        """Update online action value (Q) function with a batch of experiences"""
+        if self.curr_step % self.sync_every == 0:
+            self.sync_Q_target()
 
-for ep in range(10):
-    episode_return, episode_length = 0, 0
-    state = env.reset()
-    target_return = torch.tensor(TARGET_RETURN, device=device, dtype=torch.float32).reshape(1, 1)
-    states = torch.from_numpy(state).reshape(1, state_dim).to(device=device, dtype=torch.float32)
-    actions = torch.zeros((0, act_dim), device=device, dtype=torch.float32)
-    rewards = torch.zeros(0, device=device, dtype=torch.float32)
+        if self.curr_step < self.burnin:
+            return 0, 0 # None, None
 
-    timesteps = torch.tensor(0, device=device, dtype=torch.long).reshape(1, 1)
-    for t in range(max_ep_len):
-        env.render()
-        # add padding
-        actions = torch.cat([actions, torch.zeros((1, act_dim), device=device)], dim=0)
-        rewards = torch.cat([rewards, torch.zeros(1, device=device)])
+        if self.curr_step % self.learn_every != 0:
+            return 0, 0 # None, None
 
-        action = get_action(
-            model,
-            (states.to(dtype=torch.float32) - state_mean) / state_std,
-            actions.to(dtype=torch.float32),
-            rewards.to(dtype=torch.float32),
-            target_return.to(dtype=torch.float32),
-            timesteps.to(dtype=torch.long),
-        )
-        actions[-1] = action
-        action = action.detach().cpu().numpy()
+        # Sample from memory get self.batch_size number of memories
+        state, next_state, action, reward, done = self.recall()
 
-        state, reward, done, _ = env.step(action)
+        # move everything to gpu here to use less gpu memory but slower training
+        state, next_state, action, reward, done, t = state.to(device=self.device), next_state.to(device=self.device), action.to(device=self.device), reward.to(device=self.device), done.to(device=self.device), t.to(device=self.device)
 
-        cur_state = torch.from_numpy(state).to(device=device).reshape(1, state_dim)
-        states = torch.cat([states, cur_state], dim=0)
-        rewards[-1] = reward
 
-        pred_return = target_return[0, -1] - (reward / scale)
-        target_return = torch.cat([target_return, pred_return.reshape(1, 1)], dim=1)
-        timesteps = torch.cat([timesteps, torch.ones((1, 1), device=device, dtype=torch.long) * (t + 1)], dim=1)
+        # må rydde dette sån at target return er fasit?
+        target_return = torch.tensor(1, device=self.device, dtype=torch.float32).reshape(self.batch_size, 1)
+        states = torch.tensor(state, device=self.device, dtype=torch.float32).reshape(1, 1, self.state_dim_flatten) # prev states
+        actions = torch.rand((1, self.action_space_dim), device=self.device, dtype=torch.float32) # prev q values
+        rewards = torch.rand((1, 1), device=self.device, dtype=torch.float32) # prev rewards
+        timesteps = torch.tensor(0, device=self.device, dtype=torch.long).reshape(1, 1) # 
+        attention_mask = None#torch.zeros(1, 1, device=self.device, dtype=torch.float32) #
 
-        episode_return += reward
-        episode_length += 1
+        state_preds, action_preds, return_preds = self.net(states=states,
+            actions=actions,
+            rewards=rewards,
+            returns_to_go=target_return,
+            timesteps=timesteps,
+            attention_mask=attention_mask,
+            return_dict=False)
 
-        if done:
-            break
+
+        #return (td_est.mean().item(), loss)
