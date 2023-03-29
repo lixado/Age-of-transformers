@@ -20,7 +20,6 @@ class DecisionTransformer_Agent:
 
         self.max_ep_length = max_steps # maximum number that can exists in timesteps
         self.n_positions = 1024 # The maximum sequence length that this model might ever be used with. Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
-        #assert max_steps * 3 < self.n_positions
         
         
         print("Max steps: ", self.max_ep_length)
@@ -72,7 +71,6 @@ class DecisionTransformer_Agent:
         else: # EXPLOIT
             with torch.no_grad():
                 sequence_length = len(states) # frame stack/action stack
-
 
                 #target_return = torch.tensor(1, device=self.device, dtype=torch.float32).unsqueeze(0) # create extra dim for batch
                 states = torch.tensor(np.array(states), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.state_dim_flatten) # prev states
