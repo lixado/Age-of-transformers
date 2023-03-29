@@ -12,8 +12,8 @@ MAP = "10x10-2p-ffa-Eblil.json"
 def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
     if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
         return 10000/ticks
-    if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
-        return 0 #-0.001*ticks
+    #if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
+        #return -0.001*ticks
     if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
         return 1000/ticks
     return 0
@@ -101,8 +101,7 @@ class Simple1v1Gym(gym.Env):
 
 
     def _get_obs(self):
-        stateResized = np.ndarray.flatten(self.game.state)
-        stateResized = np.resize(stateResized, (1024, 1024))
+        stateResized = np.resize(np.ndarray.flatten(self.game.state), (1024, 1024))
         return stateResized
         #return cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
 
