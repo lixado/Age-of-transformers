@@ -4,7 +4,6 @@ import numpy as np
 from constants import inv_action_space
 from DeepRTS import Engine, Constants
 from gym.spaces import Box
-
 from functions import PlayerState
 
 
@@ -14,7 +13,7 @@ def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
     if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
         return 10000/ticks
     if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
-        return -0.001*ticks
+        return 0 #-0.001*ticks
     if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
         return 1000/ticks
     return 0
@@ -40,7 +39,7 @@ class Simple1v1Gym(gym.Env):
         # add 2 players
         self.player0: Engine.Player = self.game.add_player()
         self.player1: Engine.Player = self.game.add_player()
-        
+
         self.action_space = [3, 4, 5, 6, 11, 16] # move and attack simple
         # max actions = list(range(Engine.Constants.ACTION_MIN, Engine.Constants.ACTION_MAX + 1))
         self.mode = mode
@@ -72,7 +71,7 @@ class Simple1v1Gym(gym.Env):
         image = cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
         dashboard = np.zeros(self.initial_shape,dtype=np.uint8)
         dashboard.fill(255)
-        
+
 
         font = cv2.FONT_HERSHEY_SIMPLEX
         org = (10, self.initial_shape[1]-10)
@@ -93,16 +92,19 @@ class Simple1v1Gym(gym.Env):
                  f"Reward: {self.reward}",
                  f"Action: {inv_action_space[self.action_space[self.action]]}"]
 
-        for text in texts[::-1]:        
+        for text in texts[::-1]:
             dashboard = cv2.putText(dashboard, text, org, font, fontScale, color, thickness, cv2.LINE_AA, False)
             org = (org[0], org[1] - spacing)
 
         image = cv2.hconcat([dashboard, image])
         return image
-    
+
 
     def _get_obs(self):
-        return cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
+        stateResized = np.ndarray.flatten(self.game.state)
+        stateResized = np.resize(stateResized, (1024, 1024))
+        return stateResized
+        #return cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
 
 
     def _get_info(self):
