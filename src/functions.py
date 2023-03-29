@@ -85,3 +85,11 @@ def NotifyDiscord(message):
     }
     url = "https://discord.com/api/webhooks/1076092503238922290/Rtdbr-HBf7O2mzAUwz95xW8Qjrgp12bloT0ygA6qICtoA9uwozY4X4DzYEMGPJLKUE91"
     result = requests.post(url, json=data)
+
+def sample_with_order(population, max_sequence_length):
+    """
+        Samples [1,population] elements from a sequence mantaining the order
+    """
+    k = random.randint(1, max_sequence_length)
+    k_start = random.randint(0, len(population)-k)
+    return population[k_start: k_start+k]

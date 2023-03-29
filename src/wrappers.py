@@ -1,4 +1,9 @@
+from collections import deque
 import gym
+from gym.wrappers.frame_stack import LazyFrames
+from gym.spaces import Box
+import numpy as np
+
 
 class RepeatFrame(gym.Wrapper):
     def __init__(self, env, skip):

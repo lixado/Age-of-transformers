@@ -11,14 +11,20 @@ from functions import sample_with_order
 
 
 class DecisionTransformer_Agent:
-    def __init__(self, state_dim, action_space_dim):
+    def __init__(self, state_dim, action_space_dim, device, max_steps):
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
 
         self.state_dim_flatten = state_dim[0]*state_dim[1]*state_dim[2]
-        self.max_ep_length = 4096
-        config = DecisionTransformerConfig(self.state_dim_flatten, action_space_dim, max_ep_len=self.max_ep_length)
+
+        self.max_ep_length = max_steps # maximum number that can exists in timesteps
+        self.n_positions = 1024 # The maximum sequence length that this model might ever be used with. Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
+        #assert max_steps * 3 < self.n_positions
+        
+        
+        print("Max steps: ", self.max_ep_length)
+        config = DecisionTransformerConfig(self.state_dim_flatten, action_space_dim, max_ep_len=self.max_ep_length, n_positions=self.n_positions)
         self.net = DecisionTransformerModel(config).to(device=self.device)
 
         self.exploration_rate = 1 # 1
@@ -34,7 +40,7 @@ class DecisionTransformer_Agent:
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # * 2 because 2 states are saved in line
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = self.max_ep_length
+        self.batch_size = 64
         #self.save_every = 5e5  # no. of experiences between saving model
 
         """
@@ -52,7 +58,7 @@ class DecisionTransformer_Agent:
         self.learn_every = 1  # no. of experiences between updates to Q_online
         self.sync_every = 1e6  # no. of experiences between Q_target & Q_online sync
 
-    def act(self, state):
+    def act(self, states, actions, timesteps, rewards):
         """
             Given a state, choose an epsilon-greedy action and update value of step.
             Inputs:
@@ -65,29 +71,30 @@ class DecisionTransformer_Agent:
             actionIdx = random.randint(0, self.action_space_dim-1)
         else: # EXPLOIT
             with torch.no_grad():
-                state = np.array(state)
-                #state = state.unsqueeze(0) # create extra dim for batch
+                sequence_length = len(states) # frame stack/action stack
 
-                # need to save previous states and actions to send here
-                # search in memory up to self.max_ep_length for previous stuff and send in here
 
-                target_return = torch.tensor(1, device=self.device, dtype=torch.float32).reshape(1, 1)
-                states = torch.tensor(state, device=self.device, dtype=torch.float32).reshape(1, 1, self.state_dim_flatten) # prev states
-                actions = torch.rand((1, self.action_space_dim), device=self.device, dtype=torch.float32) # prev q values
-                rewards = torch.rand((1, 1), device=self.device, dtype=torch.float32) # prev rewards
-                timesteps = torch.tensor(0, device=self.device, dtype=torch.long).reshape(1, 1) # 
-                attention_mask = None#torch.zeros(1, 1, device=self.device, dtype=torch.float32) #
+                #target_return = torch.tensor(1, device=self.device, dtype=torch.float32).unsqueeze(0) # create extra dim for batch
+                states = torch.tensor(np.array(states), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.state_dim_flatten) # prev states
+                actions = torch.tensor(np.array(actions), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.action_space_dim) # create extra dim for batch
+                rewards = torch.tensor(rewards, device=self.device, dtype=torch.float32).reshape(1, sequence_length, 1) # create extra dim for batch # not sure what the other is
+                timesteps = torch.tensor(timesteps, device=self.device, dtype=torch.long).reshape(1, sequence_length) # create extra dim for batch
+                attention_mask = torch.ones((1, sequence_length), device=self.device, dtype=torch.float32) # if None default is full attention for all nodes (b, t)
+
 
                 state_preds, action_preds, return_preds = self.net(states=states,
                     actions=actions,
-                    rewards=rewards,
-                    returns_to_go=target_return,
+                    rewards=None, #not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
+                    returns_to_go=rewards,
                     timesteps=timesteps,
                     attention_mask=attention_mask,
                     return_dict=False)
 
-                actionIdx = torch.argmax(action_preds).item()
-                pred_arr = torch.squeeze(action_preds).detach().cpu().numpy()
+                # remove batch dim  
+                state_preds, action_preds, return_preds = torch.squeeze(state_preds, 0), torch.squeeze(action_preds, 0), torch.squeeze(return_preds, 0)
+
+                actionIdx = torch.argmax(action_preds[-1]).item()
+                pred_arr = torch.squeeze(action_preds[-1]).detach().cpu().numpy()
 
         # decrease exploration_rate
         self.exploration_rate *= self.exploration_rate_decay

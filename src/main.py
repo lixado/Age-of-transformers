@@ -9,7 +9,7 @@ from Gyms.Simple1v1 import Simple1v1Gym
 from logger import Logger
 from functions import GetConfigDict
 from constants import inv_action_space
-from Agents.ddqn import DDQN_Agent
+from Agents.decisition_transformer import DecisionTransformer_Agent
 from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, GrayScaleObservation
 from train import train
 from eval import evaluate
@@ -69,8 +69,8 @@ if __name__ == "__main__":
         Start agent
     """
     state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
-    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space))
-    agent.device = device
+    agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=int(config["stepsMax"]/(SKIP_FRAME+1)))
+
 
     """
         Training loop
