@@ -4,7 +4,7 @@ import torch.utils.data
 from Agents.ddqn import DDQN_Agent
 from logger import Logger
 from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
-from src.data import AllActions1v1Dataset
+from data import AllActions1v1Dataset
 
 
 def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):

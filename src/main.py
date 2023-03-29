@@ -14,7 +14,7 @@ from train import train
 from eval import evaluate
 from playground import playground
 from simulate import simulate
-import src.train_transformer
+import train_transformer
 
 from wrappers import SkipFrame, RepeatFrame
 
@@ -27,7 +27,6 @@ if __name__ == "__main__":
     workingDir = os.getcwd()
     if not os.path.exists(os.path.join(workingDir, "src")):
         sys.exit(f'Working directory: {workingDir} not correct, should be "Age-of-transformers/" not "{os.path.basename(os.path.normpath(workingDir))}"')
-
     config = GetConfigDict(workingDir)
     print("Config: ", config)
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -78,7 +77,7 @@ if __name__ == "__main__":
     if mode == 0:
         logger = Logger(workingDir)
         #train(config, agent, gym, logger)
-        src.train_transformer.train(config, agent, gym, logger, workingDir)
+        train_transformer.train(config, agent, gym, logger, workingDir)
     elif mode == 1:
         # get latest model path
         results = os.path.join(workingDir, "results")

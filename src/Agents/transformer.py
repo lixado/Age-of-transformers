@@ -2,6 +2,7 @@ import torch.nn as nn
 import numpy as np
 import torch
 import math
+from transformers import DecisionTransformerModel, DecisionTransformerConfig
 
 class AddAndNorm(nn.Module):
     def __init__(self):
@@ -129,3 +130,10 @@ class Decoder(nn.Module):
 class Transformer(nn.Module):
     def __init__(self, n_layers):
         super().__init__()
+
+class TransformerAgent():
+    def __init__(self, state_dim_flatten, act_dim, max_ep_len=4096):
+     config = DecisionTransformerConfig(state_dim_flatten, act_dim, max_ep_len=max_ep_len)
+     self.model = DecisionTransformerModel(config)
+
+
