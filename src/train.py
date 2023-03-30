@@ -25,30 +25,15 @@ def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: 
         done = False
         truncated = False
         
-        # save sequences
-        length = int(agent.n_positions/3)
-        states_sequence = deque(maxlen=length)
-        actions_sequence = deque(maxlen=length)
-        timesteps_sequence = deque(maxlen=length)
-        rewards_sequence = deque(maxlen=length)
         actionIndex = -1 # first acction is default Do nothing
         reward = 0
-
 
         while not done and not truncated:
             ticks += 1
 
-            # Save sequence
-            states_sequence.append(observation)
-            # save action tensor as [0,0,1,0,0,0] depending on which action
-            actionTensor = np.zeros(agent.action_space_dim)
-            actionTensor[actionIndex] = 1
-            actions_sequence.append(actionTensor)
-            timesteps_sequence.append(ticks)
-            rewards_sequence.append(reward)
 
             # AI choose action
-            actionIndex, q_values = agent.act(states_sequence, actions_sequence, timesteps_sequence, rewards_sequence)
+            actionIndex, q_values = agent.act(observation, actionIndex, ticks, reward)
             
             # Act
             next_observation, reward, done, truncated, info = gym.step(actionIndex)
@@ -63,6 +48,8 @@ def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: 
 
             # Learn
             #q, loss = agent.learn()
+
+            s, a, r, t = agent.recall()
             
             # Logging
             #logger.log_step(reward, loss, q)

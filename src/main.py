@@ -22,7 +22,7 @@ FRAME_STACK = 3 # get latest x frames into model
 SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
 
-torch.set_float32_matmul_precision('high')
+#torch.set_float32_matmul_precision('high')
 
 if __name__ == "__main__":
     workingDir = os.getcwd()
@@ -63,13 +63,13 @@ if __name__ == "__main__":
     gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
     gym = GrayScaleObservation(gym)
     gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
-    gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
+    gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=True)
 
     """
         Start agent
     """
     state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
-    agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=int(config["stepsMax"]/(SKIP_FRAME+1)))
+    agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=(SKIP_FRAME+1) + int(config["stepsMax"]/(SKIP_FRAME+1)))
 
 
     """
