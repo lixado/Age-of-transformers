@@ -60,8 +60,8 @@ if __name__ == "__main__":
         gym = SkipFrame(gym, SKIP_FRAME)
     if REPEAT_FRAME != 0:
         gym = RepeatFrame(gym, REPEAT_FRAME)
-    #gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
-    #gym = GrayScaleObservation(gym)
+    gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
+    gym = GrayScaleObservation(gym)
     gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
     gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 

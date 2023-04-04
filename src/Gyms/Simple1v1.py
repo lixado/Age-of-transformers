@@ -101,9 +101,7 @@ class Simple1v1Gym(gym.Env):
 
 
     def _get_obs(self):
-        stateResized = np.resize(np.ndarray.flatten(self.game.state), (32, 32))
-        return stateResized
-        #return cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
+        return cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
 
 
     def _get_info(self):
