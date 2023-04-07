@@ -1,6 +1,6 @@
 {
-    "epochs": 1000,
-    "stepsMax": 10000,
+    "epochs": 20000,
+    "stepsMax": 500,
     "recordEvery": 100,
     "mode": 0
 }

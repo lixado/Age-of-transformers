@@ -6,6 +6,7 @@ import random
 import numpy as np
 import torch
 from torchvision.models import resnet50
+import torch._dynamo.config
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
 class DDQN_Agent:
@@ -14,13 +15,12 @@ class DDQN_Agent:
         self.action_space_dim = action_space_dim
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.net = torch.compile(DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device))
+        self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
 
         self.exploration_rate = 1
         self.exploration_rate_decay = 0.99999
         self.exploration_rate_min = 0.001
         self.curr_step = 0
-
         """
             Memory
         """
