@@ -37,7 +37,7 @@ class DDQN_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.025
+        self.learning_rate = 0.25
         self.learning_rate_decay = 0.999975
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
