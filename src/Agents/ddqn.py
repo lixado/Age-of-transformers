@@ -209,11 +209,18 @@ class DDQN(nn.Module):
     def __init__(self, input_dim, output_dim):
         super().__init__()
         c, h, w = input_dim
-    
+
         self.online = nn.Sequential(
-            resnet50(),
+            nn.Conv2d(in_channels=c, out_channels=16, kernel_size=4, stride=2),
             nn.ReLU(),
-            nn.Linear(1000, output_dim)
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=2, stride=2),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(1568, 512),
+            nn.ReLU(),
+            nn.Linear(512, output_dim)
         )
 
         self.target = copy.deepcopy(self.online)
@@ -223,6 +230,7 @@ class DDQN(nn.Module):
            p.requires_grad = False
 
     def forward(self, input, model):
+        print(input.size())
         if model == "online":
             return self.online(input)
         elif model == "target":
