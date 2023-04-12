@@ -65,7 +65,7 @@ class DDQN_Agent:
             state = state.unsqueeze(0) # create extra dim for batch
 
             neuralNetOutput = self.net(state, model="online")
-            actionIdx = torch.argmax(neuralNetOutput, axis=1).item()
+            actionIdx = torch.argmax(neuralNetOutput).item()
             pred_arr = neuralNetOutput[0].detach().cpu().numpy()
 
         # decrease exploration_rate
@@ -208,19 +208,13 @@ class DDQN_Agent:
 class DDQN(nn.Module):
     def __init__(self, input_dim, output_dim):
         super().__init__()
-        c, h, w = input_dim
 
         self.online = nn.Sequential(
-            nn.Conv2d(in_channels=c, out_channels=16, kernel_size=4, stride=2),
+            nn.Linear(input_dim, 512),
             nn.ReLU(),
-            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2),
+            nn.Linear(512, 128),
             nn.ReLU(),
-            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=2, stride=2),
-            nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(1568, 512),
-            nn.ReLU(),
-            nn.Linear(512, output_dim)
+            nn.Linear(128, output_dim)
         )
 
         self.target = copy.deepcopy(self.online)

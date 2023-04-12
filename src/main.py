@@ -14,6 +14,7 @@ from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, Gr
 from train import train
 from eval import evaluate
 from playground import playground
+import gym as g
 
 from wrappers import SkipFrame, RepeatFrame
 
@@ -52,24 +53,25 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = Simple1v1Gym(0, config["stepsMax"])
-    print("Action space: ", [inv_action_space[i] for i in gym.action_space])
+    #gym = Simple1v1Gym(0, config["stepsMax"])
+    gym = g.make("Taxi-v3", render_mode="rgb_array")
+    #print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
-    if SKIP_FRAME != 0:
-        gym = SkipFrame(gym, SKIP_FRAME)
-    if REPEAT_FRAME != 0:
-        gym = RepeatFrame(gym, REPEAT_FRAME)
-    gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
-    gym = GrayScaleObservation(gym)
-    gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
-    gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
+    #if SKIP_FRAME != 0:
+    #    gym = SkipFrame(gym, SKIP_FRAME)
+    #if REPEAT_FRAME != 0:
+    #    gym = RepeatFrame(gym, REPEAT_FRAME)
+    #gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
+    #gym = GrayScaleObservation(gym)
+    #gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
+    #gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
     """
         Start agent
     """
     state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
-    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space))
+    agent = DDQN_Agent(state_dim=1, action_space_dim=gym.action_space.n)
     agent.device = device
 
     """

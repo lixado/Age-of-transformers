@@ -10,7 +10,6 @@ def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
     agent.net.train()
     save_dir = logger.getSaveFolderPath()
     agent.saveHyperParameters(save_dir)
-
     record_epochs = config["recordEvery"] # record game every x epochs
     epochs = config["epochs"]
     for e in range(epochs):
@@ -32,7 +31,7 @@ def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
 
             # Record game
             if record:
-                SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values), ticks)
+                SaveTempImage(logger.getSaveFolderPath(), gym.render(), ticks)
 
             # use this to see image example
             #cv2.imshow('image', next_observation[0])
