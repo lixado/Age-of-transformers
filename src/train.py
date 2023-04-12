@@ -47,17 +47,17 @@ def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: 
             #agent.cache(observation, next_observation, actionIndex, reward, (done or truncated))
 
             # Learn
-            #q, loss = agent.learn()
+            loss, q = agent.learn()
 
-            s, a, r, t = agent.recall()
+            
             
             # Logging
-            #logger.log_step(reward, loss, q)
+            logger.log_step(reward, loss, q)
 
             # Update state
             observation = next_observation
 
-        #logger.log_epoch(e, agent.exploration_rate, agent.optimizer.param_groups[0]["lr"])
+        logger.log_epoch(e, agent.exploration_rate, agent.optimizer.param_groups[0]["lr"])
 
         # Record game
         if record:

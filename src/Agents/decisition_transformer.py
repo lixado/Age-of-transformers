@@ -136,6 +136,7 @@ class DecisionTransformer_Agent:
         currentSize = len(self.states_sequence)
         # sample random sequences between (1, self.max_sequence_length)
         k = random.randint(1, currentSize)
+        assert k < self.max_sequence_length # must be less then this
         for _ in range(self.batch_size):
             k_start = random.randint(0, currentSize-k)
 
@@ -144,20 +145,51 @@ class DecisionTransformer_Agent:
             rewardBatch.append(list(itertools.islice(self.rewards_sequence, k_start, k_start+k)))
             timestepsBatch.append(list(itertools.islice(self.timesteps_sequence, k_start, k_start+k)))
 
-        stateBatch = torch.tensor(np.array(stateBatch), device=self.device, dtype=torch.float32)
+        seq_length = len(stateBatch[0])
+        stateBatch = torch.tensor(np.array(stateBatch), device=self.device, dtype=torch.float32).reshape(self.batch_size, seq_length, self.state_dim_flatten)
         actionBatch = torch.tensor(np.array(actionBatch), device=self.device, dtype=torch.float32)
-        rewardBatch = torch.tensor(rewardBatch, device=self.device, dtype=torch.float32)
+        rewardBatch = torch.tensor(rewardBatch, device=self.device, dtype=torch.float32).reshape(self.batch_size, seq_length, 1)
         timestepsBatch = torch.tensor(timestepsBatch, device=self.device, dtype=torch.long)
 
         return stateBatch, actionBatch, rewardBatch, timestepsBatch
 
     def learn(self):
         """Update online action value (Q) function with a batch of experiences"""
-        if self.curr_step < self.burnin:
-            return 0, 0 # None, None
+        #if self.curr_step < self.burnin:
+        #    return 0, 0 # None, None
 
-        if self.curr_step % self.learn_every != 0:
-            return 0, 0 # None, None
+        #if self.curr_step % self.learn_every != 0:
+        #    return 0, 0 # None, None
+        
+        # [batchSize, sequenceSize, state_dim]
+        totalLoss = 0
+        for _ in range(10):
+            s, a, r, t = self.recall()
+
+            attention_mask = torch.ones((s.shape[0], s.shape[1]), device=self.device, dtype=torch.float32)
+
+
+            state_preds, action_preds, return_preds = self.net(states=s,
+                    actions=a,
+                    rewards=None, #not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
+                    returns_to_go=r,
+                    timesteps=t,
+                    attention_mask=attention_mask,
+                    return_dict=False)
+            
+            loss = self.loss_fn(action_preds, a)
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            totalLoss += loss.item()
+        
+
+        return totalLoss, 0
+
+
+
+
         
 
 
