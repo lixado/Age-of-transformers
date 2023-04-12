@@ -5,6 +5,7 @@ from constants import inv_action_space
 from DeepRTS import Engine, Constants
 from gym.spaces import Box
 from functions import PlayerState
+from DeepRTS.Engine import Unit
 
 
 MAP = "10x10-2p-ffa-Eblil.json"
@@ -101,7 +102,16 @@ class Simple1v1Gym(gym.Env):
 
 
     def _get_obs(self):
-        return cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
+        if self.game.is_terminal():
+            return 0
+
+        player = self.game.units[0]
+        x = player.tile.x
+        y = player.tile.y
+        width = self.game.map.map_width
+
+        state = x + width * y
+        return state
 
 
     def _get_info(self):

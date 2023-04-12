@@ -24,7 +24,7 @@ class DDQN_Agent:
         """
             Memory
         """
-        self.deque_size = 50000
+        self.deque_size = 500000
         arr = np.zeros(state_dim)
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
@@ -37,7 +37,7 @@ class DDQN_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.0000025
+        self.learning_rate = 0.0025
         self.learning_rate_decay = 0.999975
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
@@ -60,13 +60,14 @@ class DDQN_Agent:
         if (random.random() < self.exploration_rate): # EXPLORE
             actionIdx = random.randint(0, self.action_space_dim-1)
         else: # EXPLOIT
-            state = np.array(state)
-            state = torch.tensor(state).float().to(device=self.device)
-            state = state.unsqueeze(0) # create extra dim for batch
+            with torch.no_grad():
+                #state = np.array(state)
+                state = torch.tensor([state]).to(device=self.device)
+                #state = state.unsqueeze(0) # create extra dim for batch
 
-            neuralNetOutput = self.net(state, model="online")
-            actionIdx = torch.argmax(neuralNetOutput, axis=1).item()
-            pred_arr = neuralNetOutput[0].detach().cpu().numpy()
+                neuralNetOutput = self.net(state, model="online")
+                actionIdx = torch.argmax(neuralNetOutput).item()
+                pred_arr = neuralNetOutput[0].detach().cpu().numpy()
 
         # decrease exploration_rate
         self.exploration_rate *= self.exploration_rate_decay
@@ -90,8 +91,8 @@ class DDQN_Agent:
         # not make to np array ans use lazyframes
         state = np.array(state)
         next_state = np.array(next_state)
-        state = torch.tensor(state).float()#.to(device=self.device)
-        next_state = torch.tensor(next_state).float()#.to(device=self.device)
+        state = torch.tensor(state)#.to(device=self.device)
+        next_state = torch.tensor(next_state)#.to(device=self.device)
 
         action = torch.tensor([action])#.to(device=self.device)
         reward = torch.tensor([reward])#.to(device=self.device)
@@ -211,16 +212,12 @@ class DDQN(nn.Module):
         c, h, w = input_dim
 
         self.online = nn.Sequential(
-            nn.Conv2d(in_channels=c, out_channels=16, kernel_size=4, stride=2),
+            nn.Embedding(500, 4),
+            nn.Linear(4, 128),
             nn.ReLU(),
-            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=2, stride=2),
-            nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(1568, 512),
-            nn.ReLU(),
-            nn.Linear(512, output_dim)
+            nn.Linear(128, output_dim)
         )
 
         self.target = copy.deepcopy(self.online)
