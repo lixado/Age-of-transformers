@@ -60,13 +60,14 @@ class DDQN_Agent:
         if (random.random() < self.exploration_rate): # EXPLORE
             actionIdx = random.randint(0, self.action_space_dim-1)
         else: # EXPLOIT
-            state = np.array(state)
-            state = torch.tensor(state).float().to(device=self.device)
-            state = state.unsqueeze(0) # create extra dim for batch
+            with torch.no_grad():
+                #state = np.array(state)
+                state = torch.tensor([state]).to(device=self.device)
+                #state = state.unsqueeze(0) # create extra dim for batch
 
-            neuralNetOutput = self.net(state, model="online")
-            actionIdx = torch.argmax(neuralNetOutput).item()
-            pred_arr = neuralNetOutput[0].detach().cpu().numpy()
+                neuralNetOutput = self.net(state, model="online")
+                actionIdx = torch.argmax(neuralNetOutput).item()
+                pred_arr = neuralNetOutput[0].detach().cpu().numpy()
 
         # decrease exploration_rate
         self.exploration_rate *= self.exploration_rate_decay
@@ -90,8 +91,8 @@ class DDQN_Agent:
         # not make to np array ans use lazyframes
         state = np.array(state)
         next_state = np.array(next_state)
-        state = torch.tensor(state).float()#.to(device=self.device)
-        next_state = torch.tensor(next_state).float()#.to(device=self.device)
+        state = torch.tensor(state)#.to(device=self.device)
+        next_state = torch.tensor(next_state)#.to(device=self.device)
 
         action = torch.tensor([action])#.to(device=self.device)
         reward = torch.tensor([reward])#.to(device=self.device)
@@ -210,9 +211,10 @@ class DDQN(nn.Module):
         super().__init__()
 
         self.online = nn.Sequential(
-            nn.Linear(input_dim, 512),
+            nn.Embedding(500, 4),
+            nn.Linear(4, 128),
             nn.ReLU(),
-            nn.Linear(512, 128),
+            nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, output_dim)
         )
