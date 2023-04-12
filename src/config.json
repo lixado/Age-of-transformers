@@ -1,13 +1,6 @@
 {
-<<<<<<< HEAD
     "epochs": 10000,
     "stepsMax": 500,
     "recordEvery": 100,
-    "mode": 1
-=======
-    "epochs": 40000,
-    "stepsMax": 500,
-    "recordEvery": 1000,
     "mode": 0
->>>>>>> c2dbd643d1903af93161764ab09a7dfe579a99bb
 }
