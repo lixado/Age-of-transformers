@@ -58,8 +58,8 @@ def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
     pygame.init()
     pygame.display.set_caption('DeepRTS v3.0')  # set the pygame window name
 
-    WIDTH = gym.initial_shape[0]*2 # because of dashboard
-    HEIGHT = gym.initial_shape[1]
+    WIDTH = 550# because of dashboard
+    HEIGHT = 350
     canvas = pygame.display.set_mode((WIDTH, HEIGHT))
 
     #Set agent model and evaluation mode
@@ -80,7 +80,7 @@ def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
             state, reward, done, _, _ = gym.step(action0)
 
 
-            image = gym.render(q_values)
+            image = gym.render()
 
             img = pygame.transform.rotate(pygame.surfarray.make_surface(image), -90)
             img = pygame.transform.flip(img, True, False)
@@ -96,7 +96,7 @@ def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
                 play = False
                 break
 
-            gym.player1.do_action(action1)
+            #gym.player1.do_action(action1)
 
             if done:
                 break
