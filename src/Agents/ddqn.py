@@ -18,7 +18,7 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.99999
+        self.exploration_rate_decay = 0.999995
         self.exploration_rate_min = 0.001
         self.curr_step = 0
         """
@@ -37,16 +37,16 @@ class DDQN_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.025
+        self.learning_rate = 0.0025
         self.learning_rate_decay = 0.999975
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
-        #self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
+        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
-        self.burnin = 500  # min. experiences before training
+        self.burnin = 1e4  # min. experiences before training
         assert( self.burnin >  self.batch_size)
         self.learn_every = 3  # no. of experiences between updates to Q_online
-        self.sync_every = 1e4  # no. of experiences between Q_target & Q_online sync
+        self.sync_every = 1e3  # no. of experiences between Q_target & Q_online sync
 
     def act(self, state):
         """
@@ -209,11 +209,18 @@ class DDQN(nn.Module):
     def __init__(self, input_dim, output_dim):
         super().__init__()
         c, h, w = input_dim
-    
+
         self.online = nn.Sequential(
-            resnet50(),
+            nn.Conv2d(in_channels=c, out_channels=16, kernel_size=4, stride=2),
             nn.ReLU(),
-            nn.Linear(1000, output_dim)
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=2, stride=2),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(1568, 512),
+            nn.ReLU(),
+            nn.Linear(512, output_dim)
         )
 
         self.target = copy.deepcopy(self.online)
