@@ -18,18 +18,18 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.99999
+        self.exploration_rate_decay = 0.9999995
         self.exploration_rate_min = 0.001
         self.curr_step = 0
         """
             Memory
         """
-        self.deque_size = 50000
+        self.deque_size = 500000
         arr = np.zeros(state_dim)
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 256
+        self.batch_size = 512
         print(f"Need {((arr.size * arr.itemsize * 2 * self.batch_size)*(1e-9)):.2f} Gb VRAM")
         #self.save_every = 5e5  # no. of experiences between saving model
 
@@ -46,7 +46,7 @@ class DDQN_Agent:
         self.burnin = 1e4  # min. experiences before training
         assert( self.burnin >  self.batch_size)
         self.learn_every = 3  # no. of experiences between updates to Q_online
-        self.sync_every = 1e3  # no. of experiences between Q_target & Q_online sync
+        self.sync_every = 1e4  # no. of experiences between Q_target & Q_online sync
 
     def act(self, state):
         """
