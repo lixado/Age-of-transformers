@@ -69,7 +69,7 @@ if __name__ == "__main__":
         Start agent
     """
     state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
-    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space))
+    agent = DDQN_Agent(state_dim=1, action_space_dim=len(gym.action_space))
     agent.device = device
 
     """
