@@ -18,7 +18,7 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.9999995
+        self.exploration_rate_decay = 0.99999
         self.exploration_rate_min = 0.001
         self.curr_step = 0
         """
@@ -45,7 +45,7 @@ class DDQN_Agent:
         self.loss_fn = torch.nn.SmoothL1Loss()
         self.burnin = 1e4  # min. experiences before training
         assert( self.burnin >  self.batch_size)
-        self.learn_every = 3  # no. of experiences between updates to Q_online
+        self.learn_every = 20  # no. of experiences between updates to Q_online
         self.sync_every = 1e4  # no. of experiences between Q_target & Q_online sync
 
     def act(self, state):
