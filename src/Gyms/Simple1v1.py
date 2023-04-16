@@ -102,16 +102,8 @@ class Simple1v1Gym(gym.Env):
 
 
     def _get_obs(self):
-        if self.game.is_terminal():
-            return 0
-
-        player = self.game.units[0]
-        x = player.tile.x
-        y = player.tile.y
-        width = self.game.map.map_width
-
-        state = x + width * y
-        return state
+        stateResized = np.resize(np.ndarray.flatten(self.game.state), (32, 32))
+        return stateResized
 
 
     def _get_info(self):

@@ -17,7 +17,7 @@ from playground import playground
 
 from wrappers import SkipFrame, RepeatFrame
 
-STATE_SHAPE = (64, 64) # model input shapes
+STATE_SHAPE = (32, 32) # model input shapes
 FRAME_STACK = 3 # get latest x frames into model
 SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
@@ -58,18 +58,18 @@ if __name__ == "__main__":
     # gym wrappers
     if SKIP_FRAME != 0:
         gym = SkipFrame(gym, SKIP_FRAME)
-    #if REPEAT_FRAME != 0:
-    #    gym = RepeatFrame(gym, REPEAT_FRAME)
+    if REPEAT_FRAME != 0:
+        gym = RepeatFrame(gym, REPEAT_FRAME)
     #gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
     #gym = GrayScaleObservation(gym)
-    #gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
-    #gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
+    gym = TransformObservation(gym, f=lambda x: x / 13.)  # normalize the values [0, 1]
+    gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
     """
         Start agent
     """
     state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
-    agent = DDQN_Agent(state_dim=1, action_space_dim=len(gym.action_space))
+    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space))
     agent.device = device
 
     """
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         results = os.path.join(workingDir, "results")
         folders = os.listdir(results)
         paths = [os.path.join(results, basename) for basename in folders]
-        latestFolder = max(paths, key=os.path.getctime)
+        latestFolder = paths[-1]
         modelPath = os.path.join(latestFolder, "model.chkpt")
         evaluate(agent, gym, modelPath)
     elif mode == 2:
