@@ -5,6 +5,7 @@ from collections import deque
 import random
 import numpy as np
 import torch
+import torch._dynamo.config
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
 class DDQN_Agent:
@@ -12,35 +13,39 @@ class DDQN_Agent:
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.net = DDQN(self.state_dim, self.action_space_dim).to(device=self.device)
+
+        self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.99995
-        self.exploration_rate_min = 0.0001
+        self.exploration_rate_decay = 0.99999
+        self.exploration_rate_min = 0.001
         self.curr_step = 0
-
         """
             Memory
         """
-        self.deque_size = 15000
+        self.deque_size = 100000
+        arr = np.zeros(state_dim)
+        totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
+        print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
         self.batch_size = 512
-        self.save_every = 5e5  # no. of experiences between saving model
+        print(f"Need {((arr.size * arr.itemsize * 2 * self.batch_size)*(1e-9)):.2f} Gb VRAM")
+        #self.save_every = 5e5  # no. of experiences between saving model
 
         """
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.0250
-        self.learning_rate_decay = 0.9999985
+        self.learning_rate = 0.00025
+        self.learning_rate_decay = 0.999975
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
-        self.burnin = 1e3  # min. experiences before training
+        self.burnin = 1e4  # min. experiences before training
         assert( self.burnin >  self.batch_size)
-        self.learn_every = 1  # no. of experiences between updates to Q_online
-        self.sync_every = 1e2  # no. of experiences between Q_target & Q_online sync
+        self.learn_every = 3  # no. of experiences between updates to Q_online
+        self.sync_every = 1e4  # no. of experiences between Q_target & Q_online sync
 
     def act(self, state):
         """
@@ -54,13 +59,14 @@ class DDQN_Agent:
         if (random.random() < self.exploration_rate): # EXPLORE
             actionIdx = random.randint(0, self.action_space_dim-1)
         else: # EXPLOIT
-            state = np.array(state)
-            state = torch.tensor(state).float().to(device=self.device)
-            state = state.unsqueeze(0) # create extra dim for batch
+            with torch.no_grad():
+                state = np.array(state)
+                state = torch.tensor(state).float().to(device=self.device)
+                state = state.unsqueeze(0) # create extra dim for batch
 
-            neuralNetOutput = self.net(state, model="online")
-            actionIdx = torch.argmax(neuralNetOutput, axis=1).item()
-            pred_arr = neuralNetOutput[0].detach().cpu().numpy()
+                neuralNetOutput = self.net(state, model="online")
+                actionIdx = torch.argmax(neuralNetOutput).item()
+                pred_arr = neuralNetOutput[0].detach().cpu().numpy()
 
         # decrease exploration_rate
         self.exploration_rate *= self.exploration_rate_decay
@@ -81,17 +87,21 @@ class DDQN_Agent:
         reward (float),
         done(bool))
         """
-
+        # not make to np array ans use lazyframes
         state = np.array(state)
         next_state = np.array(next_state)
-        state = torch.tensor(state).float().to(device=self.device)
-        next_state = torch.tensor(next_state).float().to(device=self.device)
+        state = torch.tensor(state).float()#.to(device=self.device)
+        next_state = torch.tensor(next_state).float()#.to(device=self.device)
 
-        action = torch.tensor([action]).to(device=self.device)
-        reward = torch.tensor([reward]).to(device=self.device)
-        done = torch.tensor([done]).to(device=self.device)
+        action = torch.tensor([action])#.to(device=self.device)
+        reward = torch.tensor([reward])#.to(device=self.device)
+        done = torch.tensor([done])#.to(device=self.device)
 
-        self.memory.append((state, next_state, action, reward, done))
+        try:
+            self.memory.append((state, next_state, action, reward, done))
+        except:
+            print("Need more memory or decrease Deque size in agent.")
+            quit()
 
     def recall(self):
         """
@@ -102,13 +112,10 @@ class DDQN_Agent:
 
         return state, next_state, action.squeeze(), reward.squeeze(), done.squeeze()
 
-    def learn(self, save_dir):
+    def learn(self):
         """Update online action value (Q) function with a batch of experiences"""
         if self.curr_step % self.sync_every == 0:
             self.sync_Q_target()
-
-        if self.curr_step % self.save_every == 0:
-            self.save(save_dir)
 
         if self.curr_step < self.burnin:
             return 0, 0 # None, None
@@ -119,6 +126,9 @@ class DDQN_Agent:
         # Sample from memory get self.batch_size number of memories
         state, next_state, action, reward, done = self.recall()
 
+        # move everything to gpu here to use less gpu memory but slower training
+        state, next_state, action, reward, done = state.to(device=self.device), next_state.to(device=self.device), action.to(device=self.device), reward.to(device=self.device), done.to(device=self.device)
+
         # Get TD Estimate, make predictions for the each memory
         td_est = self.td_estimate(state, action)
 
@@ -128,6 +138,7 @@ class DDQN_Agent:
         # Backpropagate loss through Q_online
         loss = self.update_Q_online(td_est, td_tgt)
 
+
         return (td_est.mean().item(), loss)
 
     def update_Q_online(self, td_estimate, td_target):
@@ -136,7 +147,7 @@ class DDQN_Agent:
         loss.backward()
         self.optimizer.step()
 
-        self.scheduler.step() # 
+        #self.scheduler.step() #
 
         return loss.item()
 
@@ -195,21 +206,23 @@ class DDQN_Agent:
 
 
 class DDQN(nn.Module):
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, state_dim, output_dim):
         super().__init__()
-        c, h, w = input_dim
-    
+        c, h, w = state_dim
+
         self.online = nn.Sequential(
-            nn.Conv2d(in_channels=c, out_channels=32, kernel_size=8, stride=4),
+            nn.Conv2d(in_channels=c, out_channels=32, kernel_size=4, stride=2),
             nn.ReLU(),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.ReLU(),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(3136, 512),
+            nn.Linear(576, 128),
             nn.ReLU(),
-            nn.Linear(512, output_dim)
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, output_dim)
         )
 
         self.target = copy.deepcopy(self.online)

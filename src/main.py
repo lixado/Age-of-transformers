@@ -1,15 +1,12 @@
 import os
 import sys
-from DeepRTS import Engine, Constants
-import cv2
 import torch
-from Gyms.AllActions1v1 import AllActions1v1
 from Gyms.Simple1v1 import Simple1v1Gym
 from logger import Logger
 from functions import GetConfigDict
 from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
-from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, GrayScaleObservation
+from gym.wrappers import FrameStack, TransformObservation
 from train import train
 from eval import evaluate
 from playground import playground
@@ -17,10 +14,12 @@ from simulate import simulate
 
 from wrappers import SkipFrame, RepeatFrame
 
-STATE_SHAPE = (84, 84) # model input shapes
-FRAME_STACK = 5 # get latest 10 frames into model
-SKIP_FRAME = 10 # do no action for 10 frames then do action
+STATE_SHAPE = (32, 32) # model input shapes
+FRAME_STACK = 3 # get latest x frames into model
+SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
+
+torch.set_float32_matmul_precision('high')
 
 if __name__ == "__main__":
     workingDir = os.getcwd()
@@ -51,7 +50,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = AllActions1v1(0, config["stepsMax"])
+    gym = Simple1v1Gym(0, config["stepsMax"])
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
@@ -59,9 +58,7 @@ if __name__ == "__main__":
         gym = SkipFrame(gym, SKIP_FRAME)
     if REPEAT_FRAME != 0:
         gym = RepeatFrame(gym, REPEAT_FRAME)
-    gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
-    gym = GrayScaleObservation(gym)
-    gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
+    gym = TransformObservation(gym, f=lambda x: x / 13.)  # normalize the values [0, 1] #MAX VALUE=20
     gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
     """
@@ -82,7 +79,7 @@ if __name__ == "__main__":
         results = os.path.join(workingDir, "results")
         folders = os.listdir(results)
         paths = [os.path.join(results, basename) for basename in folders]
-        latestFolder = max(paths, key=os.path.getctime)
+        latestFolder = paths[-1]
         modelPath = os.path.join(latestFolder, "model.chkpt")
         evaluate(agent, gym, modelPath)
     elif mode == 2:

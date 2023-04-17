@@ -39,10 +39,10 @@ def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
             #cv2.waitKey(3)
 
             # AI Save memory
-            agent.cache(observation, next_observation, actionIndex, reward, done)
+            agent.cache(observation, next_observation, actionIndex, reward, (done or truncated))
 
             # Learn
-            q, loss = agent.learn(save_dir)
+            q, loss = agent.learn()
             
             # Logging
             logger.log_step(reward, loss, q)

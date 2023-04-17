@@ -4,18 +4,20 @@ import numpy as np
 from constants import inv_action_space
 from DeepRTS import Engine, Constants
 from gym.spaces import Box
-
 from functions import PlayerState
+from DeepRTS.Engine import Unit
 
-def conditional_reward(player0, previousPlayer0: PlayerState, player1):
-    if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
-        return 1000
-    if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
-        return -100
-    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
-        return 100
 
 MAP = "10x10-2p-ffa-Eblil.json"
+
+def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
+    if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
+        return 10000/ticks
+    if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
+        return -0.001*ticks
+    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
+        return 1000/ticks
+    return -1
 
 class Simple1v1Gym(gym.Env):
     def __init__(self, mode, max_episode_steps):
@@ -32,13 +34,13 @@ class Simple1v1Gym(gym.Env):
         """
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
-        engineConfig.set_auto_attack(False)
+        engineConfig.set_auto_attack(True)
         self.game: Engine.Game = Engine.Game(MAP, engineConfig)
         self.game.set_max_fps(0)  # 0 = unlimited
         # add 2 players
         self.player0: Engine.Player = self.game.add_player()
         self.player1: Engine.Player = self.game.add_player()
-        
+
         self.action_space = [3, 4, 5, 6, 11, 16] # move and attack simple
         # max actions = list(range(Engine.Constants.ACTION_MIN, Engine.Constants.ACTION_MAX + 1))
         self.mode = mode
@@ -57,13 +59,7 @@ class Simple1v1Gym(gym.Env):
         self.game.update()
 
         # reward
-        self.reward = 0
-        if self.mode == 0:
-            dmgReward = 1 - ((100 - self.player0.statistic_damage_done) / 100)**0.5 # rewards exponentioally based on dmg done ehre 100 = max dmg
-            timeConservation = (self.max_episode_steps - self.elapsed_steps) / self.max_episode_steps # * the dmg reward, higher the lesser time has passed
-            self.reward = dmgReward * timeConservation          
-        if self.mode == 1:
-            self.reward = conditional_reward(self.player0, previousPlayer0, self.player1)
+        self.reward = conditional_reward(self.player0, previousPlayer0, self.player1, self.elapsed_steps)
 
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
         return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
@@ -76,7 +72,7 @@ class Simple1v1Gym(gym.Env):
         image = cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
         dashboard = np.zeros(self.initial_shape,dtype=np.uint8)
         dashboard.fill(255)
-        
+
 
         font = cv2.FONT_HERSHEY_SIMPLEX
         org = (10, self.initial_shape[1]-10)
@@ -97,16 +93,17 @@ class Simple1v1Gym(gym.Env):
                  f"Reward: {self.reward}",
                  f"Action: {inv_action_space[self.action_space[self.action]]}"]
 
-        for text in texts[::-1]:        
+        for text in texts[::-1]:
             dashboard = cv2.putText(dashboard, text, org, font, fontScale, color, thickness, cv2.LINE_AA, False)
             org = (org[0], org[1] - spacing)
 
         image = cv2.hconcat([dashboard, image])
         return image
-    
+
 
     def _get_obs(self):
-        return cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
+        stateResized = np.resize(np.ndarray.flatten(self.game.state), (32, 32))
+        return stateResized
 
 
     def _get_info(self):

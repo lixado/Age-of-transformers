@@ -24,7 +24,7 @@ class RepeatFrame(gym.Wrapper):
 class SkipFrame(gym.Wrapper):
     def __init__(self, env, skip):
         """
-        This wrapper will do the same action for x number of frames
+        This wrapper will do no action for x amount of times and then do the asked action
         Return only every `skip`-th frame
         """
         super().__init__(env)
