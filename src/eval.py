@@ -3,12 +3,8 @@ import sys
 
 import gym
 from Agents.ddqn import DDQN_Agent
-from DeepRTS import Engine, Constants
 import pygame
 import time
-from constants import inv_action_space
-
-
 
 def action(ev):
     action = 16
@@ -72,7 +68,6 @@ def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
         done = False
         j = 0
         start = time.time()
-        action1 = 16
         while True:#not done:
             j += 1
             #Actions

@@ -5,8 +5,6 @@ from DeepRTS import Engine, Constants
 import gym
 import pygame
 import cv2
-import numpy as np
-from PIL import Image
 from constants import action_space, inv_action_space
 
 """

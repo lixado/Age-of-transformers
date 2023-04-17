@@ -5,7 +5,6 @@ from collections import deque
 import random
 import numpy as np
 import torch
-from torchvision.models import resnet50
 import torch._dynamo.config
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
