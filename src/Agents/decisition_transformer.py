@@ -23,7 +23,7 @@ class DecisionTransformer_Agent:
         
         
         print("max_ep_length: ", self.max_ep_length)
-        config = DecisionTransformerConfig(self.state_dim_flatten, action_space_dim, max_ep_len=self.max_ep_length, n_positions=self.n_positions)
+        config = DecisionTransformerConfig(self.state_dim_flatten, action_space_dim, max_ep_len=self.max_ep_length, n_positions=self.n_positions, action_tanh=True)
         self.net = DecisionTransformerModel(config).to(device=self.device)
         self.batch_size = 64
 
@@ -70,7 +70,7 @@ class DecisionTransformer_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.0025
+        self.learning_rate = 0.00025
         self.learning_rate_decay = 0.999985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
@@ -174,7 +174,9 @@ class DecisionTransformer_Agent:
         
         # [batchSize, sequenceSize, state_dim]
         totalLoss = 0
-        for _ in range(1):
+        avgQ = 0
+        j = 3
+        for _ in range(j):
             s, a, r, t = self.recall()
 
             attention_mask = torch.ones((s.shape[0], s.shape[1]), device=self.device, dtype=torch.float32)
@@ -190,12 +192,13 @@ class DecisionTransformer_Agent:
                     attention_mask=attention_mask,
                     return_dict=False)
             
-            loss = self.loss_fn(return_preds, r)
+            loss = self.loss_fn(return_preds, r) + self.loss_fn(state_preds, s)
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
 
             totalLoss += loss.item()
+            avgQ += action_preds.mean().item()
         
 
-        return totalLoss, 0
+        return totalLoss, (avgQ / j)
