@@ -7,6 +7,8 @@ from functions import GetConfigDict
 from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
 from gym.wrappers import FrameStack, TransformObservation
+
+from Gyms.Full1v1 import Full1v1Gym
 from train import train
 from eval import evaluate
 from playground import playground
@@ -50,7 +52,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = Simple1v1Gym(config["stepsMax"], STATE_SHAPE)
+    gym = Full1v1Gym(config["stepsMax"], STATE_SHAPE)
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
@@ -67,13 +69,14 @@ if __name__ == "__main__":
     state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
     agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space))
     agent.device = device
+    agents = [DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space)) for _ in range(2)]
 
     """
         Training loop
     """
     if mode == 0:
         logger = Logger(workingDir)
-        train(config, agent, gym, logger)
+        train(config, agents, gym, logger)
 
     elif mode == 1:
         # get latest model path
