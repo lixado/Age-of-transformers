@@ -62,7 +62,7 @@ if __name__ == "__main__":
         gym = RepeatFrame(gym, REPEAT_FRAME)
     #gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
     #gym = GrayScaleObservation(gym)
-    gym = TransformObservation(gym, f=lambda x: x / 13.)  # normalize the values [0, 1]
+    gym = TransformObservation(gym, f=lambda x: x / 13.)  # normalize the values [0, 1] #MAX VALUE=20
     gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
     """
