@@ -17,7 +17,7 @@ class DecisionTransformer_Agent:
         self.action_space_dim = action_space_dim
         self.device = device
 
-        self.state_dim_flatten = state_dim[0]*state_dim[1]*state_dim[2]
+        self.state_dim_flatten = 1
 
         self.max_ep_length = max_steps # maximum number that can exists in timesteps
         self.n_positions = 1024 # The maximum sequence length that this model might ever be used with. Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
@@ -28,8 +28,8 @@ class DecisionTransformer_Agent:
         self.net = DecisionTransformerModel(config).to(device=self.device)
         self.batch_size = 64
 
-        self.exploration_rate = 0 # 1
-        self.exploration_rate_decay = 0.995
+        self.exploration_rate = 1
+        self.exploration_rate_decay = 0.999975
         self.exploration_rate_min = 0.0001
         self.curr_step = 0
 
@@ -136,7 +136,8 @@ class DecisionTransformer_Agent:
         currentSize = len(self.states_sequence)
         # sample random sequences between (1, self.max_sequence_length)
         k = random.randint(1, currentSize)
-        assert k < self.max_sequence_length # must be less then this
+        if k >= self.max_sequence_length: # cant use bigger then allowed
+            k = random.randint(1, self.max_sequence_length-1)
         for _ in range(self.batch_size):
             k_start = random.randint(0, currentSize-k)
 
@@ -163,10 +164,12 @@ class DecisionTransformer_Agent:
         
         # [batchSize, sequenceSize, state_dim]
         totalLoss = 0
-        for _ in range(10):
+        for _ in range(1):
             s, a, r, t = self.recall()
 
             attention_mask = torch.ones((s.shape[0], s.shape[1]), device=self.device, dtype=torch.float32)
+
+            # [R1, S1, A1, R2, S2, A2...]
 
 
             state_preds, action_preds, return_preds = self.net(states=s,
@@ -177,7 +180,7 @@ class DecisionTransformer_Agent:
                     attention_mask=attention_mask,
                     return_dict=False)
             
-            loss = self.loss_fn(action_preds, a)
+            loss = self.loss_fn(return_preds, r)
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -186,12 +189,3 @@ class DecisionTransformer_Agent:
         
 
         return totalLoss, 0
-
-
-
-
-        
-
-
-
-        

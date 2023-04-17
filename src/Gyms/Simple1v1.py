@@ -36,7 +36,7 @@ class Simple1v1Gym(gym.Env):
         # max actions = list(range(Engine.Constants.ACTION_MIN, Engine.Constants.ACTION_MAX + 1))
         self.mode = mode
         self.game.start()
-        self.observation_space = Box(low=0, high=255, shape=self.initial_shape, dtype=np.uint8)
+        #self.observation_space = Box(low=0, high=(10*10)-1, shape=self.initial_shape, dtype=np.uint8)
 
 
     def step(self, actionIndex):
@@ -97,7 +97,16 @@ class Simple1v1Gym(gym.Env):
     
 
     def _get_obs(self):
-        return cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
+        if self.game.is_terminal():
+            return 0
+
+        player = self.game.units[0]
+        x = player.tile.x
+        y = player.tile.y
+        width = self.game.map.map_width
+
+        state = x + width * y
+        return state
 
 
     def _get_info(self):
