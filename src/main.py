@@ -17,8 +17,7 @@ from playground import playground
 
 from wrappers import SkipFrame, RepeatFrame
 
-STATE_SHAPE = (64, 64) # model input shapes
-FRAME_STACK = 3 # get latest x frames into model
+STATE_SHAPE = (10, 10, 10) # model input shapes
 SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
 
@@ -58,17 +57,14 @@ if __name__ == "__main__":
     # gym wrappers
     if SKIP_FRAME != 0:
         gym = SkipFrame(gym, SKIP_FRAME)
-    #if REPEAT_FRAME != 0:
-    #    gym = RepeatFrame(gym, REPEAT_FRAME)
-    #gym = ResizeObservation(gym, STATE_SHAPE)  # reshape
-    #gym = GrayScaleObservation(gym)
-    #gym = TransformObservation(gym, f=lambda x: x / 255.)  # normalize the values [0, 1]
-    #gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=True)
+    if REPEAT_FRAME != 0:
+        gym = RepeatFrame(gym, REPEAT_FRAME)
+    gym = TransformObservation(gym, f=lambda x: x / 13.)  # normalize the values [0, 1]
 
     """
         Start agent
     """
-    state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
+    state_sizes = STATE_SHAPE # number of image stacked
     agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=(SKIP_FRAME+1) + int(config["stepsMax"]/(SKIP_FRAME+1)))
 
 

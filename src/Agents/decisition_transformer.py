@@ -7,7 +7,6 @@ import numpy as np
 import torch
 import itertools
 from transformers import DecisionTransformerModel, DecisionTransformerConfig
-
 from functions import sample_with_order
 
 
@@ -17,10 +16,10 @@ class DecisionTransformer_Agent:
         self.action_space_dim = action_space_dim
         self.device = device
 
-        self.state_dim_flatten = 1
+        self.state_dim_flatten = np.prod(state_dim)
 
         self.max_ep_length = max_steps # maximum number that can exists in timesteps
-        self.n_positions = 1024 # The maximum sequence length that this model might ever be used with. Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
+        self.n_positions = 2**10 # The maximum sequence length that this model might ever be used with. Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
         
         
         print("max_ep_length: ", self.max_ep_length)
@@ -28,8 +27,9 @@ class DecisionTransformer_Agent:
         self.net = DecisionTransformerModel(config).to(device=self.device)
         self.batch_size = 64
 
+
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.999975
+        self.exploration_rate_decay = 0.99975
         self.exploration_rate_min = 0.0001
         self.curr_step = 0
 
@@ -37,7 +37,8 @@ class DecisionTransformer_Agent:
             Memory
         """
         # sequences
-        self.max_sequence_length = int(self.n_positions/3) # not sure why / 3
+        self.max_sequence_length = int(self.n_positions/3) # not sure why / 3 might be [R1, S1, A1, R2, S2, A2]
+        print("max_sequence_length: ", self.max_sequence_length)
         self.states_sequence = deque(maxlen=self.max_sequence_length)
         self.actions_sequence = deque(maxlen=self.max_sequence_length)
         self.timesteps_sequence = deque(maxlen=self.max_sequence_length)
@@ -48,12 +49,21 @@ class DecisionTransformer_Agent:
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram for states sequence.")
 
 
-        #self.deque_size = 512
-        #arr = np.zeros(state_dim)
-        #totalSizeInBytes = (arr.size * arr.itemsize * max_sequence_length * self.deque_size) # * 2 because 2 states are saved in line
-        #print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram for memory")
-        #self.memory = deque(maxlen=self.deque_size)
-        
+        param_size = 0
+        for param in self.net.parameters():
+            param_size += param.nelement() * param.element_size()
+        buffer_size = 0
+        for buffer in self.net.buffers():
+            buffer_size += buffer.nelement() * buffer.element_size()
+
+        size_model_mb = (param_size + buffer_size) / 1024**2
+        size_model_gb = size_model_mb / 1024
+
+        arr = np.zeros(state_dim)
+        totalSizeInBytes = (arr.size * arr.itemsize * self.max_sequence_length * self.batch_size)
+        print(f"Need {(totalSizeInBytes*(1e-9) + size_model_gb):.2f} Gb Vram for states sequence in learning.")
+
+
         #self.save_every = 5e5  # no. of experiences between saving model
 
         """
@@ -85,7 +95,7 @@ class DecisionTransformer_Agent:
             self.timesteps_sequence.append(timestep)
             self.rewards_sequence.append(reward)
         except:
-            print("Need more memory or decrease Deque size in agent.")
+            print("Need more memory or decrease sequence size in agent.")
             quit()
 
 
