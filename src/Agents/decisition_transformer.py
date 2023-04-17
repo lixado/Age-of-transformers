@@ -29,7 +29,7 @@ class DecisionTransformer_Agent:
 
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.99975
+        self.exploration_rate_decay = 0.999975
         self.exploration_rate_min = 0.0001
         self.curr_step = 0
 
