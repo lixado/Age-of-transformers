@@ -1,12 +1,10 @@
 import cv2
-import gym
 import numpy as np
 from constants import inv_action_space
 from DeepRTS import Engine, Constants
-from gym.spaces import Box
 from functions import PlayerState
-from DeepRTS.Engine import Unit
 
+from Gyms.CustomGym import CustomGym
 
 MAP = "10x10-2p-ffa-Eblil.json"
 
@@ -19,33 +17,16 @@ def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
         return 1000/ticks
     return -1
 
-class Simple1v1Gym(gym.Env):
-    def __init__(self, mode, max_episode_steps):
-        self.max_episode_steps = max_episode_steps
-        self.elapsed_steps = None
-
-        tilesize = 32
-        mapSize = MAP.split("-")[0].split("x")
-
-        self.initial_shape = (int(mapSize[0])*tilesize, int(mapSize[1])*tilesize, 3) # W, H, C
-        print("Initial_shape: ", self.initial_shape)
-        """
-            Start engine
-        """
+class Simple1v1Gym(CustomGym):
+    def __init__(self, max_episode_steps, shape):
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
         engineConfig.set_auto_attack(True)
-        self.game: Engine.Game = Engine.Game(MAP, engineConfig)
-        self.game.set_max_fps(0)  # 0 = unlimited
-        # add 2 players
-        self.player0: Engine.Player = self.game.add_player()
-        self.player1: Engine.Player = self.game.add_player()
 
         self.action_space = [3, 4, 5, 6, 11, 16] # move and attack simple
-        # max actions = list(range(Engine.Constants.ACTION_MIN, Engine.Constants.ACTION_MAX + 1))
-        self.mode = mode
-        self.game.start()
-        self.observation_space = Box(low=0, high=255, shape=self.initial_shape, dtype=np.uint8)
+        self.reward = 0
+
+        super().__init__(max_episode_steps, shape, MAP, engineConfig)
 
 
     def step(self, actionIndex):
@@ -70,12 +51,12 @@ class Simple1v1Gym(gym.Env):
             Return RGB image but this one will not be changed by wrappers
         """
         image = cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
-        dashboard = np.zeros(self.initial_shape,dtype=np.uint8)
+        dashboard = np.zeros(image.shape, dtype=np.uint8)
         dashboard.fill(255)
 
 
         font = cv2.FONT_HERSHEY_SIMPLEX
-        org = (10, self.initial_shape[1]-10)
+        org = (10, image.shape[1]-10)
         fontScale = 0.5
         spacing = int(40 * fontScale)
         color = (0, 0, 0)
@@ -99,23 +80,3 @@ class Simple1v1Gym(gym.Env):
 
         image = cv2.hconcat([dashboard, image])
         return image
-
-
-    def _get_obs(self):
-        stateResized = np.resize(np.ndarray.flatten(self.game.state), (32, 32))
-        return stateResized
-
-
-    def _get_info(self):
-        return {}
-
-
-    def reset(self):
-        self.elapsed_steps = 0
-        self.game.reset()
-
-        return self._get_obs(), self._get_info()
-    
-
-    def close(self):
-        self.game.stop()

@@ -34,10 +34,6 @@ def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
             if record:
                 SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values), ticks)
 
-            # use this to see image example
-            #cv2.imshow('image', next_observation[0])
-            #cv2.waitKey(3)
-
             # AI Save memory
             agent.cache(observation, next_observation, actionIndex, reward, (done or truncated))
 

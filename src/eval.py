@@ -54,8 +54,8 @@ def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
     pygame.init()
     pygame.display.set_caption('DeepRTS v3.0')  # set the pygame window name
 
-    WIDTH = gym.initial_shape[0]*2 # because of dashboard
-    HEIGHT = gym.initial_shape[1]
+    WIDTH = gym.render_shape[0]*2 # because of dashboard
+    HEIGHT = gym.render_shape[1]
     canvas = pygame.display.set_mode((WIDTH, HEIGHT))
 
     #Set agent model and evaluation mode

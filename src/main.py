@@ -50,7 +50,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = Simple1v1Gym(0, config["stepsMax"])
+    gym = Simple1v1Gym(config["stepsMax"], STATE_SHAPE)
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         gym = SkipFrame(gym, SKIP_FRAME)
     if REPEAT_FRAME != 0:
         gym = RepeatFrame(gym, REPEAT_FRAME)
-    gym = TransformObservation(gym, f=lambda x: x / 13.)  # normalize the values [0, 1] #MAX VALUE=20
+    gym = TransformObservation(gym, f=lambda x: x / 20.)  # normalize the values [0, 1] #MAX VALUE=20
     gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
     """
@@ -74,6 +74,7 @@ if __name__ == "__main__":
     if mode == 0:
         logger = Logger(workingDir)
         train(config, agent, gym, logger)
+
     elif mode == 1:
         # get latest model path
         results = os.path.join(workingDir, "results")
@@ -82,8 +83,10 @@ if __name__ == "__main__":
         latestFolder = paths[-1]
         modelPath = os.path.join(latestFolder, "model.chkpt")
         evaluate(agent, gym, modelPath)
+
     elif mode == 2:
         playground(gym)
+
     elif mode == 3:
         logger = Logger(workingDir)
         simulate(config, gym, logger.getSaveFolderPath())
