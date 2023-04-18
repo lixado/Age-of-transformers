@@ -43,6 +43,7 @@ def action(ev):
                     return -1
     return action
 
+
 def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
     workingDir = os.getcwd()
     if not os.path.exists(os.path.join(workingDir, "src")):

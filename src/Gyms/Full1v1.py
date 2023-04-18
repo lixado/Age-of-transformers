@@ -38,7 +38,7 @@ class Full1v1Gym(CustomGym):
         previousPlayer0 = PlayerState(self.player0)
         previousPlayer1 = PlayerState(self.player1)
 
-        if randint(0,1) == 0:
+        if randint(0, 1) == 0:
             self.player1.do_action(self.action_space[actionIndices[1]])
             self.player0.do_action(self.action_space[actionIndices[0]])
         else:
