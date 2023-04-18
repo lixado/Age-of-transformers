@@ -1,0 +1,20 @@
+sete opp 1v1 2 modeler
+skrive på rapport
+sette opp trening DT simple 1v1 1 model
+
+
+
+(R_1, s_1, a_1, R_2, s_2, a_2, ..., R_T, s_T, a_T)
+
+
+
+
+3 possible actions:
+
+learn to predict next state and best actions?
+
+(s_1, a[0]_1, a[1]_1, a[2]_1, s_2, a[0]_2, a[1]_2, a[2]_2, ..., s_T, a[0]_T, a[1]_T, a[2]_T)
+
+where a[0]_1 is the reward given the action a[0] at time 1
+
+we can teach it to predict the best action based on previous actions and states and maybe rewards 
