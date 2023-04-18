@@ -3,5 +3,5 @@
     "stepsMax_comment": "stepstMax should be of the form SKIP_FRAME * 2^x ",
     "stepsMax": 500,
     "recordEvery": 1000,
-    "mode": 0
+    "mode": 1
 }

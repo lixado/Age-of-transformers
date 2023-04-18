@@ -5,12 +5,16 @@ import os
 from functions import CreateVideoFromTempImages, SaveTempImage
 
 
-def simulate(config: dict, agent, gym: gym.Env, save_path: str):
+def simulate(config: dict, agent, gym: gym.Env, save_path: str, model_path=None):
     data_path = os.path.join(save_path, 'data')
     os.makedirs(data_path, exist_ok=True) # create temp folder if not exist
 
     record_epochs = config["recordEvery"] # record game every x epochs
     epochs = config["epochs"]
+
+    if model_path != None:
+        agent.loadModel(model_path)
+        agent.net.eval()
     for e in range(epochs):
         observation, info = gym.reset()
         ticks = 0

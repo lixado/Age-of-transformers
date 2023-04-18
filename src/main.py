@@ -6,6 +6,7 @@ from logger import Logger
 from functions import GetConfigDict
 from constants import inv_action_space
 from Agents.decisition_transformer import DecisionTransformer_Agent
+from Agents.ddqn import DDQN_Agent
 from gym.wrappers import TransformObservation
 from train import train
 from eval import evaluate
@@ -14,7 +15,7 @@ from simulate import simulate
 
 from wrappers import SkipFrame, RepeatFrame
 
-STATE_SHAPE = (10, 10, 10) # model input shapes
+STATE_SHAPE = (32, 32) # model input shapes
 SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
 
@@ -79,11 +80,17 @@ if __name__ == "__main__":
         paths = [os.path.join(results, basename) for basename in folders]
         latestFolder = paths[-1]
         modelPath = os.path.join(latestFolder, "model.chkpt")
-        evaluate(agent, gym, modelPath)
+        evaluate(ddqn_agent, gym, modelPath)
     elif mode == 2:
         playground(gym)
     elif mode == 3:
         logger = Logger(workingDir)
-        simulate(config, gym, logger.getSaveFolderPath())
+        results = os.path.join(workingDir, "results")
+        folders = os.listdir(results)
+        paths = [os.path.join(results, basename) for basename in folders]
+        latestFolder = paths[-1]
+        modelPath = os.path.join(latestFolder, "model.chkpt")
+        ddqn_agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=gym.action_space)
+        simulate(config, ddqn_agent, gym, logger.getSaveFolderPath(), modelPath)
     else:
         print("Mode not avaliable")
