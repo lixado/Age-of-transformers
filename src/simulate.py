@@ -5,7 +5,7 @@ import os
 from functions import CreateVideoFromTempImages, SaveTempImage
 
 
-def simulate(config: dict, gym: gym.Env, save_path: str):
+def simulate(config: dict, agent, gym: gym.Env, save_path: str):
     data_path = os.path.join(save_path, 'data')
     os.makedirs(data_path, exist_ok=True) # create temp folder if not exist
 
@@ -23,7 +23,7 @@ def simulate(config: dict, gym: gym.Env, save_path: str):
         while not done and not truncated:
             ticks += 1
 
-            actionIndex = random.randint(0, len(gym.action_space)-1)
+            actionIndex = agent.act(observation)
 
             # Act
             next_observation, reward, done, truncated, info = gym.step(actionIndex)
