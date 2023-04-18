@@ -5,7 +5,7 @@ from collections import deque
 import random
 import numpy as np
 import torch
-from torchvision.models import resnet50
+import torch._dynamo.config
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
 class DDQN_Agent:
@@ -14,22 +14,21 @@ class DDQN_Agent:
         self.action_space_dim = action_space_dim
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.net = torch.compile(DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device), mode="reduce-overhead")
+        self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.9999975
+        self.exploration_rate_decay = 0.99999
         self.exploration_rate_min = 0.001
         self.curr_step = 0
-
         """
             Memory
         """
-        self.deque_size = 50000
+        self.deque_size = 100000
         arr = np.zeros(state_dim)
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 256
+        self.batch_size = 512
         print(f"Need {((arr.size * arr.itemsize * 2 * self.batch_size)*(1e-9)):.2f} Gb VRAM")
         #self.save_every = 5e5  # no. of experiences between saving model
 
@@ -37,13 +36,13 @@ class DDQN_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.0025
+        self.learning_rate = 0.00025
         self.learning_rate_decay = 0.999975
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
-        self.burnin = 1e3  # min. experiences before training
+        self.burnin = 1e4  # min. experiences before training
         assert( self.burnin >  self.batch_size)
         self.learn_every = 3  # no. of experiences between updates to Q_online
         self.sync_every = 1e4  # no. of experiences between Q_target & Q_online sync
@@ -60,13 +59,14 @@ class DDQN_Agent:
         if (random.random() < self.exploration_rate): # EXPLORE
             actionIdx = random.randint(0, self.action_space_dim-1)
         else: # EXPLOIT
-            state = np.array(state)
-            state = torch.tensor(state).float().to(device=self.device)
-            state = state.unsqueeze(0) # create extra dim for batch
+            with torch.no_grad():
+                state = np.array(state)
+                state = torch.tensor(state).float().to(device=self.device)
+                state = state.unsqueeze(0) # create extra dim for batch
 
-            neuralNetOutput = self.net(state, model="online")
-            actionIdx = torch.argmax(neuralNetOutput, axis=1).item()
-            pred_arr = neuralNetOutput[0].detach().cpu().numpy()
+                neuralNetOutput = self.net(state, model="online")
+                actionIdx = torch.argmax(neuralNetOutput).item()
+                pred_arr = neuralNetOutput[0].detach().cpu().numpy()
 
         # decrease exploration_rate
         self.exploration_rate *= self.exploration_rate_decay
@@ -147,7 +147,7 @@ class DDQN_Agent:
         loss.backward()
         self.optimizer.step()
 
-        self.scheduler.step() # 
+        #self.scheduler.step() #
 
         return loss.item()
 
@@ -206,13 +206,23 @@ class DDQN_Agent:
 
 
 class DDQN(nn.Module):
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, state_dim, output_dim):
         super().__init__()
-        c, h, w = input_dim
-    
+        c, h, w = state_dim
+
         self.online = nn.Sequential(
-            resnet50(),
-            nn.Linear(1000, output_dim)
+            nn.Conv2d(in_channels=c, out_channels=32, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(576, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, output_dim)
         )
 
         self.target = copy.deepcopy(self.online)

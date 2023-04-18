@@ -6,8 +6,20 @@ import numpy as np
 from constants import inv_action_space
 from DeepRTS import Engine, Constants
 from gym.spaces import Box
+from src.functions import PlayerState
 
 MAP = "15x15-2p-ffa-Cresal.json"
+
+
+def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
+    if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
+        return 100 / ticks
+    if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
+        return -10
+    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
+        return 10 / ticks
+    return 0
+
 
 class AllActions1v1(gym.Env):
     def __init__(self, mode, max_episode_steps):
@@ -36,8 +48,7 @@ class AllActions1v1(gym.Env):
         # add 2 players
         self.player0: Engine.Player = self.game.add_player()
         self.player1: Engine.Player = self.game.add_player()
-        
-        self.action_space = list(range(Engine.Constants.ACTION_MIN, Engine.Constants.ACTION_MAX + 1))
+        self.action_space = [i for i in range(1, 17)]  # 1-16, all actions, (see deep-rts/bindings/Constants.cpp)
         self.mode = mode
         self.game.start()
         self.observation_space = Box(low=0, high=255, shape=self.initial_shape, dtype=np.uint8)
@@ -46,24 +57,21 @@ class AllActions1v1(gym.Env):
         self.elapsed_steps += 1
         self.action = actionIndex
 
+        previousPlayer0 = PlayerState(self.player0)
 
         self.player0.do_action(self.action_space[actionIndex])
 
-        actionIndex2 = random.randint(0, len(self.action_space)-1)
-        self.player1.do_action(self.action_space[actionIndex2]) # do random moves
+        actionIndex2 = random.randint(0, len(self.action_space) - 1)
+        self.player1.do_action(self.action_space[actionIndex2])  # do nothing
 
         self.game.update()
 
-        self.reward = 0
-        dmgReward = self.player0.statistic_damage_done # rewards exponentioally based on dmg done ehre 100 = max dmg
-        win = int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat) # +1
-        loss = int(self.player0.evaluate_player_state() == Constants.PlayerState.Defeat)/3 # +0.1
-        self.reward = dmgReward + win + loss   # 1 reward if win       
+        self.reward = conditional_reward(self.player0, previousPlayer0, self.player1, self.elapsed_steps)
 
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
         return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
     
-    def render(self, q_values):
+    def render(self):
         """
             Return RGB image but this one will not be changed by wrappers
         """
@@ -80,14 +88,7 @@ class AllActions1v1(gym.Env):
         thickness = 1
 
         texts = [f"Update Nr.: {self.elapsed_steps}",
-                 f"Q_values:",
-                 f"Q_Left: {q_values[0]}",
-                 f"Q_Right: {q_values[1]}",
-                 f"Q_Up: {q_values[2]}",
-                 f"Q_Down: {q_values[3]}",
-                 f"Q_Attack: {q_values[4]}",
-                 f"Q_None: {q_values[5]}",
-                 f"player0.statistic_damage_done: {self.player0.statistic_damage_done}",
+                 f"player0.damage_done: {self.player0.statistic_damage_done}",
                  f"Reward: {self.reward}",
                  f"Action: {inv_action_space[self.action_space[self.action]]}"]
 

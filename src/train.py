@@ -62,6 +62,7 @@ def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: 
         # Record game
         if record:
             CreateVideoFromTempImages(os.path.join(logger.getSaveFolderPath(), "temp"), (e))
+            agent.save(logger.getSaveFolderPath())
 
     # save model
     #agent.save(logger.getSaveFolderPath())

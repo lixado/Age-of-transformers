@@ -1,19 +1,16 @@
 import os
 import sys
-import time
-from DeepRTS import Engine, Constants
-import cv2
 import torch
-from Gyms.AllActions1v1 import AllActions1v1
 from Gyms.Simple1v1 import Simple1v1Gym
 from logger import Logger
 from functions import GetConfigDict
 from constants import inv_action_space
 from Agents.decisition_transformer import DecisionTransformer_Agent
-from gym.wrappers import FrameStack, TransformObservation, ResizeObservation, GrayScaleObservation
+from gym.wrappers import TransformObservation
 from train import train
 from eval import evaluate
 from playground import playground
+from simulate import simulate
 
 from wrappers import SkipFrame, RepeatFrame
 
@@ -38,8 +35,9 @@ if __name__ == "__main__":
         0 = Train
         1 = Eval
         2 = Playground
+        3 = Simulate games
     """
-    modes = ["Train", "Eval", "Playground"]
+    modes = ["Train", "Eval", "Playground", "Simulate"]
     for cnt, modeName in enumerate(modes, 1):
         sys.stdout.write("[%d] %s\n\r" % (cnt, modeName))
 
@@ -59,7 +57,7 @@ if __name__ == "__main__":
         gym = SkipFrame(gym, SKIP_FRAME)
     if REPEAT_FRAME != 0:
         gym = RepeatFrame(gym, REPEAT_FRAME)
-    gym = TransformObservation(gym, f=lambda x: x / 13.)  # normalize the values [0, 1]
+    gym = TransformObservation(gym, f=lambda x: x / 13.)  # normalize the values [0, 1] #MAX VALUE=20
 
     """
         Start agent
@@ -79,10 +77,13 @@ if __name__ == "__main__":
         results = os.path.join(workingDir, "results")
         folders = os.listdir(results)
         paths = [os.path.join(results, basename) for basename in folders]
-        latestFolder = max(paths, key=os.path.getctime)
+        latestFolder = paths[-1]
         modelPath = os.path.join(latestFolder, "model.chkpt")
         evaluate(agent, gym, modelPath)
     elif mode == 2:
         playground(gym)
+    elif mode == 3:
+        logger = Logger(workingDir)
+        simulate(config, gym, logger.getSaveFolderPath())
     else:
         print("Mode not avaliable")
