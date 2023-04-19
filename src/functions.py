@@ -59,7 +59,7 @@ def CreateVideoFromTempImages(images_folder, epoch):
 
     log_folder = os.path.dirname(images_folder) # get parent dir
     path = os.path.join(log_folder, f"video{epoch}.mp4")
-    video = cv2.VideoWriter(path, fourcc=cv2.VideoWriter_fourcc(*'DIVX'), fps=1, frameSize=(width, height))
+    video = cv2.VideoWriter(path, fourcc=cv2.VideoWriter_fourcc(*'mp4v'), fps=1, frameSize=(width, height))
 
     for image in tqdm(images, desc="Processing images"):
         video.write(cv2.imread(image))
