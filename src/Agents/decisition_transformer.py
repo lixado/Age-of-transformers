@@ -70,7 +70,7 @@ class DecisionTransformer_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.00025
+        self.learning_rate = 0.0025
         self.learning_rate_decay = 0.999985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
@@ -78,7 +78,7 @@ class DecisionTransformer_Agent:
         self.loss_fn = torch.nn.SmoothL1Loss()
         self.burnin = 1e3  # min. experiences before training
         assert( self.burnin >  self.batch_size)
-        self.learn_every = 1  # no. of experiences between updates to Q_online
+        self.learn_every = 6  # no. of experiences between updates to Q_online
         self.sync_every = 1e6  # no. of experiences between Q_target & Q_online sync
 
     def act(self, state, actionIndex, timestep, reward):
@@ -145,9 +145,11 @@ class DecisionTransformer_Agent:
 
         currentSize = len(self.states_sequence)
         # sample random sequences between (1, self.max_sequence_length)
-        k = random.randint(1, currentSize)
+        k = random.randint(2, currentSize)
         if k >= self.max_sequence_length: # cant use bigger then allowed
-            k = random.randint(1, self.max_sequence_length-1)
+            k = random.randint(2, self.max_sequence_length-1)
+
+        assert k > 1
         for _ in range(self.batch_size):
             k_start = random.randint(0, currentSize-k)
 
@@ -169,30 +171,42 @@ class DecisionTransformer_Agent:
         #if self.curr_step < self.burnin:
         #    return 0, 0 # None, None
 
-        #if self.curr_step % self.learn_every != 0:
-        #    return 0, 0 # None, None
+        if self.curr_step % self.learn_every != 0 or self.curr_step == 1:
+            return 0, 0 # None, None
         
         # [batchSize, sequenceSize, state_dim]
         totalLoss = 0
         avgQ = 0
-        j = 3
+        j = 5
         for _ in range(j):
             s, a, r, t = self.recall()
 
-            attention_mask = torch.ones((s.shape[0], s.shape[1]), device=self.device, dtype=torch.float32)
+            attention_mask = torch.ones((s.shape[0], s.shape[1]-1), device=self.device, dtype=torch.float32)
+
+            s_to_predict = s[:,:-1,:]
+            a_to_predict = a[:,:-1,:]
+            r_to_predict = r[:,:-1,:]
+            t_to_predict = t[:,:-1]
+            #print(s_to_predict.shape)
+            #print(a_to_predict.shape)
+            #print(r_to_predict.shape)
+            #print(t_to_predict.shape)
 
             # [R1, S1, A1, R2, S2, A2...]
 
 
-            state_preds, action_preds, return_preds = self.net(states=s,
-                    actions=a,
+            state_preds, action_preds, return_preds = self.net(states=s_to_predict,
+                    actions=a_to_predict,
                     rewards=None, #not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
-                    returns_to_go=r,
-                    timesteps=t,
+                    returns_to_go=r_to_predict,
+                    timesteps=t_to_predict,
                     attention_mask=attention_mask,
                     return_dict=False)
             
-            loss = self.loss_fn(return_preds, r) + self.loss_fn(state_preds, s)
+            #print(f"returns_preds {return_preds[:, -1,:].shape}, r {r[:, -1,:].shape}")
+
+            
+            loss = self.loss_fn(return_preds[:,-1,:], r[:,-1,:]) + self.loss_fn(state_preds[:, -1,:], s[:, -1,:]) + self.loss_fn(torch.argmax(action_preds[:,-1,:],dim=1), r[:, -1,:].squeeze())
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
