@@ -13,11 +13,12 @@ from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 def get_batches(data: list, batch_size):
     while len(data) % batch_size != 0:
         data.append(data[-1])
-    #batches = np.array([data[i*batch_size : (i+1)*batch_size] for i in range(int(len(data)/batch_size))])
-
-    batches = np.zeros((int(len(data)/batch_size), batch_size, 4))
-
-    return batches
+    batches = [data[i*batch_size : (i+1)*batch_size] for i in range(int(len(data)/batch_size))]
+    observations = [[element[0] for element in row] for row in batches]
+    actions = [[element[1] for element in row] for row in batches]
+    timesteps = [[element[2] for element in row] for row in batches]
+    rewards = [[element[3] for element in row] for row in batches]
+    return observations, actions, timesteps, rewards
 
 
 def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger, data_path):
@@ -32,11 +33,23 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
     trainingData, validationData = torch.utils.data.random_split(data, [0.8, 0.2], generator=gen)
     trainingLoader = DataLoader(trainingData, batch_size=1, shuffle=False)
 
-    #for e in range(epochs):
-    for game in trainingLoader:
-        batches = get_batches(game, batch_size=batch_size)
-        for batch in batches:
-            print(batch[:, 0])
+    for e in range(epochs):
+        for game in trainingLoader:
+            batches = get_batches(game, batch_size=batch_size)
+            for i in range(len(batches)):
+                observations = batches[0][i]
+                actions = batches[1][i]
+                timesteps = batches[2][i]
+                rewards = batches[3][i]
+
+                agent.act(observations, actions, timesteps, rewards)
+
+                loss, q = agent.learn()
+
+                logger.log_step(0.0, loss, q)
+
+        logger.log_epoch(e, agent.exploration_rate, agent.optimizer.param_groups[0]["lr"])
+
 
 def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger):
     agent.net.train()
