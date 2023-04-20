@@ -7,8 +7,8 @@ from functions import GetConfigDict
 from constants import inv_action_space
 from Agents.decisition_transformer import DecisionTransformer_Agent
 from Agents.ddqn import DDQN_Agent
-from gym.wrappers import TransformObservation
-from train import train
+from gym.wrappers import TransformObservation, FrameStack
+from train import train, train_transformer
 from eval import evaluate
 from playground import playground
 from simulate import simulate
@@ -16,6 +16,7 @@ from simulate import simulate
 from wrappers import SkipFrame, RepeatFrame
 
 STATE_SHAPE = (32, 32) # model input shapes
+FRAME_STACK = 3
 SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
 
@@ -65,14 +66,16 @@ if __name__ == "__main__":
     """
     state_sizes = STATE_SHAPE # number of image stacked
     agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=(SKIP_FRAME+1) + int(config["stepsMax"]/(SKIP_FRAME+1)))
-
+    ddqn_agent = DDQN_Agent(state_dim=(FRAME_STACK,) + STATE_SHAPE, action_space_dim=len(gym.action_space))
 
     """
         Training loop
     """
     if mode == 0:
         logger = Logger(workingDir)
-        train(config, agent, gym, logger)
+        data_path = os.path.join(workingDir, "data")
+        #train(config, agent, gym, logger)
+        train_transformer(config, agent, gym, logger, data_path)
     elif mode == 1:
         # get latest model path
         results = os.path.join(workingDir, "results")
@@ -84,13 +87,14 @@ if __name__ == "__main__":
     elif mode == 2:
         playground(gym)
     elif mode == 3:
-        logger = Logger(workingDir)
         results = os.path.join(workingDir, "results")
         folders = os.listdir(results)
         paths = [os.path.join(results, basename) for basename in folders]
         latestFolder = paths[-1]
         modelPath = os.path.join(latestFolder, "model.chkpt")
-        ddqn_agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=gym.action_space)
-        simulate(config, ddqn_agent, gym, logger.getSaveFolderPath(), modelPath)
+        gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
+
+        logger = Logger(workingDir)
+        simulate(config, ddqn_agent, gym, logger, modelPath)
     else:
         print("Mode not avaliable")

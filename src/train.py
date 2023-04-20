@@ -3,11 +3,40 @@ import gym
 import os
 import torch
 import numpy as np
+from data import Simple1v1Dataset
+from torch.utils.data import DataLoader
 
 from Agents.decisition_transformer import DecisionTransformer_Agent
 from logger import Logger
 from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 
+def get_batches(data: list, batch_size):
+    while len(data) % batch_size != 0:
+        data.append(data[-1])
+    #batches = np.array([data[i*batch_size : (i+1)*batch_size] for i in range(int(len(data)/batch_size))])
+
+    batches = np.zeros((int(len(data)/batch_size), batch_size, 4))
+
+    return batches
+
+
+def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger, data_path):
+    agent.net.train()
+    save_dir = logger.getSaveFolderPath()
+
+    epochs = config["epochs"]
+    batch_size = config["batchSize"]
+
+    data = Simple1v1Dataset(data_path)
+    gen = torch.Generator().manual_seed(42)
+    trainingData, validationData = torch.utils.data.random_split(data, [0.8, 0.2], generator=gen)
+    trainingLoader = DataLoader(trainingData, batch_size=1, shuffle=False)
+
+    #for e in range(epochs):
+    for game in trainingLoader:
+        batches = get_batches(game, batch_size=batch_size)
+        for batch in batches:
+            print(batch[:, 0])
 
 def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger):
     agent.net.train()
