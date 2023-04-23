@@ -16,6 +16,6 @@ class Simple1v1Dataset(Dataset):
         file = open(path, "rb")
         item = pickle.load(file)
         file.close()
-        for i in item:
-            i[0] = np.array(i[0])
+        #for i in item:
+            #i[0] = np.array(i[0])
         return item
