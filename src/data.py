@@ -6,7 +6,8 @@ import pickle
 class Simple1v1Dataset(Dataset):
     def __init__(self, data_path):
         self.path = data_path
-        self.game_paths = os.listdir(data_path)
+        data = os.listdir(data_path)
+        self.game_paths = [game for game in data if ".pickle" in game]
 
     def __len__(self):
         return len(self.game_paths)

@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import itertools
 from transformers import DecisionTransformerModel, DecisionTransformerConfig
-from src.functions import sample_with_order
+from functions import sample_with_order
 
 
 class DecisionTransformer_Agent:
@@ -30,7 +30,7 @@ class DecisionTransformer_Agent:
 
         self.exploration_rate = 1
         self.exploration_rate_decay = 0.999975
-        self.exploration_rate_min = 0.0001
+        self.exploration_rate_min = 0
         self.curr_step = 0
 
         """

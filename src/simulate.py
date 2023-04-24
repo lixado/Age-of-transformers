@@ -30,7 +30,7 @@ def simulate(config: dict, agent, gym: gym.Env, logger, model_path=None):
             if model_path != None:
                 actionIndex, q_values = agent.act(observation)
             else:
-                actionIndex, q_values = random.randint(0, len(gym.action_space)-1), []
+                actionIndex, q_values = random.randint(0, len(gym.action_space)-1), [0] * len(gym.action_space)
 
             # Act
             next_observation, reward, done, truncated, info = gym.step(actionIndex)

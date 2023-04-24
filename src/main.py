@@ -95,6 +95,6 @@ if __name__ == "__main__":
         gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
         logger = Logger(workingDir)
-        simulate(config, ddqn_agent, gym, logger, modelPath)
+        simulate(config, ddqn_agent, gym, logger)
     else:
         print("Mode not avaliable")
