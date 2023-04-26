@@ -11,7 +11,7 @@ class RepeatFrame(gym.Wrapper):
 
     def step(self, action):
         """Repeat action, and sum reward"""
-        total_reward = np.array([0.0, 0.0])
+        total_reward = 0.0
         done = False
         for _ in range(self._skip):
             # Accumulate reward and repeat the same action
@@ -32,11 +32,11 @@ class SkipFrame(gym.Wrapper):
 
     def step(self, action):
         """Repeat action, and sum reward"""
-        total_reward = np.array([0.0, 0.0])
+        total_reward = 0.0
         done = False
         for _ in range(self._skip):
             # Accumulate reward and repeat the same action
-            obs, reward, done, truncated, info = self.env.step([-1 for _ in range(len(action))]) # do nothing for skip frames
+            obs, reward, done, truncated, info = self.env.step(-1) # do nothing for skip frames
             total_reward += reward
             if done or truncated:
                 break

@@ -52,7 +52,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = Full1v1Gym(config["stepsMax"], STATE_SHAPE)
+    gym = Simple1v1Gym(config["stepsMax"], STATE_SHAPE)
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
@@ -67,20 +67,15 @@ if __name__ == "__main__":
         Start agent
     """
     state_sizes = (FRAME_STACK, ) + STATE_SHAPE # number of image stacked
-    agents = []
-    for _ in range(2):
-        agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space))
-        agent.device = device
-        agents.append(agent)
-
+    agent = DDQN_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space))
+    agent.device = device
 
     """
         Training loop
     """
     if mode == 0:
         logger = Logger(workingDir)
-        train(config, agents, gym, logger)
-
+        train(config, agent, gym, logger)
     elif mode == 1:
         # get latest model path
         results = os.path.join(workingDir, "results")
