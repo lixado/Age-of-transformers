@@ -29,7 +29,7 @@ class DecisionTransformer_Agent:
 
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.999975
+        self.exploration_rate_decay = 0.99975
         self.exploration_rate_min = 0.0001
         self.curr_step = 0
 
@@ -70,7 +70,7 @@ class DecisionTransformer_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.0025
+        self.learning_rate = 0.025
         self.learning_rate_decay = 0.999985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
@@ -181,7 +181,7 @@ class DecisionTransformer_Agent:
         for _ in range(j):
             s, a, r, t = self.recall()
 
-            attention_mask = torch.ones((s.shape[0], s.shape[1]-1), device=self.device, dtype=torch.float32)
+            attention_mask = torch.ones((s.shape[0], s.shape[1]), device=self.device, dtype=torch.float32)
 
             s_to_predict = s[:,:-1,:]
             a_to_predict = a[:,:-1,:]
@@ -195,18 +195,23 @@ class DecisionTransformer_Agent:
             # [R1, S1, A1, R2, S2, A2...]
 
 
-            state_preds, action_preds, return_preds = self.net(states=s_to_predict,
-                    actions=a_to_predict,
+            state_preds, action_preds, return_preds = self.net(states=s,
+                    actions=a,
                     rewards=None, #not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
-                    returns_to_go=r_to_predict,
-                    timesteps=t_to_predict,
+                    returns_to_go=r,
+                    timesteps=t,
                     attention_mask=attention_mask,
                     return_dict=False)
             
             #print(f"returns_preds {return_preds[:, -1,:].shape}, r {r[:, -1,:].shape}")
 
             
-            loss = self.loss_fn(return_preds[:,-1,:], r[:,-1,:]) + self.loss_fn(state_preds[:, -1,:], s[:, -1,:]) + self.loss_fn(torch.argmax(action_preds[:,-1,:],dim=1), r[:, -1,:].squeeze())
+            #loss = self.loss_fn(return_preds[:,-1,:], r[:,-1,:]) + self.loss_fn(state_preds[:, -1,:], s[:, -1,:]) + self.loss_fn(torch.argmax(action_preds[:,-1,:],dim=1), r[:, -1,:].squeeze())
+            
+            print(f"Q for action done,", action_preds[torch.argmax(action_preds,dim=2)].shape)
+            print(f"reward", r.shape)
+            
+            #loss = self.loss_fn(, r[:, -1,:].squeeze())
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
