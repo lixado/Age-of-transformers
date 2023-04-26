@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import itertools
 from transformers import DecisionTransformerModel, DecisionTransformerConfig
-from src.functions import sample_with_order
+from functions import sample_with_order
 
 
 class DecisionTransformer_Agent:

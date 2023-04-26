@@ -136,4 +136,5 @@ dmypy.json
 .idea
 data/
 ddqn_data/
+data_mix/
 *.zip
