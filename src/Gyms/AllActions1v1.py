@@ -1,12 +1,12 @@
 import random
 
 import cv2
-import gym
 import numpy as np
 from constants import inv_action_space
 from DeepRTS import Engine, Constants
-from gym.spaces import Box
-from src.functions import PlayerState
+
+from Gyms.CustomGym import CustomGym
+from functions import PlayerState
 
 MAP = "15x15-2p-ffa-Cresal.json"
 
@@ -21,19 +21,9 @@ def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
     return 0
 
 
-class AllActions1v1(gym.Env):
-    def __init__(self, mode, max_episode_steps):
-        self.max_episode_steps = max_episode_steps
-        self.elapsed_steps = None
+class AllActions1v1(CustomGym):
+    def __init__(self, max_episode_steps, shape):
 
-        tilesize = 32
-        mapSize = MAP.split("-")[0].split("x")
-        self.initial_shape = (int(mapSize[0])*tilesize, int(mapSize[1])*tilesize, 3) # W, H, C
-        print("Initial_shape: ", self.initial_shape)
-        
-        """
-            Start engine
-        """
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
         engineConfig.set_instant_building(True)
@@ -43,15 +33,11 @@ class AllActions1v1(gym.Env):
         engineConfig.set_start_lumber(1000)
         engineConfig.set_start_gold(1000)
         engineConfig.set_start_stone(1000)
-        self.game: Engine.Game = Engine.Game(MAP, engineConfig)
-        self.game.set_max_fps(0)  # 0 = unlimited
-        # add 2 players
-        self.player0: Engine.Player = self.game.add_player()
-        self.player1: Engine.Player = self.game.add_player()
+
         self.action_space = [i for i in range(1, 17)]  # 1-16, all actions, (see deep-rts/bindings/Constants.cpp)
-        self.mode = mode
-        self.game.start()
-        self.observation_space = Box(low=0, high=255, shape=self.initial_shape, dtype=np.uint8)
+
+        super().__init__(max_episode_steps, shape, MAP, engineConfig)
+
 
     def step(self, actionIndex):
         self.elapsed_steps += 1
@@ -98,22 +84,3 @@ class AllActions1v1(gym.Env):
 
         image = cv2.hconcat([dashboard, image])
         return image
-
-
-    def _get_obs(self):
-        return cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
-
-
-    def _get_info(self):
-        return {}
-
-
-    def reset(self):
-        self.elapsed_steps = 0
-        self.game.reset()
-
-        return self._get_obs(), self._get_info()
-    
-
-    def close(self):
-        self.game.stop()

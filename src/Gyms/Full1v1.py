@@ -3,6 +3,7 @@ import numpy as np
 from constants import inv_action_space
 from DeepRTS import Engine, Constants
 from functions import PlayerState
+from random import randint
 
 from Gyms.CustomGym import CustomGym
 
@@ -17,19 +18,7 @@ def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
         return 1000/ticks
     return -1
 
-def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
-    stoneReward = 0
-    goldReward = 0
-    lumberReward = 0
-    if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
-        stoneReward = 1000/ticks
-    if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
-        goldReward = 1000/ticks
-    if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
-        lumberReward = 1000/ticks
-    return stoneReward + goldReward + lumberReward
-
-class Simple1v1Gym(CustomGym):
+class Full1v1Gym(CustomGym):
     def __init__(self, max_episode_steps, shape):
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
@@ -41,21 +30,31 @@ class Simple1v1Gym(CustomGym):
         super().__init__(max_episode_steps, shape, MAP, engineConfig)
 
 
-    def step(self, actionIndex):
+    def step(self, actionIndices):
         self.elapsed_steps += 1
-        self.action = actionIndex
+        self.action1 = actionIndices[0]
+        self.action2 = actionIndices[1]
 
         previousPlayer0 = PlayerState(self.player0)
+        previousPlayer1 = PlayerState(self.player1)
 
-        self.player0.do_action(self.action_space[actionIndex])
-        self.player1.do_action(16) # do nothing
+        if randint(0, 1) == 0:
+            self.player1.do_action(self.action_space[actionIndices[1]])
+            self.player0.do_action(self.action_space[actionIndices[0]])
+        else:
+            self.player0.do_action(self.action_space[actionIndices[0]])
+            self.player1.do_action(self.action_space[actionIndices[1]])
+
         self.game.update()
 
         # reward
-        self.reward = conditional_reward(self.player0, previousPlayer0, self.player1, self.elapsed_steps)
+        self.rewards = np.array([
+            conditional_reward(self.player0, previousPlayer0, self.player1, self.elapsed_steps),
+            conditional_reward(self.player1, previousPlayer1, self.player0, self.elapsed_steps),
+        ])
 
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
-        return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
+        return self._get_obs(), self.rewards, self.game.is_terminal(), truncated, self._get_info()
 
 
     def render(self, q_values):
@@ -84,7 +83,7 @@ class Simple1v1Gym(CustomGym):
                  f"Q_None: {q_values[5]}",
                  f"player0.statistic_damage_done: {self.player0.statistic_damage_done}",
                  f"Reward: {self.reward}",
-                 f"Action: {inv_action_space[self.action_space[self.action]]}"]
+                 f"Action: {inv_action_space[self.action_space[self.action1]]}"]
 
         for text in texts[::-1]:
             dashboard = cv2.putText(dashboard, text, org, font, fontScale, color, thickness, cv2.LINE_AA, False)
