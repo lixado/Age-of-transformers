@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import itertools
 from transformers import DecisionTransformerModel, DecisionTransformerConfig
-from functions import sample_with_order
+from src.functions import sample_with_order
 
 
 class DecisionTransformer_Agent:
@@ -80,6 +80,9 @@ class DecisionTransformer_Agent:
         assert( self.burnin >  self.batch_size)
         self.learn_every = 1  # no. of experiences between updates to Q_online
         self.sync_every = 1e6  # no. of experiences between Q_target & Q_online sync
+
+        self.attention_mask = torch.ones((self.batch_size, 1), device=self.device, dtype=torch.float32)  # if None default is full attention for all nodes (b, t)
+
 
     def act(self, state, actionIndex, timestep, reward):
         """
@@ -224,7 +227,7 @@ class DecisionTransformer_Agent:
            rewards=None, # not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
            returns_to_go=rewards_to_go,
            timesteps=timesteps,
-           attention_mask=attention_mask,
+           attention_mask=self.attention_mask,
            return_dict=False)
 
         # remove batch dim
@@ -240,6 +243,34 @@ class DecisionTransformer_Agent:
         self.optimizer.step()
         return loss.detach().cpu().item(), 0
 
+    # def train(self, observations, actions, timesteps, rewards):
+    #     observations = observations.float().reshape(self.batch_size, 1, self.state_dim_flatten).to(self.device)
+    #
+    #     actionArr = torch.zeros((self.batch_size, self.action_space_dim))
+    #     for i in range(self.batch_size):
+    #         ind = actions[i]
+    #         actionArr[i][ind] = 1
+    #
+    #     actions = actionArr.reshape(self.batch_size, 1, self.action_space_dim).to(self.device)
+    #
+    #     rewards_to_go_cumsum = torch.cumsum(rewards, dim=0)
+    #     rewards_to_go = (rewards_to_go_cumsum[-1] - rewards_to_go_cumsum).float().reshape(self.batch_size, 1, 1).to(self.device)
+    #     timesteps = timesteps.reshape(self.batch_size, 1).to(self.device)
+    #
+    #     observation_preds, action_preds, reward_preds = self.net(states=observations,
+    #        actions=actions,
+    #        returns_to_go=rewards_to_go,
+    #        timesteps=timesteps,
+    #        attention_mask=self.attention_mask,
+    #        return_dict=False)
+    #
+    #     loss = self.loss_fn(observation_preds, action_preds, reward_preds,
+    #                         observations, actions, rewards)
+    #
+    #     self.optimizer.zero_grad()
+    #     loss.backward()
+    #     self.optimizer.step()
+    #     return loss.detach().cpu().item(), 0
 
     def save(self, save_dir):
         """
