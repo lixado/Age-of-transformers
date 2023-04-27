@@ -7,7 +7,7 @@ from functions import GetConfigDict
 from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
 from gym.wrappers import FrameStack, TransformObservation
-
+from Gyms.HarvestGym import HarvestGym
 from Gyms.Full1v1 import Full1v1Gym
 from train import train
 from eval import evaluate
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = Simple1v1Gym(config["stepsMax"], STATE_SHAPE)
+    gym = HarvestGym(config["stepsMax"], STATE_SHAPE)
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
