@@ -19,7 +19,8 @@ def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
         goldReward = 1000/ticks
     if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
         lumberReward = 1000/ticks
-    return stoneReward + goldReward + lumberReward
+    carryWeight = player0.stone + player0.gold + player0.lumber
+    return stoneReward + goldReward + lumberReward - carryWeight / ticks
 
 
 class HarvestGym(CustomGym):
