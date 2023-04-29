@@ -27,6 +27,8 @@ def train(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
             # AI choose action
             actionIndex, q_values = agent.act(observation)
             
+            gym.save_player_state()
+
             # Act
             next_observation, reward, done, truncated, info = gym.step(actionIndex)
 

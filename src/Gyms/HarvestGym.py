@@ -10,7 +10,7 @@ MAP = "15x15-2p-ffa-Cresal.json"
 
 
 def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
-    reward = -ticks/10000
+    reward = -ticks/2000
     if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
         reward += 10
     if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
@@ -18,9 +18,11 @@ def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
     if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
         reward += 10
     if player0.num_town_hall > previousPlayer0.num_town_hall:
-        reward += 100
+        reward += 10
     if player0.num_peasant > previousPlayer0.num_peasant:
         reward += 10
+    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done:
+        reward -= 10
     return reward
 
 
@@ -40,17 +42,19 @@ class HarvestGym(CustomGym):
 
         super().__init__(max_episode_steps, shape, MAP, engineConfig)
 
+        self.previousPlayer0 = PlayerState(self.player0)
+
     def step(self, actionIndex):
         self.elapsed_steps += 1
         self.action = actionIndex
 
-        previousPlayer0 = PlayerState(self.player0)
+        #previousPlayer0 = PlayerState(self.player0)
 
         self.player0.do_action(self.action_space[actionIndex])
 
         self.game.update()
 
-        self.reward = harvest_reward(self.player0, previousPlayer0, self.elapsed_steps)
+        self.reward = harvest_reward(self.player0, self.previousPlayer0, self.elapsed_steps)
 
         truncated = self.elapsed_steps > self.max_episode_steps  # useless value needs to be here for frame stack wrapper
         return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
@@ -91,3 +95,6 @@ class HarvestGym(CustomGym):
             org = (org[0], org[1] - spacing)
         image = cv2.hconcat([dashboard, image])
         return image
+
+    def save_player_state(self):
+        self.previousPlayer0 = PlayerState(self.player0)
