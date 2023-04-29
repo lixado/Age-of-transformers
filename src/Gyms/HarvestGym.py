@@ -4,23 +4,24 @@ from constants import inv_action_space
 from DeepRTS import Engine, Constants
 
 from Gyms.CustomGym import CustomGym
-from functions import PlayerState
+from src.functions import PlayerState
 
 MAP = "15x15-2p-ffa-Cresal.json"
 
 
 def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
-    stoneReward = 0
-    goldReward = 0
-    lumberReward = 0
+    reward = -ticks/10000
     if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
-        stoneReward = 1000/ticks
+        reward += 10
     if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
-        goldReward = 1000/ticks
+        reward += 10
     if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
-        lumberReward = 1000/ticks
-    carryWeight = player0.stone + player0.gold + player0.lumber
-    return stoneReward + goldReward + lumberReward - carryWeight / ticks
+        reward += 10
+    if player0.num_town_hall > previousPlayer0.num_town_hall:
+        reward += 100
+    if player0.num_peasant > previousPlayer0.num_peasant:
+        reward += 10
+    return reward
 
 
 class HarvestGym(CustomGym):

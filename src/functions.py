@@ -23,7 +23,8 @@ class PlayerState():
         self.statistic_gathered_lumber = player.statistic_gathered_lumber
         self.statistic_gathered_stone = player.statistic_gathered_stone
         self.statistic_units_created = player.statistic_units_created
-
+        self.num_town_hall = player.num_town_hall
+        self.num_peasant = player.num_peasant
     def evaluate_player_state(self):
         return self.player_state
 
