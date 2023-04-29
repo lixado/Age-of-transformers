@@ -4,7 +4,7 @@ from constants import inv_action_space
 from DeepRTS import Engine, Constants
 
 from Gyms.CustomGym import CustomGym
-from src.functions import PlayerState
+from functions import PlayerState
 
 MAP = "15x15-2p-ffa-Cresal.json"
 
