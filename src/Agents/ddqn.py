@@ -17,13 +17,13 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.99999
+        self.exploration_rate_decay = 0.999999
         self.exploration_rate_min = 0.001
         self.curr_step = 0
         """
             Memory
         """
-        self.deque_size = 100000
+        self.deque_size = 120000
         arr = np.zeros(state_dim)
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")

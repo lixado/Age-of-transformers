@@ -2,7 +2,7 @@
     "epochs": 10000,
     "batchSize": 8,
     "stepsMax_comment": "stepstMax should be of the form SKIP_FRAME * 2^x ",
-    "stepsMax": 500,
+    "stepsMax": 2000,
     "recordEvery": 100,
     "mode": 0
 }

@@ -8,6 +8,8 @@ from constants import inv_action_space
 from Agents.decisition_transformer import DecisionTransformer_Agent
 from Agents.ddqn import DDQN_Agent
 from gym.wrappers import TransformObservation, FrameStack
+from Gyms.HarvestGym import HarvestGym
+from Gyms.Full1v1 import Full1v1Gym
 from train import train, train_transformer
 from eval import evaluate
 from playground import playground
@@ -20,7 +22,7 @@ FRAME_STACK = 3
 SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
 
-#torch.set_float32_matmul_precision('high')
+torch.set_float32_matmul_precision('high')
 
 if __name__ == "__main__":
     workingDir = os.getcwd()
@@ -51,7 +53,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = Simple1v1Gym(0, config["stepsMax"])
+    gym = HarvestGym(config["stepsMax"], STATE_SHAPE)
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
@@ -59,7 +61,7 @@ if __name__ == "__main__":
         gym = SkipFrame(gym, SKIP_FRAME)
     if REPEAT_FRAME != 0:
         gym = RepeatFrame(gym, REPEAT_FRAME)
-    gym = TransformObservation(gym, f=lambda x: x / 13.)  # normalize the values [0, 1] #MAX VALUE=20
+    gym = TransformObservation(gym, f=lambda x: x / 20.)  # normalize the values [0, 1] #MAX VALUE=20
 
     """
         Start agent
@@ -86,6 +88,7 @@ if __name__ == "__main__":
         evaluate(ddqn_agent, gym, modelPath)
     elif mode == 2:
         playground(gym)
+
     elif mode == 3:
         results = os.path.join(workingDir, "results")
         folders = os.listdir(results)

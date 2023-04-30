@@ -1,4 +1,3 @@
-from collections import deque
 import gym
 import os
 import torch
@@ -10,7 +9,6 @@ from Agents.decisition_transformer import DecisionTransformer_Agent
 from logger import Logger
 from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 
-
 def get_batches(data: list, batch_size):
     while len(data) % batch_size != 0:
         data.append(data[-1])
@@ -20,33 +18,6 @@ def get_batches(data: list, batch_size):
     timesteps = [[element[2].numpy() for element in row] for row in batches]
     rewards = [[element[3].numpy() for element in row] for row in batches]
     return observations, actions, timesteps, rewards
-
-
-# def get_batches(data: list, batch_size):
-#     while len(data) % batch_size != 0:
-#         data.append(data[-1])
-#     batches = [data[i * batch_size: (i + 1) * batch_size] for i in range(int(len(data) / batch_size))]
-#     observations = [torch.cat([element[0] for element in row]) for row in batches]
-#     actions = [torch.cat([element[1] for element in row]) for row in batches]
-#     timesteps = [torch.cat([element[2] for element in row]) for row in batches]
-#     rewards = [torch.cat([element[3] for element in row]) for row in batches]
-#     return observations, actions, timesteps, rewards
-
-# def get_batches(data: list, batch_size):
-#     num_samples = len(data)
-#     num_batches = num_samples // batch_size
-#
-#     if num_batches * batch_size < num_samples:
-#         num_batches += 1
-#         num_padding = num_batches * batch_size - num_samples
-#         for i in range(num_padding):
-#             data.append(data[-1])
-#
-#     batches = [data[i * batch_size: (i + 1) * batch_size] for i in range(num_batches)]
-#     observations, actions, timesteps, rewards = zip(
-#         *[(torch.cat([element[j] for element in row]) for j in range(4)) for row in batches])
-#
-#     return list(observations), list(actions), list(timesteps), list(rewards)
 
 def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger, data_path):
     agent.net.train()
@@ -71,11 +42,6 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
                 timesteps = np.array(batches[2][i])
                 rewards = np.array(batches[3][i])
 
-                # observations = batches[0][i]
-                # actions = batches[1][i]
-                # timesteps = batches[2][i]
-                # rewards = batches[3][i]
-
                 loss, q = agent.train(observations, actions, timesteps, rewards)
 
         observation, info = gym.reset()
@@ -94,6 +60,8 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
 
             # AI choose action
             actionIndex, q_values = agent.act(observation, actionIndex, ticks, reward)
+
+            gym.save_player_state()
 
             # Act
             next_observation, reward, done, truncated, info = gym.step(actionIndex)
@@ -119,7 +87,6 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
     NotifyDiscord(f"Training finished. Epochs: {epochs} Name: {save_dir}")
     gym.close()
 
-
 def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger):
     agent.net.train()
     save_dir = logger.getSaveFolderPath()
@@ -144,6 +111,8 @@ def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: 
 
             # AI choose action
             actionIndex, q_values = agent.act(observation, actionIndex, ticks, reward)
+
+            gym.save_player_state()
 
             # Act
             next_observation, reward, done, truncated, info = gym.step(actionIndex)
@@ -175,3 +144,4 @@ def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: 
     agent.save(save_dir)
     NotifyDiscord(f"Training finished. Epochs: {epochs} Name: {save_dir}")
     gym.close()
+

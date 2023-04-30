@@ -1,8 +1,4 @@
-from collections import deque
 import gym
-from gym.wrappers.frame_stack import LazyFrames
-from gym.spaces import Box
-import numpy as np
 
 
 class RepeatFrame(gym.Wrapper):
@@ -47,4 +43,5 @@ class SkipFrame(gym.Wrapper):
                 break
 
         obs, reward, done, truncated, info = self.env.step(action) # do action
-        return obs, total_reward+reward, done, truncated, info
+        self.reward = total_reward+reward
+        return obs, self.reward, done, truncated, info

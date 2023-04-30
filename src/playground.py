@@ -16,7 +16,7 @@ def playground(gym: gym.Env):
     """
     pygame.init()
     pygame.display.set_caption('DeepRTS v3.0') # set the pygame window name
-    size = (gym.initial_shape[0], gym.initial_shape[1])
+    size = (gym.render_shape[0], gym.render_shape[1])
     canvas = pygame.display.set_mode(size) # pygame.FULLSCREEN
 
     """
