@@ -15,9 +15,9 @@ class CustomGym(gym.Env):
         """
         self.game: Engine.Game = Engine.Game(game_map, config)
         self.game.set_max_fps(0)  # 0 = unlimited
-        # add 2 players
+
+        # add 1 player (for pvp add 1 player in the sub-gym environment, see Simple1v1.py)
         self.player0: Engine.Player = self.game.add_player()
-        self.player1: Engine.Player = self.game.add_player()
 
         self.game.start()
         self.observation_space = Box(low=-1., high=20., shape=self.initial_shape, dtype=np.uint8)

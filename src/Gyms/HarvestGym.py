@@ -6,7 +6,7 @@ from DeepRTS import Engine, Constants
 from Gyms.CustomGym import CustomGym
 from functions import PlayerState
 
-MAP = "15x15-2p-ffa-Cresal.json"
+MAP = "10x10-2p-ffa-Eblil.json"
 
 
 def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
@@ -21,8 +21,6 @@ def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
         reward += 10
     if player0.num_peasant > previousPlayer0.num_peasant:
         reward += 10
-    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done:
-        reward -= 10
     return reward
 
 
@@ -75,9 +73,9 @@ class HarvestGym(CustomGym):
         thickness = 1
 
         texts = [f"Update Nr.: {self.elapsed_steps}",
-                 f"player0.statistic_gathered_stone: {self.player0.statistic_gathered_stone}",
-                 f"player0.statistic_gathered_gold: {self.player0.statistic_gathered_gold}",
-                 f"player0.statistic_gathered_lumber: {self.player0.statistic_gathered_lumber}",
+                 f"player0.gathered_stone: {self.player0.statistic_gathered_stone}",
+                 f"player0.gathered_gold: {self.player0.statistic_gathered_gold}",
+                 f"player0.gathered_lumber: {self.player0.statistic_gathered_lumber}",
                  f"Q_values:",
                  f"Q_Prev_Unit: {q_values[0]}",
                  f"Q_Next_Unit: {q_values[1]}",
@@ -85,6 +83,7 @@ class HarvestGym(CustomGym):
                  f"Q_Right: {q_values[3]}",
                  f"Q_Up: {q_values[4]}",
                  f"Q_Down: {q_values[5]}",
+                 f"Q_Attack: {q_values[10]}",
                  f"Q_Harvest: {q_values[11]}",
                  f"Q_Build0: {q_values[12]}",
                  f"Reward: {self.reward}",

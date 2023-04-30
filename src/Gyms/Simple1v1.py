@@ -40,6 +40,8 @@ class Simple1v1Gym(CustomGym):
 
         super().__init__(max_episode_steps, shape, MAP, engineConfig)
 
+        self.player1: Engine.Player = self.game.add_player()
+
 
     def step(self, actionIndex):
         self.elapsed_steps += 1

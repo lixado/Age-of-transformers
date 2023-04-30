@@ -92,7 +92,7 @@ def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
                 play = False
                 break
 
-            gym.player1.do_action(action1)
+            #gym.player1.do_action(action1)
 
             if done:
                 break
