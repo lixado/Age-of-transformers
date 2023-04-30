@@ -42,19 +42,20 @@ class Simple1v1Gym(CustomGym):
 
         self.player1: Engine.Player = self.game.add_player()
 
+        self.previousPlayer0 = PlayerState(self.player0)
+
 
     def step(self, actionIndex):
         self.elapsed_steps += 1
         self.action = actionIndex
 
-        previousPlayer0 = PlayerState(self.player0)
 
         self.player0.do_action(self.action_space[actionIndex])
         self.player1.do_action(16) # do nothing
         self.game.update()
 
         # reward
-        self.reward = conditional_reward(self.player0, previousPlayer0, self.player1, self.elapsed_steps)
+        self.reward = conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
 
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
         return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
@@ -94,3 +95,6 @@ class Simple1v1Gym(CustomGym):
 
         image = cv2.hconcat([dashboard, image])
         return image
+
+    def save_player_state(self):
+        self.previousPlayer0 = PlayerState(self.player0)

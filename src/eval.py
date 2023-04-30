@@ -73,8 +73,10 @@ def evaluate(agent: DDQN_Agent, gym: gym.Env, modelPath):
             j += 1
             #Actions
             action0, q_values = agent.act(state)
-            state, reward, done, _, _ = gym.step(action0)
 
+            gym.save_player_state()
+
+            state, reward, done, _, _ = gym.step(action0)
 
             image = gym.render(q_values)
 

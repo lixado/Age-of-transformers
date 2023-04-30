@@ -32,6 +32,8 @@ def simulate(config: dict, agent, gym: gym.Env, logger, model_path=None):
             else:
                 actionIndex, q_values = random.randint(0, len(gym.action_space)-1), [0] * len(gym.action_space)
 
+            gym.save_player_state()
+
             # Act
             next_observation, reward, done, truncated, info = gym.step(actionIndex)
 
@@ -42,7 +44,7 @@ def simulate(config: dict, agent, gym: gym.Env, logger, model_path=None):
             logger.log_step(reward, 0, 0)
 
             # save data
-            memory.append([observation[-1], actionIndex, ticks, reward])
+            memory.append([observation[0], actionIndex, ticks, reward])
             # Update state
             observation = next_observation
 

@@ -45,7 +45,7 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
                 loss, q = agent.train(observations, actions, timesteps, rewards)
 
         observation, info = gym.reset()
-        ticks = 0
+        ticks = 1
         record = (e % record_epochs == 0) or (e == epochs - 1)  # last part to always record last
         if record:
             print("Recording this epoch")
@@ -53,18 +53,25 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
         truncated = False
 
         actionIndex = -1  # first acction is default Do nothing
-        reward = 0
-
+        reward = 10
+        agent.states_sequence = [observation]
+        agent.rewards_sequence = [reward]
+        agent.timesteps_sequence = [ticks]
+        actionArr = np.zeros(agent.action_space_dim)
+        actionArr[actionIndex] = 1
+        agent.actions_sequence = [actionArr]
         while not done and not truncated:
             ticks += 1
 
             # AI choose action
-            actionIndex, q_values = agent.act(observation, actionIndex, ticks, reward)
+            actionIndex, q_values = agent.act()
 
             gym.save_player_state()
 
             # Act
             next_observation, reward, done, truncated, info = gym.step(actionIndex)
+
+            agent.append(next_observation, actionIndex, ticks, reward)
 
             # Record game
             if record:

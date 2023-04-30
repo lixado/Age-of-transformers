@@ -22,7 +22,7 @@ FRAME_STACK = 3
 SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
 
-torch.set_float32_matmul_precision('high')
+#torch.set_float32_matmul_precision('high')
 
 if __name__ == "__main__":
     workingDir = os.getcwd()
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         Start agent
     """
     state_sizes = STATE_SHAPE # number of image stacked
-    agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=(SKIP_FRAME+1) + int(config["stepsMax"]/(SKIP_FRAME+1)))
+    agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=(SKIP_FRAME+1) + int(config["stepsMax"]/(SKIP_FRAME+1)), batch_size=config["batchSize"])
     ddqn_agent = DDQN_Agent(state_dim=(FRAME_STACK,) + STATE_SHAPE, action_space_dim=len(gym.action_space))
 
     """
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     """
     if mode == 0:
         logger = Logger(workingDir)
-        data_path = os.path.join(workingDir, "data")
+        data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
         #train(config, agent, gym, logger)
         train_transformer(config, agent, gym, logger, data_path)
     elif mode == 1:
@@ -85,6 +85,7 @@ if __name__ == "__main__":
         paths = [os.path.join(results, basename) for basename in folders]
         latestFolder = paths[-1]
         modelPath = os.path.join(latestFolder, "model.chkpt")
+        gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
         evaluate(ddqn_agent, gym, modelPath)
     elif mode == 2:
         playground(gym)
@@ -98,6 +99,6 @@ if __name__ == "__main__":
         gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
         logger = Logger(workingDir)
-        simulate(config, ddqn_agent, gym, logger)
+        simulate(config, ddqn_agent, gym, logger, modelPath)
     else:
         print("Mode not avaliable")

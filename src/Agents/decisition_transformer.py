@@ -11,7 +11,7 @@ from functions import sample_with_order
 
 
 class DecisionTransformer_Agent:
-    def __init__(self, state_dim, action_space_dim, device, max_steps):
+    def __init__(self, state_dim, action_space_dim, device, max_steps, batch_size):
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
         self.device = device
@@ -25,7 +25,7 @@ class DecisionTransformer_Agent:
         print("max_ep_length: ", self.max_ep_length)
         config = DecisionTransformerConfig(self.state_dim_flatten, action_space_dim, max_ep_len=self.max_ep_length, n_positions=self.n_positions, action_tanh=True)
         self.net = DecisionTransformerModel(config).to(device=self.device)
-        self.batch_size = 8
+        self.batch_size = batch_size
 
 
         self.exploration_rate = 1
@@ -84,52 +84,34 @@ class DecisionTransformer_Agent:
         self.attention_mask = torch.ones((self.batch_size, 1), device=self.device, dtype=torch.float32)  # if None default is full attention for all nodes (b, t)
 
 
-    def act(self, state, actionIndex, timestep, reward):
+    def act(self):
         """
         """
 
-        # save to sequences
-        try:
-            self.states_sequence.append(state)
-            # save action tensor as [0,0,1,0,0,0] depending on which action
-            actionArr = np.zeros(self.action_space_dim)
-            actionArr[actionIndex] = 1
-            self.actions_sequence.append(actionArr)
-            self.timesteps_sequence.append(timestep)
-            self.rewards_sequence.append(reward)
-        except:
-            print("Need more memory or decrease sequence size in agent.")
-            quit()
+        with torch.no_grad():
+            sequence_length = len(self.states_sequence)
+
+            #target_return = torch.tensor(1, device=self.device, dtype=torch.float32).unsqueeze(0) # create extra dim for batch
+            states = torch.tensor(np.array(self.states_sequence), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.state_dim_flatten) # prev states
+            actions = torch.tensor(np.array(self.actions_sequence), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.action_space_dim) # create extra dim for batch
+            rewards = torch.tensor(self.rewards_sequence, device=self.device, dtype=torch.float32).reshape(1, sequence_length, 1) # create extra dim for batch # not sure what the other is
+            timesteps = torch.tensor(self.timesteps_sequence, device=self.device, dtype=torch.long).reshape(1, sequence_length) # create extra dim for batch
+            attention_mask = torch.ones((1, sequence_length), device=self.device, dtype=torch.float32) # if None default is full attention for all nodes (b, t)
 
 
-        pred_arr = [None for _ in range(self.action_space_dim)]
-        if (random.random() < self.exploration_rate): # EXPLORE
-            actionIdx = random.randint(0, self.action_space_dim-1)
-        else: # EXPLOIT
-            with torch.no_grad():
-                sequence_length = len(self.states_sequence)
+            state_preds, action_preds, return_preds = self.net(states=states,
+                actions=actions,
+                rewards=None, #not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
+                returns_to_go=rewards,
+                timesteps=timesteps,
+                attention_mask=attention_mask,
+                return_dict=False)
 
-                #target_return = torch.tensor(1, device=self.device, dtype=torch.float32).unsqueeze(0) # create extra dim for batch
-                states = torch.tensor(np.array(self.states_sequence), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.state_dim_flatten) # prev states
-                actions = torch.tensor(np.array(self.actions_sequence), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.action_space_dim) # create extra dim for batch
-                rewards = torch.tensor(self.rewards_sequence, device=self.device, dtype=torch.float32).reshape(1, sequence_length, 1) # create extra dim for batch # not sure what the other is
-                timesteps = torch.tensor(self.timesteps_sequence, device=self.device, dtype=torch.long).reshape(1, sequence_length) # create extra dim for batch
-                attention_mask = torch.ones((1, sequence_length), device=self.device, dtype=torch.float32) # if None default is full attention for all nodes (b, t)
+            # remove batch dim
+            state_preds, action_preds, return_preds = torch.squeeze(state_preds, 0), torch.squeeze(action_preds, 0), torch.squeeze(return_preds, 0)
 
-
-                state_preds, action_preds, return_preds = self.net(states=states,
-                    actions=actions,
-                    rewards=None, #not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
-                    returns_to_go=rewards,
-                    timesteps=timesteps,
-                    attention_mask=attention_mask,
-                    return_dict=False)
-
-                # remove batch dim  
-                state_preds, action_preds, return_preds = torch.squeeze(state_preds, 0), torch.squeeze(action_preds, 0), torch.squeeze(return_preds, 0)
-
-                actionIdx = torch.argmax(action_preds[-1]).item()
-                pred_arr = torch.squeeze(action_preds[-1]).detach().cpu().numpy()
+            actionIdx = torch.argmax(action_preds[-1]).item()
+            pred_arr = torch.squeeze(action_preds[-1]).detach().cpu().numpy()
 
         # decrease exploration_rate
         self.exploration_rate *= self.exploration_rate_decay
@@ -139,7 +121,22 @@ class DecisionTransformer_Agent:
         self.curr_step += 1
 
         return actionIdx, pred_arr
-    
+
+    def append(self, state, actionIndex, timestep, reward):
+
+        # save to sequences
+        try:
+            self.states_sequence.append(state)
+            # save action tensor as [0,0,1,0,0,0] depending on which action
+            actionArr = np.zeros(self.action_space_dim)
+            actionArr[actionIndex] = 1
+            self.actions_sequence.append(actionArr)
+            self.timesteps_sequence.append(timestep)
+            self.rewards_sequence.append(self.rewards_sequence[-1] - reward)
+        except:
+            print("Need more memory or decrease sequence size in agent.")
+            quit()
+
     def recall(self):
         stateBatch = []
         actionBatch = []
@@ -192,7 +189,7 @@ class DecisionTransformer_Agent:
                     rewards=None, #not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
                     returns_to_go=r,
                     timesteps=t,
-                    attention_mask=attention_mask,
+                    attention_mask=self.attention_mask,
                     return_dict=False)
             
             loss = self.loss_fn(return_preds, r) + self.loss_fn(state_preds, s)
