@@ -1,6 +1,7 @@
 import os
 import sys
 import torch
+from Gyms.Random1v1 import Random1v1Gym
 from Gyms.Simple1v1 import Simple1v1Gym
 from logger import Logger
 from functions import GetConfigDict
@@ -50,7 +51,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = Simple1v1Gym(0, config["stepsMax"])
+    gym = Random1v1Gym(0, config["stepsMax"])
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
