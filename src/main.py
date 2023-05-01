@@ -75,7 +75,7 @@ if __name__ == "__main__":
     """
     if mode == 0:
         logger = Logger(workingDir)
-        data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
+        data_path = os.path.join(workingDir, "test_data")
         #train(config, agent, gym, logger)
         train_transformer(config, agent, gym, logger, data_path)
     elif mode == 1:
@@ -99,6 +99,6 @@ if __name__ == "__main__":
         gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
         logger = Logger(workingDir)
-        simulate(config, ddqn_agent, gym, logger, modelPath)
+        simulate(config, ddqn_agent, gym, logger)
     else:
         print("Mode not avaliable")
