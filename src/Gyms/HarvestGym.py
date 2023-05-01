@@ -29,6 +29,7 @@ class HarvestGym(CustomGym):
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
         engineConfig.set_instant_building(True)
+        engineConfig.set_harvest_forever(False)
         engineConfig.set_barracks(True)
         engineConfig.set_farm(True)
         engineConfig.set_footman(True)
