@@ -59,12 +59,14 @@ class DDQN_Agent:
         if (random.random() < self.exploration_rate): # EXPLORE
             actionIdx = random.randint(0, self.action_space_dim-1)
         else: # EXPLOIT
+            self.net.eval()
             with torch.no_grad():
                 state = np.array(state)
                 state = torch.tensor(state).float().to(device=self.device)
                 state = state.unsqueeze(0) # create extra dim for batch
 
                 neuralNetOutput = self.net(state, model="online")
+                self.net.train()
                 actionIdx = torch.argmax(neuralNetOutput).item()
                 pred_arr = neuralNetOutput[0].detach().cpu().numpy()
 
@@ -211,18 +213,18 @@ class DDQN(nn.Module):
         c, h, w = state_dim
 
         self.online = nn.Sequential(
-            nn.Conv2d(in_channels=c, out_channels=32, kernel_size=4, stride=2),
+            nn.Conv2d(in_channels=c, out_channels=32, kernel_size=7, stride=3),
             nn.ReLU(),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1),
             nn.ReLU(),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1),
-            nn.ReLU(),
+            #nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1),
+            #nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(576, 128),
+            nn.Linear(3136, 512),
             nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, output_dim)
+            #nn.Linear(128, 64),
+            #nn.ReLU(),
+            nn.Linear(512, output_dim)
         )
 
         self.target = copy.deepcopy(self.online)
