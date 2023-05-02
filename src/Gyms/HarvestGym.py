@@ -10,7 +10,13 @@ MAP = "10x10-2p-ffa-Eblil.json"
 
 
 def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
+    #Penalties
     reward = -ticks/2000
+    target = player0.get_targeted_unit()
+    if target is not None and target.can_move is False:
+        reward -= 10
+
+    #Rewards
     if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
         reward += 10
     if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
