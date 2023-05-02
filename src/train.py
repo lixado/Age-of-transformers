@@ -66,7 +66,6 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
             # AI choose action
             actionIndex, q_values = agent.act()
 
-            gym.save_player_state()
 
             # Act
             next_observation, reward, done, truncated, info = gym.step(actionIndex)

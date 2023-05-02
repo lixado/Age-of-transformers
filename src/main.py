@@ -9,6 +9,7 @@ from Agents.decisition_transformer import DecisionTransformer_Agent
 from Agents.ddqn import DDQN_Agent
 from gym.wrappers import TransformObservation, FrameStack
 from Gyms.HarvestGym import HarvestGym
+from Gyms.Random1v1 import Random1v1Gym
 from Gyms.Full1v1 import Full1v1Gym
 from train import train, train_transformer
 from eval import evaluate
@@ -53,7 +54,7 @@ if __name__ == "__main__":
     """
         Start gym
     """
-    gym = HarvestGym(config["stepsMax"], STATE_SHAPE)
+    gym = Random1v1Gym(config["stepsMax"], STATE_SHAPE)
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
@@ -75,7 +76,7 @@ if __name__ == "__main__":
     """
     if mode == 0:
         logger = Logger(workingDir)
-        data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
+        data_path = os.path.join(workingDir, "random1v1_data")
         #train(config, agent, gym, logger)
         train_transformer(config, agent, gym, logger, data_path)
     elif mode == 1:
