@@ -6,7 +6,7 @@ from functions import GetConfigDict
 from constants import inv_action_space
 from Agents.decisition_transformer import DecisionTransformer_Agent
 from Agents.ddqn import DDQN_Agent
-from gym.wrappers import TransformObservation, FrameStack
+from gym.wrappers import TransformObservation, FrameStack, TimeLimit
 from Gyms.Simple1v1 import Simple1v1Gym
 from Gyms.Random1v1 import Random1v1Gym
 from Gyms.Harvest import HarvestGym
@@ -78,6 +78,7 @@ if __name__ == "__main__":
     if REPEAT_FRAME != 0:
         gym = RepeatFrame(gym, REPEAT_FRAME)
     gym = TransformObservation(gym, f=lambda x: x / 20.)  # normalize the values [0, 1] #MAX VALUE=20
+    gym = TimeLimit(gym, max_episode_steps=config["stepsMax"])
 
     """
         Start agent
@@ -91,11 +92,12 @@ if __name__ == "__main__":
     """
     if mode == 0:
         logger = Logger(workingDir)
-        data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
 
-        train_transformer(config, agent, gym, logger, data_path)
-        #gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
-        #train_ddqn(config, ddqn_agent, gym, logger)
+        #data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
+        #train_transformer(config, agent, gym, logger, data_path)
+        
+        gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
+        train_ddqn(config, ddqn_agent, gym, logger)
     elif mode == 1:
         # get latest model path
         results = os.path.join(workingDir, "results")
@@ -107,7 +109,6 @@ if __name__ == "__main__":
         evaluate(ddqn_agent, gym, modelPath)
     elif mode == 2:
         playground(gym)
-
     elif mode == 3:
         results = os.path.join(workingDir, "results")
         folders = os.listdir(results)

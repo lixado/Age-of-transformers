@@ -127,7 +127,7 @@ def train_transformer_test(config: dict, agent: DecisionTransformer_Agent, gym: 
 
             # Record game
             if record:
-                SaveTempImage(save_dir, gym.render(q_values), ticks)
+                SaveTempImage(save_dir, gym.render(q_values, reward), ticks)
 
             # AI Save memory
             # agent.cache(observation, next_observation, actionIndex, reward, (done or truncated))
@@ -182,7 +182,7 @@ def train_ddqn(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
 
             # Record game
             if record:
-                SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values), ticks)
+                SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values, reward), ticks)
 
             # AI Save memory
             agent.cache(observation, next_observation, actionIndex, reward, (done or truncated))

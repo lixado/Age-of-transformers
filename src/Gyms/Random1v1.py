@@ -54,8 +54,7 @@ class Random1v1Gym(CustomGym):
         # reward
         self.reward = conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
 
-        truncated = self.elapsed_steps > self.max_episode_steps  # useless value needs to be here for frame stack wrapper
-        return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
+        return self._get_obs(), self.reward, self.game.is_terminal(), False, self._get_info()
 
     def render(self, q_values):
         """
