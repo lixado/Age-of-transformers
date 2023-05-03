@@ -1,14 +1,15 @@
 import os
 import sys
 import torch
-from Gyms.Simple1v1 import Simple1v1Gym
 from logger import Logger
 from functions import GetConfigDict
 from constants import inv_action_space
 from Agents.decisition_transformer import DecisionTransformer_Agent
 from Agents.ddqn import DDQN_Agent
 from gym.wrappers import TransformObservation, FrameStack
-from Gyms.HarvestGym import HarvestGym
+from Gyms.Simple1v1 import Simple1v1Gym
+from Gyms.Random1v1 import Random1v1Gym
+from Gyms.Harvest import HarvestGym
 from train import train_transformer, train_ddqn
 from eval import evaluate
 from playground import playground
@@ -48,11 +49,27 @@ if __name__ == "__main__":
 
     print(f"{modes[mode]} mode.") if "mode" not in config else print(f"{modes[mode]} mode. Auto from config.json file.")
 
+    gymModes = ["Simple1v1", "Random1v1", "Harvest"]
+    for cnt, modeName in enumerate(gymModes, 1):
+        sys.stdout.write("[%d] %s\n\r" % (cnt, modeName))
+
+    gymMode = (int(input("Select gym[1-%s]: " % cnt)) - 1) if "gym" not in config else config[
+        "gym"]  # get from config file if exists
+
+    print(f"{gymModes[gymMode]} gym.") if "gym" not in config else print(f"{modes[mode]} gym. Auto from config.json file.")
     
     """
         Start gym
     """
-    gym = HarvestGym(config["stepsMax"], STATE_SHAPE)
+    if gymMode == 0:
+        gym = Simple1v1Gym(config["stepsMax"], STATE_SHAPE)
+    elif gymMode == 1:
+        gym = Random1v1Gym(config["stepsMax"], STATE_SHAPE)
+    elif gymMode == 2:
+        gym = HarvestGym(config["stepsMax"], STATE_SHAPE)
+    else:
+        print("Invalid gym")
+        quit(0)
     print("Action space: ", [inv_action_space[i] for i in gym.action_space])
 
     # gym wrappers
@@ -77,6 +94,7 @@ if __name__ == "__main__":
         data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
 
         train_transformer(config, agent, gym, logger, data_path)
+        #gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
         #train_ddqn(config, ddqn_agent, gym, logger)
     elif mode == 1:
         # get latest model path
