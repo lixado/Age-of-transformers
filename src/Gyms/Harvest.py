@@ -38,6 +38,8 @@ def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
         reward += 1
     if player0.statistic_damage_done > previousPlayer0.statistic_damage_done:
         reward += 1
+    if player0.get_score() > previousPlayer0.get_score():
+        reward += 1
     return reward
 
 
