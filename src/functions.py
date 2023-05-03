@@ -25,7 +25,11 @@ class PlayerState():
         self.statistic_gathered_stone = player.statistic_gathered_stone
         self.statistic_units_created = player.statistic_units_created
         self.num_town_hall = player.num_town_hall
+        self.num_barrack = player.num_barrack
+        self.num_farm = player.num_farm
         self.num_peasant = player.num_peasant
+        self.num_footman = player.num_footman
+
     def evaluate_player_state(self):
         return self.player_state
 

@@ -2,19 +2,23 @@ import cv2
 import numpy as np
 from constants import inv_action_space
 from DeepRTS import Engine, Constants
-
+import random
 from Gyms.CustomGym import CustomGym
 from functions import PlayerState
 
-MAP = "10x10-2p-ffa-Eblil.json"
+MAP = "15x15-2p-ffa-Cresal.json"
 
 
+#['add_unit', 'do_action', 'do_manual_action', 'evaluate_player_state', 'food', 'food_consumption', 'get_id',
+# 'get_name', 'get_score', 'get_targeted_unit', 'gold', 'left_click', 'lumber', 'num_archer', 'num_barrack',
+# 'num_farm', 'num_footman', 'num_peasant', 'num_town_hall', 'right_click', 'set_name', 'set_state',
+# 'set_targeted_unit_id', 'spawn_unit', 'statistic_damage_done', 'statistic_damage_taken', 'statistic_gathered_gold',
+# 'statistic_gathered_lumber', 'statistic_gathered_stone', 'statistic_units_created', 'stone']
 def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
     reward = 0
     target = player0.get_targeted_unit()
     if target is None or (target is not None and target.can_move is False):
         reward -= 0.1
-
     # Rewards
     if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
         reward += 1
@@ -24,7 +28,15 @@ def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
         reward += 1
     if player0.num_town_hall > previousPlayer0.num_town_hall:
         reward += 1
+    if player0.num_barrack > previousPlayer0.num_barrack:
+        reward += 1
+    if player0.num_farm > previousPlayer0.num_farm:
+        reward += 1
     if player0.num_peasant > previousPlayer0.num_peasant:
+        reward += 1
+    if player0.num_footman > previousPlayer0.num_footman:
+        reward += 1
+    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done:
         reward += 1
     return reward
 
@@ -38,13 +50,15 @@ class HarvestGym(CustomGym):
         engineConfig.set_barracks(True)
         engineConfig.set_farm(True)
         engineConfig.set_footman(True)
-        engineConfig.set_start_lumber(1000)
-        engineConfig.set_start_gold(1000)
-        engineConfig.set_start_stone(1000)
+        engineConfig.set_start_lumber(5000)
+        engineConfig.set_start_gold(5000)
+        engineConfig.set_start_stone(5000)
 
         self.action_space = [i for i in range(1, 17)]  # 1-16, all actions, (see deep-rts/bindings/Constants.cpp)
 
         super().__init__(max_episode_steps, shape, MAP, engineConfig)
+
+        self.player1: Engine.Player = self.game.add_player()
 
         self.previousPlayer0 = PlayerState(self.player0)
 
@@ -52,7 +66,13 @@ class HarvestGym(CustomGym):
         self.elapsed_steps += 1
         self.action = actionIndex
 
-        self.player0.do_action(self.action_space[actionIndex])
+        # randomize action order to euqalize
+        if random.random() < 0.5:
+            self.player0.do_action(self.action_space[actionIndex])
+            self.player1.do_action(random.choice(self.action_space))  # do nothing
+        else:
+            self.player1.do_action(random.choice(self.action_space))  # do nothing
+            self.player0.do_action(self.action_space[actionIndex])
 
         self.game.update()
 

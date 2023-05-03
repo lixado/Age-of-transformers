@@ -17,7 +17,7 @@ from simulate import simulate
 
 from wrappers import SkipFrame, RepeatFrame
 
-STATE_SHAPE = (32, 32) # model input shapes
+STATE_SHAPE = (48, 48) # model input shapes
 FRAME_STACK = 3
 SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
