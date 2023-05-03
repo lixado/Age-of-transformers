@@ -11,22 +11,23 @@ MAP = "10x10-2p-ffa-Eblil.json"
 
 def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
     #Penalties
-    reward = -ticks/2000
+    reward = 0
     target = player0.get_targeted_unit()
     if target is None or (target is not None and target.can_move is False):
-        reward -= 1
+        reward -= 0.1
 
     #Rewards
     if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
-        reward += 10
+        reward += 1
     if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
-        reward += 10
+        reward += 1
     if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
-        reward += 10
+        reward += 1
     if player0.num_town_hall > previousPlayer0.num_town_hall:
-        reward += 10
+        reward += 1
     if player0.num_peasant > previousPlayer0.num_peasant:
-        reward += 10
+        reward += 1
+
     return reward
 
 
@@ -35,7 +36,7 @@ class HarvestGym(CustomGym):
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
         engineConfig.set_instant_building(True)
-        engineConfig.set_harvest_forever(False)
+        engineConfig.set_harvest_forever(True)
         engineConfig.set_barracks(True)
         engineConfig.set_farm(True)
         engineConfig.set_footman(True)

@@ -17,18 +17,18 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.999998
+        self.exploration_rate_decay = 0.99995
         self.exploration_rate_min = 0.001
         self.curr_step = 0
         """
             Memory
         """
-        self.deque_size = 200000
+        self.deque_size = 100000
         arr = np.zeros(state_dim)
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 512
+        self.batch_size = 128
         print(f"Need {((arr.size * arr.itemsize * 2 * self.batch_size)*(1e-9)):.2f} Gb VRAM")
         #self.save_every = 5e5  # no. of experiences between saving model
 
@@ -217,14 +217,14 @@ class DDQN(nn.Module):
             nn.ReLU(),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1),
             nn.ReLU(),
-            #nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1),
-            #nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(3136, 512),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1),
             nn.ReLU(),
-            #nn.Linear(128, 64),
+            nn.Flatten(),
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Linear(512, output_dim),
             #nn.ReLU(),
-            nn.Linear(512, output_dim)
+            #nn.Linear(512, output_dim)
         )
 
         self.target = copy.deepcopy(self.online)
