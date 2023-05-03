@@ -9,8 +9,7 @@ from Agents.decisition_transformer import DecisionTransformer_Agent
 from Agents.ddqn import DDQN_Agent
 from gym.wrappers import TransformObservation, FrameStack
 from Gyms.HarvestGym import HarvestGym
-from Gyms.Full1v1 import Full1v1Gym
-from train import train, train_transformer
+from train import train_transformer, train_ddqn
 from eval import evaluate
 from playground import playground
 from simulate import simulate
@@ -76,8 +75,9 @@ if __name__ == "__main__":
     if mode == 0:
         logger = Logger(workingDir)
         data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
-        #train(config, agent, gym, logger)
+
         train_transformer(config, agent, gym, logger, data_path)
+        #train_ddqn(config, ddqn_agent, gym, logger)
     elif mode == 1:
         # get latest model path
         results = os.path.join(workingDir, "results")

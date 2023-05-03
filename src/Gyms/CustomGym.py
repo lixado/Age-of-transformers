@@ -2,6 +2,8 @@ import gym
 import numpy as np
 from DeepRTS import Engine, Constants
 from gym.spaces import Box
+from functions import PlayerState
+
 
 class CustomGym(gym.Env):
     def __init__(self, max_episode_steps, shape, game_map, config):
@@ -23,6 +25,8 @@ class CustomGym(gym.Env):
         self.observation_space = Box(low=-1., high=20., shape=self.initial_shape, dtype=np.uint8)
         self.render_shape = self.game.render().shape
 
+        self.previousPlayer0 = PlayerState(self.player0)
+
     def _get_obs(self):
         stateResized = np.resize(np.ndarray.flatten(self.game.state), self.initial_shape)
         return stateResized
@@ -41,3 +45,6 @@ class CustomGym(gym.Env):
 
     def close(self):
         self.game.stop()
+
+    def save_player_state(self):
+        self.previousPlayer0 = PlayerState(self.player0)

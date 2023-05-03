@@ -43,8 +43,6 @@ class AllActions1v1(CustomGym):
         self.elapsed_steps += 1
         self.action = actionIndex
 
-        previousPlayer0 = PlayerState(self.player0)
-
         self.player0.do_action(self.action_space[actionIndex])
 
         actionIndex2 = random.randint(0, len(self.action_space) - 1)
@@ -52,7 +50,7 @@ class AllActions1v1(CustomGym):
 
         self.game.update()
 
-        self.reward = conditional_reward(self.player0, previousPlayer0, self.player1, self.elapsed_steps)
+        self.reward = conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
 
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
         return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()

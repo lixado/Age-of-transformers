@@ -44,7 +44,7 @@ def simulate(config: dict, agent, gym: gym.Env, logger, model_path=None):
             logger.log_step(reward, 0, 0)
 
             # save data
-            memory.append([observation[0], actionIndex, ticks, reward])
+            memory.append([observation[-1], actionIndex, ticks, reward])
             # Update state
             observation = next_observation
 

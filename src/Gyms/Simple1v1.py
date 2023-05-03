@@ -49,7 +49,6 @@ class Simple1v1Gym(CustomGym):
         self.elapsed_steps += 1
         self.action = actionIndex
 
-
         self.player0.do_action(self.action_space[actionIndex])
         self.player1.do_action(16) # do nothing
         self.game.update()
@@ -95,6 +94,3 @@ class Simple1v1Gym(CustomGym):
 
         image = cv2.hconcat([dashboard, image])
         return image
-
-    def save_player_state(self):
-        self.previousPlayer0 = PlayerState(self.player0)

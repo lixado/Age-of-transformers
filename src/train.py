@@ -6,6 +6,7 @@ from data import Simple1v1Dataset
 from torch.utils.data import DataLoader
 
 from Agents.decisition_transformer import DecisionTransformer_Agent
+from Agents.ddqn import DDQN_Agent
 from logger import Logger
 from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 
@@ -94,7 +95,7 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
     NotifyDiscord(f"Training finished. Epochs: {epochs} Name: {save_dir}")
     gym.close()
 
-def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger):
+def train_transformer_test(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger):
     agent.net.train()
     save_dir = logger.getSaveFolderPath()
     # agent.saveHyperParameters(save_dir)
@@ -150,5 +151,60 @@ def train(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: 
     # save model
     agent.save(save_dir)
     NotifyDiscord(f"Training finished. Epochs: {epochs} Name: {save_dir}")
+    gym.close()
+
+
+def train_ddqn(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
+    agent.net.train()
+    save_dir = logger.getSaveFolderPath()
+    agent.saveHyperParameters(save_dir)
+
+    record_epochs = config["recordEvery"]  # record game every x epochs
+    epochs = config["epochs"]
+    for e in range(epochs):
+        observation, info = gym.reset()
+        ticks = 0
+        record = (e % record_epochs == 0) or (e == epochs - 1)  # last part to always record last
+        if record:
+            print("Recording this epoch")
+        done = False
+        truncated = False
+        while not done and not truncated:
+            ticks += 1
+
+            # AI choose action
+            actionIndex, q_values = agent.act(observation)
+
+            gym.save_player_state()
+
+            # Act
+            next_observation, reward, done, truncated, info = gym.step(actionIndex)
+
+            # Record game
+            if record:
+                SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values), ticks)
+
+            # AI Save memory
+            agent.cache(observation, next_observation, actionIndex, reward, (done or truncated))
+
+            # Learn
+            q, loss = agent.learn()
+
+            # Logging
+            logger.log_step(reward, loss, q)
+
+            # Update state
+            observation = next_observation
+
+        logger.log_epoch(e, agent.exploration_rate, agent.optimizer.param_groups[0]["lr"])
+
+        # Record game
+        if record:
+            CreateVideoFromTempImages(os.path.join(logger.getSaveFolderPath(), "temp"), (e))
+            agent.save(logger.getSaveFolderPath())
+
+    # save model
+    agent.save(logger.getSaveFolderPath())
+    NotifyDiscord(f"Training finished. Epochs: {epochs} Name: {logger.getSaveFolderPath()}")
     gym.close()
 

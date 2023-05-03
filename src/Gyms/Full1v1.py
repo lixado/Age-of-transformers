@@ -35,9 +35,6 @@ class Full1v1Gym(CustomGym):
         self.action1 = actionIndices[0]
         self.action2 = actionIndices[1]
 
-        previousPlayer0 = PlayerState(self.player0)
-        previousPlayer1 = PlayerState(self.player1)
-
         if randint(0, 1) == 0:
             self.player1.do_action(self.action_space[actionIndices[1]])
             self.player0.do_action(self.action_space[actionIndices[0]])
@@ -49,8 +46,8 @@ class Full1v1Gym(CustomGym):
 
         # reward
         self.rewards = np.array([
-            conditional_reward(self.player0, previousPlayer0, self.player1, self.elapsed_steps),
-            conditional_reward(self.player1, previousPlayer1, self.player0, self.elapsed_steps),
+            conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps),
+            conditional_reward(self.player1, self.previousPlayer0, self.player0, self.elapsed_steps),
         ])
 
         truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
