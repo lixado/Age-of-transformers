@@ -52,20 +52,35 @@ class Random1v1Gym(CustomGym):
         self.game.update()
 
         # reward
-        self.reward = conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
+        reward = conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
 
-        return self._get_obs(), self.reward, self.game.is_terminal(), False, self._get_info()
+        # ttk
+        
 
-    def render(self, q_values):
+
+        return self._get_obs(), reward, self.game.is_terminal(), False, self._get_info()
+    
+
+    def _get_info(self):
+        if self.player1.evaluate_player_state() == Constants.PlayerState.Defeat:
+            return {"eval": self.elapsed_steps}
+        
+        return {"eval": None}
+    
+    def evalPrint(self, evals):
+        evalsNotNone = [x for x in evals if x is not None]
+        print(f"Total kills: {len(evalsNotNone)} out of {len(evals)}, Avg (ticks): {sum(evalsNotNone)/len(evalsNotNone) if len(evalsNotNone) > 0 else 0}, Min (ticks): {min(evalsNotNone) if len(evalsNotNone) > 0 else 0}, Max (ticks): {max(evalsNotNone) if len(evalsNotNone) > 0 else 0}")
+
+    def render(self, q_values, reward):
         """
             Return RGB image but this one will not be changed by wrappers
         """
         image = cv2.cvtColor(self.game.render(), cv2.COLOR_RGBA2RGB)
-        dashboard = np.zeros(self.initial_shape, dtype=np.uint8)
+        dashboard = np.zeros(image.shape, dtype=np.uint8)
         dashboard.fill(255)
 
         font = cv2.FONT_HERSHEY_SIMPLEX
-        org = (10, self.initial_shape[1] - 10)
+        org = (10, image.shape[1] - 10)
         fontScale = 0.5
         spacing = int(40 * fontScale)
         color = (0, 0, 0)
@@ -80,7 +95,7 @@ class Random1v1Gym(CustomGym):
                  f"Q_Attack: {q_values[4]}",
                  f"Q_None: {q_values[5]}",
                  f"player0.statistic_damage_done: {self.player0.statistic_damage_done}",
-                 f"Reward: {self.reward}",
+                 f"Reward: {reward}",
                  f"Action: {inv_action_space[self.action_space[self.action]]}"]
 
         for text in texts[::-1]:

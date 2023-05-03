@@ -6,6 +6,8 @@ import random
 import numpy as np
 import torch
 import torch._dynamo.config
+from torchvision.models import resnet50
+from torchvision import transforms
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
 class DDQN_Agent:
@@ -17,7 +19,7 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.99995
+        self.exploration_rate_decay = 0.999995
         self.exploration_rate_min = 0.001
         self.curr_step = 0
         """
@@ -28,7 +30,7 @@ class DDQN_Agent:
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 128
+        self.batch_size = 512
         print(f"Need {((arr.size * arr.itemsize * 2 * self.batch_size)*(1e-9)):.2f} Gb VRAM")
         #self.save_every = 5e5  # no. of experiences between saving model
 
@@ -36,7 +38,7 @@ class DDQN_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.00025
+        self.learning_rate = 0.0025
         self.learning_rate_decay = 0.999975
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
@@ -175,7 +177,7 @@ class DDQN_Agent:
     def loadModel(self, path):
         dt = torch.load(path, map_location=torch.device(self.device))
         self.net.load_state_dict(dt["model"])
-        self.exploration_rate = dt["exploration_rate"]
+        self.exploration_rate = 0#dt["exploration_rate"]
         print(f"Loading model at {path} with exploration rate {self.exploration_rate}")
 
     def saveHyperParameters(self, save_dir):
@@ -211,18 +213,18 @@ class DDQN(nn.Module):
         c, h, w = state_dim
 
         self.online = nn.Sequential(
-            nn.Conv2d(in_channels=c, out_channels=32, kernel_size=7, stride=3),
+            nn.Conv2d(in_channels=c, out_channels=32, kernel_size=4, stride=2),
             nn.ReLU(),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.ReLU(),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(1024, 512),
+            nn.Linear(576, 128),
             nn.ReLU(),
-            nn.Linear(512, output_dim),
-            # nn.ReLU(),
-            # nn.Linear(512, output_dim)
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, output_dim)
         )
 
         self.target = copy.deepcopy(self.online)

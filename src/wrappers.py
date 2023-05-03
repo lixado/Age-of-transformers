@@ -43,5 +43,5 @@ class SkipFrame(gym.Wrapper):
                 break
 
         obs, reward, done, truncated, info = self.env.step(action) # do action
-        reward = reward # + total_reward
+        reward = reward #+ total_reward
         return obs, reward, done, truncated, info
