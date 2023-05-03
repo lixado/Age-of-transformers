@@ -1,173 +1,278 @@
-import gym
+import os
+import torch.nn as nn
+import copy
+from collections import deque
+import random
 import numpy as np
 import torch
-from mujoco_py import GlfwContext
-
-from transformers import DecisionTransformerModel
-
-
-GlfwContext(offscreen=True)  # Create a window to init GLFW.
+import itertools
+from transformers import DecisionTransformerModel, DecisionTransformerConfig
+from functions import sample_with_order
 
 
-def get_action(model, states, actions, rewards, returns_to_go, timesteps):
-    # we don't care about the past rewards in this model
+class DecisionTransformer_Agent:
+    def __init__(self, state_dim, action_space_dim, device, max_steps, batch_size):
+        self.state_dim = state_dim
+        self.action_space_dim = action_space_dim
+        self.device = device
 
-    states = states.reshape(1, -1, model.config.state_dim)
-    actions = actions.reshape(1, -1, model.config.act_dim)
-    returns_to_go = returns_to_go.reshape(1, -1, 1)
-    timesteps = timesteps.reshape(1, -1)
+        self.state_dim_flatten = np.prod(state_dim)
 
-    if model.config.max_length is not None:
-        states = states[:, -model.config.max_length :]
-        actions = actions[:, -model.config.max_length :]
-        returns_to_go = returns_to_go[:, -model.config.max_length :]
-        timesteps = timesteps[:, -model.config.max_length :]
-
-        # pad all tokens to sequence length
-        attention_mask = torch.cat(
-            [torch.zeros(model.config.max_length - states.shape[1]), torch.ones(states.shape[1])]
-        )
-        attention_mask = attention_mask.to(dtype=torch.long, device=states.device).reshape(1, -1)
-        states = torch.cat(
-            [
-                torch.zeros(
-                    (states.shape[0], model.config.max_length - states.shape[1], model.config.state_dim),
-                    device=states.device,
-                ),
-                states,
-            ],
-            dim=1,
-        ).to(dtype=torch.float32)
-        actions = torch.cat(
-            [
-                torch.zeros(
-                    (actions.shape[0], model.config.max_length - actions.shape[1], model.config.act_dim),
-                    device=actions.device,
-                ),
-                actions,
-            ],
-            dim=1,
-        ).to(dtype=torch.float32)
-        returns_to_go = torch.cat(
-            [
-                torch.zeros(
-                    (returns_to_go.shape[0], model.config.max_length - returns_to_go.shape[1], 1),
-                    device=returns_to_go.device,
-                ),
-                returns_to_go,
-            ],
-            dim=1,
-        ).to(dtype=torch.float32)
-        timesteps = torch.cat(
-            [
-                torch.zeros(
-                    (timesteps.shape[0], model.config.max_length - timesteps.shape[1]), device=timesteps.device
-                ),
-                timesteps,
-            ],
-            dim=1,
-        ).to(dtype=torch.long)
-    else:
-        attention_mask = None
-
-    _, action_preds, _ = model(
-        states=states,
-        actions=actions,
-        rewards=rewards,
-        returns_to_go=returns_to_go,
-        timesteps=timesteps,
-        attention_mask=attention_mask,
-        return_dict=False,
-    )
-
-    return action_preds[0, -1]
+        self.max_ep_length = max_steps # maximum number that can exists in timesteps
+        self.n_positions = 2**10 # The maximum sequence length that this model might ever be used with. Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
+        
+        
+        print("max_ep_length: ", self.max_ep_length)
+        config = DecisionTransformerConfig(self.state_dim_flatten, action_space_dim, max_ep_len=self.max_ep_length, n_positions=self.n_positions, action_tanh=True)
+        self.net = DecisionTransformerModel(config).to(device=self.device)
+        self.batch_size = batch_size
 
 
-# build the environment
+        self.exploration_rate = 1
+        self.exploration_rate_decay = 0.999975
+        self.exploration_rate_min = 0
+        self.curr_step = 0
 
-env = gym.make("Hopper-v3")
-state_dim = env.observation_space.shape[0]
-act_dim = env.action_space.shape[0]
-max_ep_len = 1000
-device = "cuda"
-scale = 1000.0  # normalization for rewards/returns
-TARGET_RETURN = 3600 / scale  # evaluation conditioning targets, 3600 is reasonable from the paper LINK
-state_mean = np.array(
-    [
-        1.311279,
-        -0.08469521,
-        -0.5382719,
-        -0.07201576,
-        0.04932366,
-        2.1066856,
-        -0.15017354,
-        0.00878345,
-        -0.2848186,
-        -0.18540096,
-        -0.28461286,
-    ]
-)
-state_std = np.array(
-    [
-        0.17790751,
-        0.05444621,
-        0.21297139,
-        0.14530419,
-        0.6124444,
-        0.85174465,
-        1.4515252,
-        0.6751696,
-        1.536239,
-        1.6160746,
-        5.6072536,
-    ]
-)
-state_mean = torch.from_numpy(state_mean).to(device=device)
-state_std = torch.from_numpy(state_std).to(device=device)
+        """
+            Memory
+        """
+        # sequences
+        self.max_sequence_length = int(self.n_positions/3) # not sure why / 3 might be [R1, S1, A1, R2, S2, A2]
+        print("max_sequence_length: ", self.max_sequence_length)
+        self.states_sequence = deque(maxlen=self.max_sequence_length)
+        self.actions_sequence = deque(maxlen=self.max_sequence_length)
+        self.timesteps_sequence = deque(maxlen=self.max_sequence_length)
+        self.rewards_sequence = deque(maxlen=self.max_sequence_length)
 
-# Create the decision transformer model
-model = DecisionTransformerModel.from_pretrained("edbeeching/decision-transformer-gym-hopper-medium")
-model = model.to(device)
-model.eval()
+        arr = np.zeros(state_dim)
+        totalSizeInBytes = (arr.size * arr.itemsize * self.max_sequence_length)
+        print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram for states sequence.")
 
-for ep in range(10):
-    episode_return, episode_length = 0, 0
-    state = env.reset()
-    target_return = torch.tensor(TARGET_RETURN, device=device, dtype=torch.float32).reshape(1, 1)
-    states = torch.from_numpy(state).reshape(1, state_dim).to(device=device, dtype=torch.float32)
-    actions = torch.zeros((0, act_dim), device=device, dtype=torch.float32)
-    rewards = torch.zeros(0, device=device, dtype=torch.float32)
 
-    timesteps = torch.tensor(0, device=device, dtype=torch.long).reshape(1, 1)
-    for t in range(max_ep_len):
-        env.render()
-        # add padding
-        actions = torch.cat([actions, torch.zeros((1, act_dim), device=device)], dim=0)
-        rewards = torch.cat([rewards, torch.zeros(1, device=device)])
+        param_size = 0
+        for param in self.net.parameters():
+            param_size += param.nelement() * param.element_size()
+        buffer_size = 0
+        for buffer in self.net.buffers():
+            buffer_size += buffer.nelement() * buffer.element_size()
 
-        action = get_action(
-            model,
-            (states.to(dtype=torch.float32) - state_mean) / state_std,
-            actions.to(dtype=torch.float32),
-            rewards.to(dtype=torch.float32),
-            target_return.to(dtype=torch.float32),
-            timesteps.to(dtype=torch.long),
-        )
-        actions[-1] = action
-        action = action.detach().cpu().numpy()
+        size_model_mb = (param_size + buffer_size) / 1024**2
+        size_model_gb = size_model_mb / 1024
 
-        state, reward, done, _ = env.step(action)
+        arr = np.zeros(state_dim)
+        totalSizeInBytes = (arr.size * arr.itemsize * self.max_sequence_length * self.batch_size)
+        print(f"Need {(totalSizeInBytes*(1e-9) + size_model_gb):.2f} Gb Vram for states sequence in learning.")
 
-        cur_state = torch.from_numpy(state).to(device=device).reshape(1, state_dim)
-        states = torch.cat([states, cur_state], dim=0)
-        rewards[-1] = reward
 
-        pred_return = target_return[0, -1] - (reward / scale)
-        target_return = torch.cat([target_return, pred_return.reshape(1, 1)], dim=1)
-        timesteps = torch.cat([timesteps, torch.ones((1, 1), device=device, dtype=torch.long) * (t + 1)], dim=1)
+        #self.save_every = 5e5  # no. of experiences between saving model
 
-        episode_return += reward
-        episode_length += 1
+        """
+            Q learning
+        """
+        self.gamma = 0.9
+        self.learning_rate = 0.00025
+        self.learning_rate_decay = 0.999985
 
-        if done:
-            break
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
+        #self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
+        self.loss_fn = lambda s_pred, a_pred, r_pred, s, a, r: torch.mean((a_pred-a)**2)
+        self.burnin = 1e3  # min. experiences before training
+        assert( self.burnin >  self.batch_size)
+        self.learn_every = 1  # no. of experiences between updates to Q_online
+        self.sync_every = 1e6  # no. of experiences between Q_target & Q_online sync
+
+        self.attention_mask = torch.ones((self.batch_size, 1), device=self.device, dtype=torch.float32)  # if None default is full attention for all nodes (b, t)
+
+
+    def act(self):
+        """
+        """
+
+        with torch.no_grad():
+            sequence_length = len(self.states_sequence)
+
+            #target_return = torch.tensor(1, device=self.device, dtype=torch.float32).unsqueeze(0) # create extra dim for batch
+            states = torch.tensor(np.array(self.states_sequence), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.state_dim_flatten) # prev states
+            actions = torch.tensor(np.array(self.actions_sequence), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.action_space_dim) # create extra dim for batch
+            rewards = torch.tensor(self.rewards_sequence, device=self.device, dtype=torch.float32).reshape(1, sequence_length, 1) # create extra dim for batch # not sure what the other is
+            timesteps = torch.tensor(self.timesteps_sequence, device=self.device, dtype=torch.long).reshape(1, sequence_length) # create extra dim for batch
+            attention_mask = torch.ones((1, sequence_length), device=self.device, dtype=torch.float32) # if None default is full attention for all nodes (b, t)
+
+
+            state_preds, action_preds, return_preds = self.net(states=states,
+                actions=actions,
+                rewards=None, #not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
+                returns_to_go=rewards,
+                timesteps=timesteps,
+                attention_mask=attention_mask,
+                return_dict=False)
+
+            # remove batch dim
+            state_preds, action_preds, return_preds = torch.squeeze(state_preds, 0), torch.squeeze(action_preds, 0), torch.squeeze(return_preds, 0)
+
+            actionIdx = torch.argmax(action_preds[-1]).item()
+            pred_arr = torch.squeeze(action_preds[-1]).detach().cpu().numpy()
+
+        # decrease exploration_rate
+        self.exploration_rate *= self.exploration_rate_decay
+        self.exploration_rate = max(self.exploration_rate_min, self.exploration_rate)
+
+        # increment step
+        self.curr_step += 1
+
+        return actionIdx, pred_arr
+
+    def append(self, state, actionIndex, timestep, reward):
+
+        # save to sequences
+        try:
+            self.states_sequence.append(state)
+            # save action tensor as [0,0,1,0,0,0] depending on which action
+            actionArr = np.zeros(self.action_space_dim)
+            actionArr[actionIndex] = 1
+            self.actions_sequence.append(actionArr)
+            self.timesteps_sequence.append(timestep)
+            self.rewards_sequence.append(self.rewards_sequence[-1] - reward)
+        except:
+            print("Need more memory or decrease sequence size in agent.")
+            quit()
+
+    def recall(self):
+        stateBatch = []
+        actionBatch = []
+        rewardBatch = []
+        timestepsBatch = []
+
+        currentSize = len(self.states_sequence)
+        # sample random sequences between (1, self.max_sequence_length)
+        k = random.randint(1, currentSize)
+        if k >= self.max_sequence_length: # cant use bigger then allowed
+            k = random.randint(1, self.max_sequence_length-1)
+        for _ in range(self.batch_size):
+            k_start = random.randint(0, currentSize-k)
+
+            stateBatch.append(list(itertools.islice(self.states_sequence, k_start, k_start+k)))
+            actionBatch.append(list(itertools.islice(self.actions_sequence, k_start, k_start+k)))
+            rewardBatch.append(list(itertools.islice(self.rewards_sequence, k_start, k_start+k)))
+            timestepsBatch.append(list(itertools.islice(self.timesteps_sequence, k_start, k_start+k)))
+
+        seq_length = len(stateBatch[0])
+        stateBatch = torch.tensor(np.array(stateBatch), device=self.device, dtype=torch.float32).reshape(self.batch_size, seq_length, self.state_dim_flatten)
+        actionBatch = torch.tensor(np.array(actionBatch), device=self.device, dtype=torch.float32)
+        rewardBatch = torch.tensor(rewardBatch, device=self.device, dtype=torch.float32).reshape(self.batch_size, seq_length, 1)
+        timestepsBatch = torch.tensor(timestepsBatch, device=self.device, dtype=torch.long)
+
+        return stateBatch, actionBatch, rewardBatch, timestepsBatch
+
+    def learn(self):
+        """Update online action value (Q) function with a batch of experiences"""
+        #if self.curr_step < self.burnin:
+        #    return 0, 0 # None, None
+
+        #if self.curr_step % self.learn_every != 0:
+        #    return 0, 0 # None, None
+        
+        # [batchSize, sequenceSize, state_dim]
+        totalLoss = 0
+        avgQ = 0
+        j = 3
+        for _ in range(j):
+            s, a, r, t = self.recall()
+
+            attention_mask = torch.ones((s.shape[0], s.shape[1]), device=self.device, dtype=torch.float32)
+
+            # [R1, S1, A1, R2, S2, A2...]
+
+
+            state_preds, action_preds, return_preds = self.net(states=s,
+                    actions=a,
+                    rewards=None, #not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
+                    returns_to_go=r,
+                    timesteps=t,
+                    attention_mask=self.attention_mask,
+                    return_dict=False)
+            
+            loss = self.loss_fn(return_preds, r) + self.loss_fn(state_preds, s)
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            totalLoss += loss.item()
+            avgQ += action_preds.mean().item()
+        
+
+        return totalLoss, (avgQ / j)
+
+    def train(self, observations, actions, timesteps, rewards):
+        observations = torch.tensor(observations, device=self.device, dtype=torch.float32)
+        observations = observations.reshape(self.batch_size, 1, self.state_dim_flatten)
+
+        actionArr = np.zeros((self.batch_size, self.action_space_dim))
+        for i in range(self.batch_size):
+            ind = actions[i]
+            actionArr[i][ind] = 1
+
+        actions = torch.tensor(actionArr, device=self.device, dtype=torch.float32).reshape(self.batch_size, 1, self.action_space_dim)
+
+        rewards_to_go = np.array([sum(rewards[i:len(rewards)]) for i in range(len(rewards))])
+        rewards_to_go = torch.tensor(rewards_to_go, device=self.device, dtype=torch.float32).reshape(self.batch_size, 1, 1)
+        timesteps = torch.tensor(timesteps, device=self.device, dtype=torch.long)
+        attention_mask = torch.ones((1, self.batch_size), device=self.device, dtype=torch.float32)  # if None default is full attention for all nodes (b, t)
+
+        observation_preds, action_preds, reward_preds = self.net(states=observations,
+           actions=actions,
+           rewards=None, # not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
+           returns_to_go=rewards_to_go,
+           timesteps=timesteps,
+           attention_mask=self.attention_mask,
+           return_dict=False)
+
+        # remove batch dim
+        #state_preds = torch.squeeze(state_preds, 0)
+        #action_preds = torch.squeeze(action_preds, 0)
+        #return_preds = torch.squeeze(return_preds, 0)
+
+        loss = self.loss_fn(observation_preds, action_preds, reward_preds,
+                            observations[:, 1:], actions, rewards[:, 1:])
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        return loss.detach().cpu().item(), 0
+
+    # def train(self, observations, actions, timesteps, rewards):
+    #     observations = observations.float().reshape(self.batch_size, 1, self.state_dim_flatten).to(self.device)
+    #
+    #     actionArr = torch.zeros((self.batch_size, self.action_space_dim))
+    #     for i in range(self.batch_size):
+    #         ind = actions[i]
+    #         actionArr[i][ind] = 1
+    #
+    #     actions = actionArr.reshape(self.batch_size, 1, self.action_space_dim).to(self.device)
+    #
+    #     rewards_to_go_cumsum = torch.cumsum(rewards, dim=0)
+    #     rewards_to_go = (rewards_to_go_cumsum[-1] - rewards_to_go_cumsum).float().reshape(self.batch_size, 1, 1).to(self.device)
+    #     timesteps = timesteps.reshape(self.batch_size, 1).to(self.device)
+    #
+    #     observation_preds, action_preds, reward_preds = self.net(states=observations,
+    #        actions=actions,
+    #        returns_to_go=rewards_to_go,
+    #        timesteps=timesteps,
+    #        attention_mask=self.attention_mask,
+    #        return_dict=False)
+    #
+    #     loss = self.loss_fn(observation_preds, action_preds, reward_preds,
+    #                         observations, actions, rewards)
+    #
+    #     self.optimizer.zero_grad()
+    #     loss.backward()
+    #     self.optimizer.step()
+    #     return loss.detach().cpu().item(), 0
+
+    def save(self, save_dir):
+        """
+            Save the state to directory
+        """
+        save_path = os.path.join(save_dir, "model.chkpt")
+        torch.save(dict(model=self.net.state_dict(), exploration_rate=self.exploration_rate), save_path)
+        print(f"Model saved to {save_path}")

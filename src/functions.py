@@ -1,5 +1,6 @@
 import os
 import json
+import random
 import shutil
 import cv2
 import numpy as np
@@ -23,7 +24,8 @@ class PlayerState():
         self.statistic_gathered_lumber = player.statistic_gathered_lumber
         self.statistic_gathered_stone = player.statistic_gathered_stone
         self.statistic_units_created = player.statistic_units_created
-
+        self.num_town_hall = player.num_town_hall
+        self.num_peasant = player.num_peasant
     def evaluate_player_state(self):
         return self.player_state
 
@@ -85,3 +87,11 @@ def NotifyDiscord(message):
     }
     url = "https://discord.com/api/webhooks/1076092503238922290/Rtdbr-HBf7O2mzAUwz95xW8Qjrgp12bloT0ygA6qICtoA9uwozY4X4DzYEMGPJLKUE91"
     result = requests.post(url, json=data)
+
+def sample_with_order(population, max_sequence_length):
+    """
+        Samples [1,population] elements from a sequence mantaining the order
+    """
+    k = random.randint(1, max_sequence_length)
+    k_start = random.randint(0, len(population)-k)
+    return population[k_start: k_start+k]

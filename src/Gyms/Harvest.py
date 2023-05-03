@@ -2,63 +2,63 @@ import cv2
 import numpy as np
 from constants import inv_action_space
 from DeepRTS import Engine, Constants
-from functions import PlayerState
 
 from Gyms.CustomGym import CustomGym
+from functions import PlayerState
 
 MAP = "10x10-2p-ffa-Eblil.json"
 
-def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
-    if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
-        return 10000/ticks
-    if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
-        return -0.001*ticks
-    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
-        return 1000/ticks
-    return -1
 
 def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
-    stoneReward = 0
-    goldReward = 0
-    lumberReward = 0
-    if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
-        stoneReward = 1000/ticks
-    if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
-        goldReward = 1000/ticks
-    if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
-        lumberReward = 1000/ticks
-    return stoneReward + goldReward + lumberReward
+    reward = 0
+    target = player0.get_targeted_unit()
+    if target is None or (target is not None and target.can_move is False):
+        reward -= 0.1
 
-class Simple1v1Gym(CustomGym):
+    # Rewards
+    if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
+        reward += 1
+    if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
+        reward += 1
+    if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
+        reward += 1
+    if player0.num_town_hall > previousPlayer0.num_town_hall:
+        reward += 1
+    if player0.num_peasant > previousPlayer0.num_peasant:
+        reward += 1
+    return reward
+
+
+class HarvestGym(CustomGym):
     def __init__(self, max_episode_steps, shape):
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
-        engineConfig.set_auto_attack(True)
+        engineConfig.set_instant_building(True)
+        engineConfig.set_barracks(True)
+        engineConfig.set_farm(True)
+        engineConfig.set_footman(True)
+        engineConfig.set_start_lumber(1000)
+        engineConfig.set_start_gold(1000)
+        engineConfig.set_start_stone(1000)
 
-        self.action_space = [3, 4, 5, 6, 11, 16] # move and attack simple
-        self.reward = 0
+        self.action_space = [i for i in range(1, 17)]  # 1-16, all actions, (see deep-rts/bindings/Constants.cpp)
 
         super().__init__(max_episode_steps, shape, MAP, engineConfig)
 
-        self.player1: Engine.Player = self.game.add_player()
-
         self.previousPlayer0 = PlayerState(self.player0)
-
 
     def step(self, actionIndex):
         self.elapsed_steps += 1
         self.action = actionIndex
 
         self.player0.do_action(self.action_space[actionIndex])
-        self.player1.do_action(16) # do nothing
+
         self.game.update()
 
-        # reward
-        self.reward = conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
+        self.reward = harvest_reward(self.player0, self.previousPlayer0, self.elapsed_steps)
 
-        truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
+        truncated = self.elapsed_steps > self.max_episode_steps  # useless value needs to be here for frame stack wrapper
         return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
-
 
     def render(self, q_values):
         """
@@ -68,29 +68,32 @@ class Simple1v1Gym(CustomGym):
         dashboard = np.zeros(image.shape, dtype=np.uint8)
         dashboard.fill(255)
 
-
         font = cv2.FONT_HERSHEY_SIMPLEX
-        org = (10, image.shape[1]-10)
+        org = (10, image.shape[1] - 10)
         fontScale = 0.5
         spacing = int(40 * fontScale)
         color = (0, 0, 0)
         thickness = 1
 
         texts = [f"Update Nr.: {self.elapsed_steps}",
+                 f"player0.gathered_stone: {self.player0.statistic_gathered_stone}",
+                 f"player0.gathered_gold: {self.player0.statistic_gathered_gold}",
+                 f"player0.gathered_lumber: {self.player0.statistic_gathered_lumber}",
                  f"Q_values:",
-                 f"Q_Left: {q_values[0]}",
-                 f"Q_Right: {q_values[1]}",
-                 f"Q_Up: {q_values[2]}",
-                 f"Q_Down: {q_values[3]}",
-                 f"Q_Attack: {q_values[4]}",
-                 f"Q_None: {q_values[5]}",
-                 f"player0.statistic_damage_done: {self.player0.statistic_damage_done}",
+                 f"Q_Prev_Unit: {q_values[0]}",
+                 f"Q_Next_Unit: {q_values[1]}",
+                 f"Q_Left: {q_values[2]}",
+                 f"Q_Right: {q_values[3]}",
+                 f"Q_Up: {q_values[4]}",
+                 f"Q_Down: {q_values[5]}",
+                 f"Q_Attack: {q_values[10]}",
+                 f"Q_Harvest: {q_values[11]}",
+                 f"Q_Build0: {q_values[12]}",
                  f"Reward: {self.reward}",
                  f"Action: {inv_action_space[self.action_space[self.action]]}"]
 
         for text in texts[::-1]:
             dashboard = cv2.putText(dashboard, text, org, font, fontScale, color, thickness, cv2.LINE_AA, False)
             org = (org[0], org[1] - spacing)
-
         image = cv2.hconcat([dashboard, image])
         return image
