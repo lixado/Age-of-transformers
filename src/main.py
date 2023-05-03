@@ -7,7 +7,7 @@ from logger import Logger
 from functions import GetConfigDict
 from constants import inv_action_space
 from Agents.ddqn import DDQN_Agent
-from gym.wrappers import FrameStack, TransformObservation
+from gym.wrappers import FrameStack, TransformObservation, TimeLimit
 from train import train
 from eval import evaluate
 from playground import playground
@@ -61,6 +61,7 @@ if __name__ == "__main__":
         gym = RepeatFrame(gym, REPEAT_FRAME)
     gym = TransformObservation(gym, f=lambda x: x / 13.)  # normalize the values [0, 1] #MAX VALUE=20
     gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
+    gym = TimeLimit(gym, max_episode_steps=config["stepsMax"])
 
     """
         Start agent

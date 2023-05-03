@@ -11,14 +11,6 @@ import random
 
 MAP = "10x10-2p-ffa-Eblil.json"
 
-def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
-    if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
-        return 10000/ticks
-    if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
-        return -0.001*ticks
-    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
-        return 1000/ticks
-    return -1
 
 class Random1v1Gym(gym.Env):
     def __init__(self, mode, max_episode_steps):
@@ -66,10 +58,9 @@ class Random1v1Gym(gym.Env):
         self.game.update()
 
         # reward
-        self.reward = conditional_reward(self.player0, previousPlayer0, self.player1, self.elapsed_steps)
+        self.reward = max(self.player0.statistic_damage_done - previousPlayer0.statistic_damage_done, 0) - 1 # damage done
 
-        truncated = self.elapsed_steps > self.max_episode_steps # useless value needs to be here for frame stack wrapper
-        return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
+        return self._get_obs(), self.reward, self.game.is_terminal(), False, self._get_info()
 
 
     def render(self, q_values):

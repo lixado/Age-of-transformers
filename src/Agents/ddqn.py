@@ -5,7 +5,9 @@ from collections import deque
 import random
 import numpy as np
 import torch
+from torchvision.models import resnet50
 import torch._dynamo.config
+import torchvision.transforms as transforms
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
 class DDQN_Agent:
@@ -210,6 +212,8 @@ class DDQN(nn.Module):
         super().__init__()
         c, h, w = state_dim
 
+        self.trans = transforms.Pad(1)
+
         self.online = nn.Sequential(
             nn.Conv2d(in_channels=c, out_channels=32, kernel_size=4, stride=2),
             nn.ReLU(),
@@ -224,6 +228,7 @@ class DDQN(nn.Module):
             nn.ReLU(),
             nn.Linear(64, output_dim)
         )
+        
 
         self.target = copy.deepcopy(self.online)
 
@@ -232,6 +237,9 @@ class DDQN(nn.Module):
            p.requires_grad = False
 
     def forward(self, input, model):
+        #input = self.trans(input)
+
+
         if model == "online":
             return self.online(input)
         elif model == "target":
