@@ -93,9 +93,9 @@ if __name__ == "__main__":
         logger = Logger(workingDir)
         data_path = os.path.join(workingDir, "full1v1_test")
 
-        train_transformer(config, agent, gym, logger, data_path)
-        #gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
-        #train_ddqn(config, ddqn_agent, gym, logger)
+        #train_transformer(config, agent, gym, logger, data_path)
+        gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
+        train_ddqn(config, ddqn_agent, gym, logger)
     elif mode == 1:
         # get latest model path
         results = os.path.join(workingDir, "results")
