@@ -6,7 +6,7 @@ import random
 from Gyms.CustomGym import CustomGym
 from functions import PlayerState
 
-MAP = "15x15-2p-ffa-Cresal.json"
+MAP = "10x10-2p-ffa-Eblil.json"
 
 
 #['add_unit', 'do_action', 'do_manual_action', 'evaluate_player_state', 'food', 'food_consumption', 'get_id',
@@ -18,28 +18,29 @@ def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
     reward = 0
     target = player0.get_targeted_unit()
     if target is None or (target is not None and target.can_move is False):
-        reward -= 0.1
+        reward -= 1
+    if target is not None and target.can_move:
+        reward += 1
     # Rewards
-    if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
-        reward += 1
-    if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
-        reward += 1
-    if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
-        reward += 1
+    # if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
+    #     reward += 1
+    # if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
+    #     reward += 1
+    # if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
+    #     reward += 1
     if player0.num_town_hall > previousPlayer0.num_town_hall:
-        reward += 1
+        reward += 100/ticks
     if player0.num_barrack > previousPlayer0.num_barrack:
-        reward += 1
+        reward += 100/ticks
     if player0.num_farm > previousPlayer0.num_farm:
-        reward += 1
+        reward += 10/ticks
     if player0.num_peasant > previousPlayer0.num_peasant:
-        reward += 1
+        reward += 100/ticks
     if player0.num_footman > previousPlayer0.num_footman:
-        reward += 1
+        reward += 100/ticks
     if player0.statistic_damage_done > previousPlayer0.statistic_damage_done:
-        reward += 1
-    if player0.get_score() > previousPlayer0.get_score():
-        reward += 1
+        reward += 0.005*ticks
+    reward += player0.get_score()-previousPlayer0.get_score()
     return reward
 
 

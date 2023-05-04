@@ -17,7 +17,7 @@ from simulate import simulate
 
 from wrappers import SkipFrame, RepeatFrame
 
-STATE_SHAPE = (48, 48) # model input shapes
+STATE_SHAPE = (32, 32) # model input shapes
 FRAME_STACK = 3
 SKIP_FRAME = 10 # do no action for x frames then do action
 REPEAT_FRAME = 0 # same action for x frames 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     """
     if mode == 0:
         logger = Logger(workingDir)
-        data_path = os.path.join(workingDir, "full1v1")
+        data_path = os.path.join(workingDir, "full1v1_test")
 
         train_transformer(config, agent, gym, logger, data_path)
         #gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
@@ -117,6 +117,6 @@ if __name__ == "__main__":
         gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
         logger = Logger(workingDir)
-        simulate(config, ddqn_agent, gym, logger, modelPath)
+        simulate(config, ddqn_agent, gym, logger)
     else:
         print("Mode not avaliable")
