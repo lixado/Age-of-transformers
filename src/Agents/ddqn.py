@@ -17,7 +17,7 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.99991
+        self.exploration_rate_decay = 0.999995
         self.exploration_rate_min = 0.001
         self.curr_step = 0
         """
