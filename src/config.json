@@ -1,5 +1,5 @@
 {
-    "epochs": 1000,
+    "epochs": 2000,
     "batchSize": 7,
     "stepsMax_comment": "stepstMax should be of the form SKIP_FRAME * 2^x ",
     "stepsMax": 500,
