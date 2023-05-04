@@ -105,7 +105,7 @@ if __name__ == "__main__":
     """
     state_sizes = STATE_SHAPE # number of image stacked
     agent = None
-    #agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=(config["skipFrame"]+1) + int(config["stepsMax"]/(config["skipFrame"]+1)), batch_size=config["batchSize"])
+    #agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=config["stepsMax"]+1, batch_size=config["batchSize"])
     ddqn_agent = DDQN_Agent(state_dim=(FRAME_STACK,) + STATE_SHAPE, action_space_dim=len(gym.action_space))
 
     """
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     if mode == 0:
         logger = Logger(workingDir)
         if agent != None:
-            data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
+            data_path = os.path.join(workingDir, "simple1v1_data")
             train_transformer(config, agent, gym, logger, data_path)
         else:
             gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
@@ -128,13 +128,9 @@ if __name__ == "__main__":
     elif mode == 2:
         playground(gym)
     elif mode == 3:
-        results = os.path.join(workingDir, "results")
-        folders = os.listdir(results)
-        paths = [os.path.join(results, basename) for basename in folders]
-        latestFolder = paths[-1]
-        modelPath = os.path.join(latestFolder, "model.chkpt")
         gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
+        modelPath = chooseModel(os.path.join(workingDir, "results"))
         logger = Logger(workingDir)
         simulate(config, ddqn_agent, gym, logger, modelPath)
     else:

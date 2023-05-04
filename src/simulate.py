@@ -39,7 +39,7 @@ def simulate(config: dict, agent, gym: gym.Env, logger, model_path=None):
 
             # Record game
             if record:
-                SaveTempImage(save_path, gym.render(q_values), ticks)
+                SaveTempImage(save_path, gym.render(q_values, reward), ticks)
 
             logger.log_step(reward, 0, 0)
 

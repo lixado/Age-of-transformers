@@ -1,10 +1,10 @@
 {
-    "epochs": 20000,
+    "epochs": 100,
     "skipFrame": 10,
     "repeatFrame": 0,
-    "batchSize": 8,
+    "batchSize": 7,
     "stepsMax": 50,
-    "recordEvery": 5000,
+    "recordEvery": 10,
     "mode": 0,
     "gym": 0
 }

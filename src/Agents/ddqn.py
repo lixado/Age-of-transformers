@@ -19,7 +19,7 @@ class DDQN_Agent:
         self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.999995
+        self.exploration_rate_decay = 0.99999
         self.exploration_rate_min = 0.001
         self.curr_step = 0
         """
@@ -38,7 +38,7 @@ class DDQN_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.0025
+        self.learning_rate = 0.00025
         self.learning_rate_decay = 0.999975
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
@@ -177,7 +177,7 @@ class DDQN_Agent:
     def loadModel(self, path):
         dt = torch.load(path, map_location=torch.device(self.device))
         self.net.load_state_dict(dt["model"])
-        self.exploration_rate = 0#dt["exploration_rate"]
+        self.exploration_rate = dt["exploration_rate"]
         print(f"Loading model at {path} with exploration rate {self.exploration_rate}")
 
     def saveHyperParameters(self, save_dir):
