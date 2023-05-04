@@ -17,18 +17,6 @@ def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
         return 1000/ticks
     return -1
 
-def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
-    stoneReward = 0
-    goldReward = 0
-    lumberReward = 0
-    if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
-        stoneReward = 1000/ticks
-    if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
-        goldReward = 1000/ticks
-    if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
-        lumberReward = 1000/ticks
-    return stoneReward + goldReward + lumberReward
-
 class Simple1v1Gym(CustomGym):
     def __init__(self, max_episode_steps, shape):
         engineConfig: Engine.Config = Engine.Config().defaults()
@@ -53,7 +41,7 @@ class Simple1v1Gym(CustomGym):
         self.game.update()
 
         # reward
-        reward = conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
+        reward = max(int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat), max(self.player0.statistic_damage_done - self.previousPlayer0.statistic_damage_done, 0)/self.elapsed_steps)
 
         return self._get_obs(), reward, self.game.is_terminal(), False, self._get_info()
 

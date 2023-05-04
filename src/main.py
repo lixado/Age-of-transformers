@@ -1,12 +1,13 @@
 import os
 import sys
 import torch
+from dt_selftrain import train_dt_self
 from logger import Logger
 from functions import GetConfigDict, alphanum_key
 from constants import inv_action_space
 from Agents.decisition_transformer import DecisionTransformer_Agent
 from Agents.ddqn import DDQN_Agent
-from gym.wrappers import TransformObservation, FrameStack, TimeLimit
+from gym.wrappers import TransformObservation, FrameStack, TimeLimit, NormalizeReward, NormalizeObservation
 from Gyms.Simple1v1 import Simple1v1Gym
 from Gyms.Random1v1 import Random1v1Gym
 from Gyms.Harvest import HarvestGym
@@ -97,16 +98,18 @@ if __name__ == "__main__":
         gym = SkipFrame(gym, config["skipFrame"])
     if config["repeatFrame"] != 0:
         gym = RepeatFrame(gym, config["repeatFrame"])
-    gym = TransformObservation(gym, f=lambda x: x / 20.)  # normalize the values [0, 1] #MAX VALUE=20
+    #gym = TransformObservation(gym, f=lambda x: x / 20.)  # normalize the values [0, 1] #MAX VALUE=20
     gym = TimeLimit(gym, max_episode_steps=config["stepsMax"])
+    gym = NormalizeObservation(gym)
+    #gym = NormalizeReward(gym)
 
     """
         Start agent
     """
     state_sizes = STATE_SHAPE # number of image stacked
     agent = None
-    #agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=(config["skipFrame"]+1) + int(config["stepsMax"]/(config["skipFrame"]+1)), batch_size=config["batchSize"])
-    ddqn_agent = DDQN_Agent(state_dim=(FRAME_STACK,) + STATE_SHAPE, action_space_dim=len(gym.action_space))
+    agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=(config["skipFrame"]+1) + int(config["stepsMax"]/(config["skipFrame"]+1)), batch_size=config["batchSize"])
+    #ddqn_agent = DDQN_Agent(state_dim=(FRAME_STACK,) + STATE_SHAPE, action_space_dim=len(gym.action_space))
 
     """
         Training loop
@@ -115,7 +118,7 @@ if __name__ == "__main__":
         logger = Logger(workingDir)
         if agent != None:
             data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
-            train_transformer(config, agent, gym, logger, data_path)
+            train_dt_self(config, agent, gym, logger)
         else:
             gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
             train_ddqn(config, ddqn_agent, gym, logger)

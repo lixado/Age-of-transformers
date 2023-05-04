@@ -18,7 +18,7 @@ class DecisionTransformer_Agent:
 
         self.state_dim_flatten = np.prod(state_dim)
 
-        self.max_ep_length = max_steps # maximum number that can exists in timesteps
+        self.max_ep_length = 2**11#max_steps # maximum number that can exists in timesteps
         self.n_positions = 2**10 # The maximum sequence length that this model might ever be used with. Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
         
         
@@ -29,8 +29,8 @@ class DecisionTransformer_Agent:
 
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.999975
-        self.exploration_rate_min = 0
+        self.exploration_rate_decay = 0.9
+        self.exploration_rate_min = 0.01
         self.curr_step = 0
 
         """
@@ -88,30 +88,34 @@ class DecisionTransformer_Agent:
         """
         """
 
-        with torch.no_grad():
-            sequence_length = len(self.states_sequence)
+        pred_arr = [None for _ in range(self.action_space_dim)]
+        if (random.random() < self.exploration_rate): # EXPLORE
+            actionIdx = random.randint(0, self.action_space_dim-1)
+        else:
+            with torch.no_grad():
+                sequence_length = len(self.states_sequence)
 
-            #target_return = torch.tensor(1, device=self.device, dtype=torch.float32).unsqueeze(0) # create extra dim for batch
-            states = torch.tensor(np.array(self.states_sequence), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.state_dim_flatten) # prev states
-            actions = torch.tensor(np.array(self.actions_sequence), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.action_space_dim) # create extra dim for batch
-            rewards = torch.tensor(self.rewards_sequence, device=self.device, dtype=torch.float32).reshape(1, sequence_length, 1) # create extra dim for batch # not sure what the other is
-            timesteps = torch.tensor(self.timesteps_sequence, device=self.device, dtype=torch.long).reshape(1, sequence_length) # create extra dim for batch
-            attention_mask = torch.ones((1, sequence_length), device=self.device, dtype=torch.float32) # if None default is full attention for all nodes (b, t)
+                #target_return = torch.tensor(1, device=self.device, dtype=torch.float32).unsqueeze(0) # create extra dim for batch
+                states = torch.tensor(np.array(self.states_sequence), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.state_dim_flatten) # prev states
+                actions = torch.tensor(np.array(self.actions_sequence), device=self.device, dtype=torch.float32).reshape(1, sequence_length, self.action_space_dim) # create extra dim for batch
+                rewards = torch.tensor(self.rewards_sequence, device=self.device, dtype=torch.float32).reshape(1, sequence_length, 1) # create extra dim for batch # not sure what the other is
+                timesteps = torch.tensor(self.timesteps_sequence, device=self.device, dtype=torch.long).reshape(1, sequence_length) # create extra dim for batch
+                attention_mask = torch.ones((1, sequence_length), device=self.device, dtype=torch.float32) # if None default is full attention for all nodes (b, t)
 
 
-            state_preds, action_preds, return_preds = self.net(states=states,
-                actions=actions,
-                rewards=None, #not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
-                returns_to_go=rewards,
-                timesteps=timesteps,
-                attention_mask=attention_mask,
-                return_dict=False)
+                state_preds, action_preds, return_preds = self.net(states=states,
+                    actions=actions,
+                    rewards=None, #not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
+                    returns_to_go=rewards,
+                    timesteps=timesteps,
+                    attention_mask=attention_mask,
+                    return_dict=False)
 
-            # remove batch dim
-            state_preds, action_preds, return_preds = torch.squeeze(state_preds, 0), torch.squeeze(action_preds, 0), torch.squeeze(return_preds, 0)
+                # remove batch dim
+                state_preds, action_preds, return_preds = torch.squeeze(state_preds, 0), torch.squeeze(action_preds, 0), torch.squeeze(return_preds, 0)
 
-            actionIdx = torch.argmax(action_preds[-1]).item()
-            pred_arr = torch.squeeze(action_preds[-1]).detach().cpu().numpy()
+                actionIdx = torch.argmax(action_preds[-1]).item()
+                pred_arr = torch.squeeze(action_preds[-1]).detach().cpu().numpy()
 
         # decrease exploration_rate
         self.exploration_rate *= self.exploration_rate_decay
