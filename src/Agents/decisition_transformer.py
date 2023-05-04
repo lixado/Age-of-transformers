@@ -232,8 +232,8 @@ class DecisionTransformer_Agent:
         #action_preds = torch.squeeze(action_preds, 0)
         #return_preds = torch.squeeze(return_preds, 0)
 
-        loss = self.loss_fn(observation_preds, action_preds, reward_preds,
-                            observations[:, 1:], actions, rewards[:, 1:])
+        loss = self.loss_fn(None, action_preds, None,
+                            None, actions, None)
 
         self.optimizer.zero_grad()
         loss.backward()

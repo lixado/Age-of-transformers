@@ -5,5 +5,5 @@
     "stepsMax": 500,
     "recordEvery": 50,
     "mode": 0,
-    "gym": 0
+    "gym": 2
 }

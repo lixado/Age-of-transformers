@@ -21,7 +21,6 @@ def get_batches(data: list, batch_size):
     return observations, actions, timesteps, rewards
 
 def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger, data_path):
-    agent.net.train()
     agent.exploration_rate = 0
     save_dir = logger.getSaveFolderPath()
 
@@ -35,6 +34,7 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
 
     for e in range(epochs):
         loss, q = 0.0, 0.0
+        agent.net.train()
         for game in trainingLoader:
             batches = get_batches(game, batch_size=batch_size)
             for i in range(len(batches[0])):
@@ -45,6 +45,7 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
 
                 loss, q = agent.train(observations, actions, timesteps, rewards)
 
+        agent.net.eval()
         observation, info = gym.reset()
         ticks = 1
         record = (e % record_epochs == 0) or (e == epochs - 1)  # last part to always record last

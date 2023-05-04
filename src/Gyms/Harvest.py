@@ -16,11 +16,11 @@ MAP = "10x10-2p-ffa-Eblil.json"
 # 'statistic_gathered_lumber', 'statistic_gathered_stone', 'statistic_units_created', 'stone']
 def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
     reward = 0
-    target = player0.get_targeted_unit()
-    if target is None or (target is not None and target.can_move is False):
-        reward -= 1
-    if target is not None and target.can_move:
-        reward += 1
+    # target = player0.get_targeted_unit()
+    # if target is None or (target is not None and target.can_move is False):
+    #     reward -= 1
+    # if target is not None and target.can_move:
+    #     reward += 1
     # Rewards
     # if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
     #     reward += 1
