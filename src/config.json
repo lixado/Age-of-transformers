@@ -1,8 +1,8 @@
 {
-    "epochs": 200,
+    "epochs": 1000,
     "batchSize": 7,
     "stepsMax_comment": "stepstMax should be of the form SKIP_FRAME * 2^x ",
-    "stepsMax": 2000,
+    "stepsMax": 500,
     "recordEvery": 50,
     "mode": 0,
     "gym": 0
