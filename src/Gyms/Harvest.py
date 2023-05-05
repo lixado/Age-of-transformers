@@ -21,26 +21,17 @@ def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
     #     reward -= 1
     # if target is not None and target.can_move:
     #     reward += 1
-    # Rewards
-    # if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
-    #     reward += 1
-    # if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
-    #     reward += 1
-    # if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
-    #     reward += 1
+
     if player0.num_town_hall > previousPlayer0.num_town_hall:
-        reward += 100/ticks
+        reward += 10
     if player0.num_barrack > previousPlayer0.num_barrack:
-        reward += 100/ticks
+        reward += 10
     if player0.num_farm > previousPlayer0.num_farm:
-        reward += 10/ticks
+        reward += 1
     if player0.num_peasant > previousPlayer0.num_peasant:
-        reward += 100/ticks
+        reward += 10
     if player0.num_footman > previousPlayer0.num_footman:
-        reward += 100/ticks
-    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done:
-        reward += 0.005*ticks
-    reward += player0.get_score()-previousPlayer0.get_score()
+        reward += 10
     return reward
 
 
@@ -70,12 +61,14 @@ class HarvestGym(CustomGym):
         self.action = actionIndex
 
         # randomize action order to euqalize
-        if random.random() < 0.5:
-            self.player0.do_action(self.action_space[actionIndex])
-            self.player1.do_action(random.choice(self.action_space))  # do nothing
-        else:
-            self.player1.do_action(random.choice(self.action_space))  # do nothing
-            self.player0.do_action(self.action_space[actionIndex])
+       # if random.random() < 0.5:
+       #     self.player0.do_action(self.action_space[actionIndex])
+       #     self.player1.do_action(random.choice(self.action_space))  # do nothing
+       # else:
+       #     self.player1.do_action(random.choice(self.action_space))  # do nothing
+       #     self.player0.do_action(self.action_space[actionIndex])
+
+        self.player0.do_action(self.action_space[actionIndex])
 
         self.game.update()
 
