@@ -6,6 +6,8 @@ import random
 import numpy as np
 import torch
 import torch._dynamo.config
+from torchvision.models import resnet50
+from torchvision import transforms
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
 class DDQN_Agent:
@@ -23,12 +25,12 @@ class DDQN_Agent:
         """
             Memory
         """
-        self.deque_size = 120000
+        self.deque_size = 100000
         arr = np.zeros(state_dim)
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 128
+        self.batch_size = 512
         print(f"Need {((arr.size * arr.itemsize * 2 * self.batch_size)*(1e-9)):.2f} Gb VRAM")
         #self.save_every = 5e5  # no. of experiences between saving model
 

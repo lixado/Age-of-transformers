@@ -1,6 +1,7 @@
 import os
 import json
 import random
+import re
 import shutil
 import cv2
 import numpy as np
@@ -103,3 +104,15 @@ def sample_with_order(population, max_sequence_length):
     k = random.randint(1, max_sequence_length)
     k_start = random.randint(0, len(population)-k)
     return population[k_start: k_start+k]
+
+def tryint(s):
+    try:
+        return int(s)
+    except:
+        return s
+
+def alphanum_key(s):
+    """ Turn a string into a list of string and number chunks.
+        "z23a" -> ["z", 23, "a"]
+    """
+    return [ tryint(c) for c in re.split('([0-9]+)', s) ]

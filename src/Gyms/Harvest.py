@@ -39,6 +39,7 @@ class HarvestGym(CustomGym):
     def __init__(self, max_episode_steps, shape):
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
+        engineConfig.set_harvest_forever(False)
         engineConfig.set_instant_building(True)
         engineConfig.set_harvest_forever(False)
         engineConfig.set_barracks(True)
@@ -72,12 +73,11 @@ class HarvestGym(CustomGym):
 
         self.game.update()
 
-        self.reward = harvest_reward(self.player0, self.previousPlayer0, self.elapsed_steps)
+        reward = harvest_reward(self.player0, self.previousPlayer0, self.elapsed_steps)
 
-        truncated = self.elapsed_steps > self.max_episode_steps  # useless value needs to be here for frame stack wrapper
-        return self._get_obs(), self.reward, self.game.is_terminal(), truncated, self._get_info()
+        return self._get_obs(), reward, self.game.is_terminal(), False, self._get_info()
 
-    def render(self, q_values):
+    def render(self, q_values, reward):
         """
             Return RGB image but this one will not be changed by wrappers
         """
@@ -106,7 +106,7 @@ class HarvestGym(CustomGym):
                  f"Q_Attack: {q_values[10]}",
                  f"Q_Harvest: {q_values[11]}",
                  f"Q_Build0: {q_values[12]}",
-                 f"Reward: {self.reward}",
+                 f"Reward: {reward}",
                  f"Action: {inv_action_space[self.action_space[self.action]]}"]
 
         for text in texts[::-1]:

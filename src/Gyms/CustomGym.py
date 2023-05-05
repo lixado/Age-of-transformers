@@ -35,6 +35,8 @@ class CustomGym(gym.Env):
     def _get_info(self):
         return {}
 
+    def evalPrint(self, evals):
+        pass
 
     def reset(self):
         self.elapsed_steps = 0
