@@ -118,7 +118,7 @@ if __name__ == "__main__":
             train_transformer(config, agent, gym, logger, data_path)
         else:
             gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
-            train_ddqn(config, ddqn_agent, gym, logger)
+            train_ddqn(config, ddqn_agent, gym, logger, workingDir)
     elif mode == 1:
         if agent == None:
             gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)

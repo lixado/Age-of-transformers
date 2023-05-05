@@ -34,6 +34,15 @@ def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
         reward += 10
     return reward
 
+def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
+    if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
+        return 10000 / ticks
+    if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
+        return -0.001 * ticks
+    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
+        return 1000 / ticks
+    return -1
+
 
 class HarvestGym(CustomGym):
     def __init__(self, max_episode_steps, shape):
@@ -57,23 +66,28 @@ class HarvestGym(CustomGym):
 
         self.previousPlayer0 = PlayerState(self.player0)
 
+        self.info = "harvest"
+
     def step(self, actionIndex):
         self.elapsed_steps += 1
         self.action = actionIndex
 
         # randomize action order to euqalize
-       # if random.random() < 0.5:
-       #     self.player0.do_action(self.action_space[actionIndex])
-       #     self.player1.do_action(random.choice(self.action_space))  # do nothing
-       # else:
-       #     self.player1.do_action(random.choice(self.action_space))  # do nothing
-       #     self.player0.do_action(self.action_space[actionIndex])
+        if random.random() < 0.5:
+             self.player0.do_action(self.action_space[actionIndex])
+             self.player1.do_action(random.choice(self.action_space))  # do nothing
+        else:
+           self.player1.do_action(random.choice(self.action_space))  # do nothing
+           self.player0.do_action(self.action_space[actionIndex])
 
         self.player0.do_action(self.action_space[actionIndex])
 
         self.game.update()
 
-        reward = harvest_reward(self.player0, self.previousPlayer0, self.elapsed_steps)
+        if self.elapsed_steps<1000:
+            reward = harvest_reward(self.player0, self.previousPlayer0, self.elapsed_steps)
+        else:
+            reward = conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
 
         return self._get_obs(), reward, self.game.is_terminal(), False, self._get_info()
 
