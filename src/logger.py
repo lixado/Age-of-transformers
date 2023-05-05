@@ -10,7 +10,7 @@ import numpy as np
 class Logger():
     def __init__(self, workingDir, subname=None):
         # create folder for results
-        self.folder_path = os.path.join(workingDir, "results", time.strftime("%Y%m%d-%H-%M-%S")+subname if subname != None else "")
+        self.folder_path = os.path.join(workingDir, "results", time.strftime("%Y%m%d-%H-%M-%S") + (subname if subname is not None else ""))
         os.makedirs(self.folder_path, exist_ok=True)
         self.movingAvgNumber = 100 # take last 100 and average for plotting
 
