@@ -19,13 +19,13 @@ def harvest_reward(player0, previousPlayer0: PlayerState, player1, ticks):
 
     #Building rewards
     if player0.num_town_hall > previousPlayer0.num_town_hall:
-        reward += 10
+        reward += 100
     if player0.num_barrack > previousPlayer0.num_barrack:
-        reward += 10
+        reward += 100
     if player0.num_peasant > previousPlayer0.num_peasant:
-        reward += 10
+        reward += 100
     if player0.num_footman > previousPlayer0.num_footman:
-        reward += 10
+        reward += 100
 
     #Attack reward
     if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
