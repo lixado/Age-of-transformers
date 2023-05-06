@@ -1,10 +1,14 @@
 {
-    "epochs": 500,
+    "epochs": 500000,
     "skipFrame": 10,
     "repeatFrame": 0,
-    "batchSize": 512,
+    "batchSize": 2048,
     "stepsMax": 50,
-    "recordEvery": 100,
+    "recordEvery": 299,
     "mode": 0,
-    "gym": 0
+    "gym": 0,
+    "DTDataMaxSize": 20,
+    "DTTrainEpochs": 50,
+    "DTEpisodesGenerate": 300,
+    "DTEpsilonRate": 3
 }

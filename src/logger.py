@@ -50,11 +50,16 @@ class Logger():
         self.epochTotalQ = 0
         self.record_time = time.time()
 
-    def log_step(self, reward, loss , q):
+    def log_step(self, reward):#, loss , q):
         self.epochTotalReward += reward
-        self.epochTotalLoss += loss
+        #self.epochTotalLoss += loss
         self.epochTotalActions += 1
-        self.epochTotalQ += q
+        #self.epochTotalQ += q
+
+
+    def log_step_DT(self, loss , q):
+            self.epochTotalLoss += loss
+            self.epochTotalQ += q
 
     def log_epoch(self, epoch, epsilon, lr):
         tNow = time.time()

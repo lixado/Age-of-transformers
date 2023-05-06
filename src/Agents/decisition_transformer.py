@@ -8,6 +8,7 @@ import torch
 import itertools
 from transformers import DecisionTransformerModel, DecisionTransformerConfig
 from functions import sample_with_order
+import numpy as n
 
 
 class DecisionTransformer_Agent:
@@ -29,7 +30,7 @@ class DecisionTransformer_Agent:
 
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.9
+        self.exploration_rate_decay = 0.999
         self.exploration_rate_min = 0.01
         self.curr_step = 0
 
@@ -70,18 +71,18 @@ class DecisionTransformer_Agent:
             Q learning
         """
         self.gamma = 0.9
-        self.learning_rate = 0.00025
+        self.learning_rate = 0.0025
         self.learning_rate_decay = 0.999985
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         #self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = lambda s_pred, a_pred, r_pred, s, a, r: torch.mean((a_pred-a)**2)
         self.burnin = 1e3  # min. experiences before training
-        assert( self.burnin >  self.batch_size)
+        #assert( self.burnin >  self.batch_size)
         self.learn_every = 1  # no. of experiences between updates to Q_online
         self.sync_every = 1e6  # no. of experiences between Q_target & Q_online sync
 
-        self.attention_mask = torch.ones((self.batch_size, 1), device=self.device, dtype=torch.float32)  # if None default is full attention for all nodes (b, t)
+        #self.attention_mask = torch.ones((self.batch_size, 1), device=self.device, dtype=torch.float32)  # if None default is full attention for all nodes (b, t)
 
 
     def act(self):
@@ -207,28 +208,28 @@ class DecisionTransformer_Agent:
 
         return totalLoss, (avgQ / j)
 
-    def train(self, observations, actions, timesteps, rewards):
-        observations = torch.tensor(observations, device=self.device, dtype=torch.float32)
-        observations = observations.reshape(self.batch_size, 1, self.state_dim_flatten)
+    def train(self, observations, actions, timesteps, returns_to_go):
+        batch_size = len(observations)
+        sequence_length = len(observations[0])
 
-        actionArr = np.zeros((self.batch_size, self.action_space_dim))
-        for i in range(self.batch_size):
-            ind = actions[i]
-            actionArr[i][ind] = 1
 
-        actions = torch.tensor(actionArr, device=self.device, dtype=torch.float32).reshape(self.batch_size, 1, self.action_space_dim)
+        #print("shape: ",observations.shape)
+        observations = torch.tensor(observations, device=self.device, dtype=torch.float32).reshape(batch_size, sequence_length, self.state_dim_flatten)
 
-        rewards_to_go = np.array([sum(rewards[i:len(rewards)]) for i in range(len(rewards))])
-        rewards_to_go = torch.tensor(rewards_to_go, device=self.device, dtype=torch.float32).reshape(self.batch_size, 1, 1)
+
+        actions = torch.tensor(actions, device=self.device, dtype=torch.float32)
+        
+        rewards_to_go = torch.tensor(returns_to_go, device=self.device, dtype=torch.float32).reshape(batch_size, sequence_length, 1)
+
         timesteps = torch.tensor(timesteps, device=self.device, dtype=torch.long)
-        attention_mask = torch.ones((1, self.batch_size), device=self.device, dtype=torch.float32)  # if None default is full attention for all nodes (b, t)
+        attention_mask = torch.ones((batch_size, sequence_length), device=self.device, dtype=torch.float32)  # if None default is full attention for all nodes (b, t)
 
         observation_preds, action_preds, reward_preds = self.net(states=observations,
            actions=actions,
            rewards=None, # not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
            returns_to_go=rewards_to_go,
            timesteps=timesteps,
-           attention_mask=self.attention_mask,
+           attention_mask=attention_mask,
            return_dict=False)
 
         # remove batch dim
@@ -237,7 +238,7 @@ class DecisionTransformer_Agent:
         #return_preds = torch.squeeze(return_preds, 0)
 
         loss = self.loss_fn(observation_preds, action_preds, reward_preds,
-                            observations[:, 1:], actions, rewards[:, 1:])
+                            observations[:, 1:], actions, rewards_to_go)
 
         self.optimizer.zero_grad()
         loss.backward()

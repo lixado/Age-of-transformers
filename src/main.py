@@ -100,7 +100,7 @@ if __name__ == "__main__":
         gym = RepeatFrame(gym, config["repeatFrame"])
     #gym = TransformObservation(gym, f=lambda x: x / 20.)  # normalize the values [0, 1] #MAX VALUE=20
     gym = TimeLimit(gym, max_episode_steps=config["stepsMax"])
-    gym = NormalizeObservation(gym)
+    #gym = NormalizeObservation(gym)
     #gym = NormalizeReward(gym)
 
     """

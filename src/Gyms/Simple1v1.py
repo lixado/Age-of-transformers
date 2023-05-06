@@ -41,8 +41,8 @@ class Simple1v1Gym(CustomGym):
         self.game.update()
 
         # reward
-        reward = max(int(self.player1.evaluate_player_state() == Constants.PlayerState.Defeat), max(self.player0.statistic_damage_done - self.previousPlayer0.statistic_damage_done, 0)/self.elapsed_steps)
-
+        reward = conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
+        
         return self._get_obs(), reward, self.game.is_terminal(), False, self._get_info()
 
     def _get_info(self):
