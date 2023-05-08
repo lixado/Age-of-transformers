@@ -19,6 +19,7 @@ class PlayerState():
         self.food = player.food
 
         # Statistics
+        self.score = player.get_score()
         self.statistic_damage_done = player.statistic_damage_done
         self.statistic_damage_taken = player.statistic_damage_taken
         self.statistic_gathered_gold = player.statistic_gathered_gold
@@ -26,9 +27,16 @@ class PlayerState():
         self.statistic_gathered_stone = player.statistic_gathered_stone
         self.statistic_units_created = player.statistic_units_created
         self.num_town_hall = player.num_town_hall
+        self.num_barrack = player.num_barrack
+        self.num_farm = player.num_farm
         self.num_peasant = player.num_peasant
+        self.num_footman = player.num_footman
+
     def evaluate_player_state(self):
         return self.player_state
+
+    def get_score(self):
+        return self.score
 
 def NotifyDiscord(message):
     data = {
