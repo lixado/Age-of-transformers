@@ -10,6 +10,7 @@ from gym.wrappers import TransformObservation, FrameStack, TimeLimit
 from Gyms.Simple1v1 import Simple1v1Gym
 from Gyms.Random1v1 import Random1v1Gym
 from Gyms.Harvest import HarvestGym
+from Gyms.Full1v1 import Full1v1Gym
 from train import train_transformer, train_ddqn
 from eval import evaluate
 from playground import playground
@@ -69,7 +70,7 @@ if __name__ == "__main__":
 
     print(f"{modes[mode]} mode.") if "mode" not in config else print(f"{modes[mode]} mode. Auto from config.json file.")
 
-    gymModes = ["Simple1v1", "Random1v1", "Harvest"]
+    gymModes = ["Simple1v1", "Random1v1", "Full1v1", "Harvest"]
     for cnt, modeName in enumerate(gymModes, 1):
         sys.stdout.write("[%d] %s\n\r" % (cnt, modeName))
 
@@ -85,6 +86,8 @@ if __name__ == "__main__":
         gym = Simple1v1Gym(config["stepsMax"], STATE_SHAPE)
     elif gymMode == 1:
         gym = Random1v1Gym(config["stepsMax"], STATE_SHAPE)
+    elif gymMode == 2:
+        gym = Full1v1Gym(config["stepsMax"], STATE_SHAPE)
     elif gymMode == 2:
         gym = HarvestGym(config["stepsMax"], STATE_SHAPE)
     else:

@@ -14,28 +14,26 @@ MAP = "10x10-2p-ffa-Eblil.json"
 # 'num_farm', 'num_footman', 'num_peasant', 'num_town_hall', 'right_click', 'set_name', 'set_state',
 # 'set_targeted_unit_id', 'spawn_unit', 'statistic_damage_done', 'statistic_damage_taken', 'statistic_gathered_gold',
 # 'statistic_gathered_lumber', 'statistic_gathered_stone', 'statistic_units_created', 'stone']
-def harvest_reward(player0, previousPlayer0: PlayerState, player1, ticks):
-    reward = -1
+def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
+    #Penalties
+    reward = -ticks/2000
+    target = player0.get_targeted_unit()
+    if target is None or (target is not None and target.can_move is False):
+        reward -= 1
 
-    #Building rewards
-    if player0.num_farm > previousPlayer0.num_farm:
-        reward += 20
+    #Rewards
+    if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
+        reward += 10
+    if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
+        reward += 10
+    if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
+        reward += 10
     if player0.num_town_hall > previousPlayer0.num_town_hall:
-        reward += 50
+        reward += 10
+    if player0.num_farm > previousPlayer0.num_farm:
+        reward += 10
     if player0.num_peasant > previousPlayer0.num_peasant:
-        reward += 50
-    if player0.num_barrack > previousPlayer0.num_barrack:
-        reward += 100
-    if player0.num_footman > previousPlayer0.num_footman:
-        reward += 100
-
-    #Attack reward
-    if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
-        reward += 10000 / ticks
-    if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
-        reward += -0.001 * ticks
-    if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
-        reward += 1000 / ticks
+        reward += 10
     return reward
 
 
@@ -45,9 +43,10 @@ class HarvestGym(CustomGym):
         engineConfig.set_gui("Blend2DGui")
         engineConfig.set_instant_building(True)
         engineConfig.set_harvest_forever(False)
-        engineConfig.set_barracks(True)
         engineConfig.set_farm(True)
-        engineConfig.set_footman(True)
+        engineConfig.set_barracks(False)
+        engineConfig.set_footman(False)
+        engineConfig.set_archer(False)
         engineConfig.set_start_lumber(5000)
         engineConfig.set_start_gold(5000)
         engineConfig.set_start_stone(5000)
@@ -56,25 +55,17 @@ class HarvestGym(CustomGym):
 
         super().__init__(max_episode_steps, shape, MAP, engineConfig)
 
-        self.player1: Engine.Player = self.game.add_player()
-
         self.previousPlayer0 = PlayerState(self.player0)
 
     def step(self, actionIndex):
         self.elapsed_steps += 1
         self.action = actionIndex
 
-        # randomize action order to euqalize
-        if random.random() < 0.5:
-            self.player0.do_action(self.action_space[actionIndex])
-            self.player1.do_action(random.choice(self.action_space))  # do nothing
-        else:
-            self.player1.do_action(random.choice(self.action_space))  # do nothing
-            self.player0.do_action(self.action_space[actionIndex])
+        self.player0.do_action(self.action_space[actionIndex])
 
         self.game.update()
 
-        reward = harvest_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
+        reward = harvest_reward(self.player0, self.previousPlayer0, self.elapsed_steps)
 
         return self._get_obs(), reward, self.game.is_terminal(), False, self._get_info()
 
@@ -94,6 +85,9 @@ class HarvestGym(CustomGym):
         thickness = 1
 
         texts = [f"Update Nr.: {self.elapsed_steps}",
+                 f"player0.gathered_stone: {self.player0.statistic_gathered_stone}",
+                 f"player0.gathered_gold: {self.player0.statistic_gathered_gold}",
+                 f"player0.gathered_lumber: {self.player0.statistic_gathered_lumber}",
                  f"Q_values:",
                  f"Q_Prev_Unit: {q_values[0]}",
                  f"Q_Next_Unit: {q_values[1]}",
@@ -101,11 +95,9 @@ class HarvestGym(CustomGym):
                  f"Q_Right: {q_values[3]}",
                  f"Q_Up: {q_values[4]}",
                  f"Q_Down: {q_values[5]}",
-                 f"Q_Attack: {q_values[10]}",
                  f"Q_Harvest: {q_values[11]}",
                  f"Q_Build0: {q_values[12]}",
-                 f"Q_Build1: {q_values[13]}",
-                 f"Q_Build2: {q_values[14]}",
+                 f"Q_Build1: {q_values[12]}",
                  f"Reward: {reward}",
                  f"Action: {inv_action_space[self.action_space[self.action]]}"]
 
