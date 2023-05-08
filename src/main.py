@@ -88,7 +88,7 @@ if __name__ == "__main__":
         gym = Random1v1Gym(config["stepsMax"], STATE_SHAPE)
     elif gymMode == 2:
         gym = Full1v1Gym(config["stepsMax"], STATE_SHAPE)
-    elif gymMode == 2:
+    elif gymMode == 3:
         gym = HarvestGym(config["stepsMax"], STATE_SHAPE)
     else:
         print("Invalid gym")
