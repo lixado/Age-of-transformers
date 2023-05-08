@@ -160,6 +160,7 @@ def train_dt_self(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, 
             dtDataMaxSize = int(dtDataMaxSize * (3 / 4))
 
             if dtDataMaxSize < 2:
+                agent.save(save_dir)
                 NotifyDiscord(f"Training finished stagnated. Epochs: {epochs} Name: {save_dir}")
                 exit()
 

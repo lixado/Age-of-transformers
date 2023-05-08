@@ -12,7 +12,7 @@ def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
     if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
         return 10000/ticks
     if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
-        return -0.001*ticks
+        return -100
     if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
         return 1000/ticks
     return -1
