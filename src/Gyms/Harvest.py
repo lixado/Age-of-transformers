@@ -29,9 +29,9 @@ def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
     if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
         reward += 10
     if player0.num_town_hall > previousPlayer0.num_town_hall:
-        reward += 10
+        reward += 20
     if player0.num_farm > previousPlayer0.num_farm:
-        reward += 10
+        reward += 5
     if player0.num_peasant > previousPlayer0.num_peasant:
         reward += 10
     return reward
