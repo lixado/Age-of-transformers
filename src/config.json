@@ -3,7 +3,7 @@
     "skipFrame": 10,
     "repeatFrame": 0,
     "batchSize": 7,
-    "stepsMax": 50,
+    "stepsMax": 200,
     "recordEvery": 50,
     "mode": 0,
     "gym": 3
