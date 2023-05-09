@@ -89,7 +89,7 @@ class Logger():
         with open(self.save_log, "a") as f:
             f.write(
                 f"{epoch:8d}{self.epochTotalActions:8d}{epsilon:10.3f}"
-                f"{(np.mean(self.rewards[-self.movingAvgNumber:])):15.3f}{(np.mean(self.losses[-self.movingAvgNumber:])):15.3f}{(np.mean(self.qs[-self.movingAvgNumber:])):15.3f}"
+                f"{self.epochTotalReward:15.3f}{self.epochTotalLoss:15.3f}{self.epochTotalQ:15.3f}"
                 f"{tDelta:15.3f}"
                 f"{datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'):>20}\n"
             )
