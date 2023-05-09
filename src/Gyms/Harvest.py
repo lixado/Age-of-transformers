@@ -69,6 +69,17 @@ class HarvestGym(CustomGym):
 
         return self._get_obs(), reward, self.game.is_terminal(), False, self._get_info()
 
+
+    def _get_info(self):
+        reward = self.player0.statistic_gathered_stone + self.player0.statistic_gathered_gold + self.player0.statistic_gathered_lumber
+        
+        return {"eval": reward}
+    
+    def evalPrint(self, evals):
+        print(f"Total collected: {sum(evals)}, Avg collected(per game): {sum(evals)/len(evals)}, Min: {min(evals)}, Max: {max(evals)}")
+
+
+
     def render(self, q_values, reward):
         """
             Return RGB image but this one will not be changed by wrappers

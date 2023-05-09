@@ -113,3 +113,13 @@ class Full1v1Gym(CustomGym):
             org = (org[0], org[1] - spacing)
         image = cv2.hconcat([dashboard, image])
         return image
+    
+    def _get_info(self):
+        if self.player1.evaluate_player_state() == Constants.PlayerState.Defeat:
+            return {"eval": self.elapsed_steps}
+        
+        return {"eval": None}
+    
+    def evalPrint(self, evals):
+        evalsNotNone = [x for x in evals if x is not None]
+        print(f"Total kills: {len(evalsNotNone)} out of {len(evals)}, Avg (ticks): {sum(evalsNotNone)/len(evalsNotNone) if len(evalsNotNone) > 0 else 0}, Min (ticks): {min(evalsNotNone) if len(evalsNotNone) > 0 else 0}, Max (ticks): {max(evalsNotNone) if len(evalsNotNone) > 0 else 0}")
