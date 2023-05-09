@@ -85,7 +85,7 @@ def train_dt_self(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, 
             truncated = False
 
             actionIndex = -1  # first acction is default Do nothing
-            reward = 0
+            reward = 100
             agent.states_sequence = [observation]
             agent.rewards_sequence = [reward]
             agent.timesteps_sequence = [ticks]
@@ -106,6 +106,7 @@ def train_dt_self(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, 
 
                 # Act
                 next_observation, reward, done, truncated, info = gym.step(actionIndex)
+
 
                 agent.append(next_observation, actionIndex, ticks, reward)
 
