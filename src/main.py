@@ -11,6 +11,7 @@ from gym.wrappers import TransformObservation, FrameStack, TimeLimit, NormalizeR
 from Gyms.Simple1v1 import Simple1v1Gym
 from Gyms.Random1v1 import Random1v1Gym
 from Gyms.Harvest import HarvestGym
+from Gyms.Full1v1 import Full1v1Gym
 from train import train_transformer, train_ddqn
 from eval import evaluate
 from playground import playground
@@ -70,7 +71,7 @@ if __name__ == "__main__":
 
     print(f"{modes[mode]} mode.") if "mode" not in config else print(f"{modes[mode]} mode. Auto from config.json file.")
 
-    gymModes = ["Simple1v1", "Random1v1", "Harvest"]
+    gymModes = ["Simple1v1", "Random1v1", "Full1v1", "Harvest"]
     for cnt, modeName in enumerate(gymModes, 1):
         sys.stdout.write("[%d] %s\n\r" % (cnt, modeName))
 
@@ -87,6 +88,8 @@ if __name__ == "__main__":
     elif gymMode == 1:
         gym = Random1v1Gym(config["stepsMax"], STATE_SHAPE)
     elif gymMode == 2:
+        gym = Full1v1Gym(config["stepsMax"], STATE_SHAPE)
+    elif gymMode == 3:
         gym = HarvestGym(config["stepsMax"], STATE_SHAPE)
     else:
         print("Invalid gym")
@@ -119,25 +122,24 @@ if __name__ == "__main__":
         if agent != None:
             data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
             train_dt_self(config, agent, gym, logger)
+            
+            #data_path = os.path.join(workingDir, "simple1v1_data")
+            #train_transformer(config, agent, gym, logger, data_path)
         else:
             gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
             train_ddqn(config, ddqn_agent, gym, logger)
     elif mode == 1:
         if agent == None:
             gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
-            
+
         modelPath = chooseModel(os.path.join(workingDir, "results"))
         evaluate(ddqn_agent, gym, modelPath)
     elif mode == 2:
         playground(gym)
     elif mode == 3:
-        results = os.path.join(workingDir, "results")
-        folders = os.listdir(results)
-        paths = [os.path.join(results, basename) for basename in folders]
-        latestFolder = paths[-1]
-        modelPath = os.path.join(latestFolder, "model.chkpt")
         gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
+        modelPath = chooseModel(os.path.join(workingDir, "results"))
         logger = Logger(workingDir)
         simulate(config, ddqn_agent, gym, logger, modelPath)
     else:

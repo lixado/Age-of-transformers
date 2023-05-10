@@ -88,6 +88,12 @@ class DecisionTransformer_Agent:
     def act(self):
         """
         """
+        pred_arr = [None for _ in range(self.action_space_dim)]
+        if (random.random() < self.exploration_rate):  # EXPLORE
+            actionIdx = random.randint(0, self.action_space_dim - 1)
+        else:
+            with torch.no_grad():
+                sequence_length = len(self.states_sequence)
 
         pred_arr = [None for _ in range(self.action_space_dim)]
         if (random.random() < self.exploration_rate): # EXPLORE
