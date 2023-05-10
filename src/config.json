@@ -1,8 +1,8 @@
 {
-    "epochs": 100,
+    "epochs": 1000,
     "skipFrame": 10,
     "repeatFrame": 0,
-    "batchSize": 7,
+    "batchSize": 8,
     "stepsMax": 50,
     "recordEvery": 50,
     "mode": 0,

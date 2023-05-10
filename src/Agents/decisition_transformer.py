@@ -30,7 +30,7 @@ class DecisionTransformer_Agent:
 
         self.exploration_rate = 0.005
         self.exploration_rate_decay = 0.999975
-        self.exploration_rate_min = 0.001
+        self.exploration_rate_min = 0
         self.curr_step = 0
 
         """
@@ -271,6 +271,20 @@ class DecisionTransformer_Agent:
     #     loss.backward()
     #     self.optimizer.step()
     #     return loss.detach().cpu().item(), 0
+
+    def saveHyperParameters(self, save_dir):
+        save_HyperParameters = os.path.join(save_dir, "hyperparameters.txt")
+        with open(save_HyperParameters, "w") as f:
+            f.write(f"exploration_rate = {self.exploration_rate}\n")
+            f.write(f"exploration_rate_decay = {self.exploration_rate_decay}\n")
+            f.write(f"exploration_rate_min = {self.exploration_rate_min}\n")
+            f.write(f"batch_size = {self.batch_size}\n")
+            f.write(f"gamma (discount parameter) = {self.gamma}\n")
+            f.write(f"learning_rate = {self.learning_rate}\n")
+            f.write(f"learning_rate_decay = {self.learning_rate_decay}\n")
+            f.write(f"burnin = {self.burnin}\n")
+            f.write(f"learn_every = {self.learn_every}\n")
+            f.write(f"sync_every = {self.sync_every}")
 
     def save(self, save_dir):
         """

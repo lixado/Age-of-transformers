@@ -21,6 +21,7 @@ def get_batches(data: list, batch_size):
     return observations, actions, timesteps, rewards
 
 def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger, data_path):
+    agent.exploration_rate = 0
     save_dir = logger.getSaveFolderPath()
 
     record_epochs = config["recordEvery"]  # record game every x epochs
