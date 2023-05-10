@@ -4,7 +4,7 @@
     "repeatFrame": 0,
     "batchSize": 7,
     "stepsMax": 50,
-    "recordEvery": 10,
+    "recordEvery": 50,
     "mode": 0,
     "gym": 0
 }
