@@ -4,11 +4,11 @@
     "repeatFrame": 0,
     "batchSize": 2048,
     "stepsMax": 50,
-    "recordEvery": 99,
+    "recordEvery": 199,
     "mode": 0,
     "gym": 0,
-    "DTDataMaxSize": 10,
-    "DTTrainEpochs": 200,
-    "DTEpisodesGenerate": 100,
+    "DTDataMaxSize": 30,
+    "DTTrainEpochs": 100,
+    "DTEpisodesGenerate": 200,
     "DTEpsilonRate": 5
 }
