@@ -3,6 +3,7 @@ import json
 import random
 import re
 import shutil
+import sys
 import cv2
 import numpy as np
 from tqdm import tqdm
@@ -37,6 +38,30 @@ class PlayerState():
 
     def get_score(self):
         return self.score
+    
+
+def chooseModel(folderPath):
+    folderList = [name for name in os.listdir(folderPath) if os.path.isdir(os.path.join(folderPath, name)) and len(os.listdir(os.path.join(folderPath, name))) != 0]
+
+    if len(folderList) == 0:
+        print("No models to load in path: ", folderPath)
+        quit()
+
+    for cnt, fileName in enumerate(folderList, 1):
+        sys.stdout.write("[%d] %s\n\r" % (cnt, fileName))
+
+    choice = int(input("Select folder with platformer model[1-%s]: " % cnt)) - 1
+    folder = folderList[choice]
+    print(folder)
+
+    fileList = [f for f in os.listdir(os.path.join(folderPath, folder)) if f.endswith(".chkpt")]
+
+    if len(fileList) == 0:
+        print("No models to load in path: ", folder)
+        quit()
+
+    modelPath = os.path.join(folderPath, folder, fileList[0])
+    return modelPath
 
 def NotifyDiscord(message):
     data = {

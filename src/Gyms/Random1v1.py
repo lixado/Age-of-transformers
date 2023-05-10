@@ -24,7 +24,7 @@ def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
 
 
 class Random1v1Gym(CustomGym):
-    def __init__(self, max_episode_steps, shape):
+    def __init__(self, shape):
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
         engineConfig.set_auto_attack(True)
@@ -32,7 +32,7 @@ class Random1v1Gym(CustomGym):
         self.action_space = [3, 4, 5, 6, 11, 16]  # move and attack simple
         self.reward = 0
 
-        super().__init__(max_episode_steps, shape, MAP, engineConfig)
+        super().__init__(shape, MAP, engineConfig)
 
         self.player1: Engine.Player = self.game.add_player()
 

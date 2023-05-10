@@ -11,43 +11,43 @@ from torchvision import transforms
 
 #based on pytorch RL tutorial by yfeng997: https://github.com/yfeng997/MadMario/blob/master/agent.py
 class DDQN_Agent:
-    def __init__(self, state_dim, action_space_dim):
+    def __init__(self, state_dim, action_space_dim, config):
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.net = DDQN(self.state_dim, self.action_space_dim).float().to(device=self.device)
 
-        self.exploration_rate = 1
-        self.exploration_rate_decay = 0.999997
-        self.exploration_rate_min = 0.001
+        self.exploration_rate = config["exploration_rate"]
+        self.exploration_rate_decay = config["exploration_rate_decay"]
+        self.exploration_rate_min = config["exploration_rate_min"]
         self.curr_step = 0
         """
             Memory
         """
-        self.deque_size = 100000
+        self.deque_size = config["deque_size"]
         arr = np.zeros(state_dim)
         totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = 512
+        self.batch_size = config["batch_size"]
         print(f"Need {((arr.size * arr.itemsize * 2 * self.batch_size)*(1e-9)):.2f} Gb VRAM")
         #self.save_every = 5e5  # no. of experiences between saving model
 
         """
             Q learning
         """
-        self.gamma = 0.9
-        self.learning_rate = 0.00025
-        self.learning_rate_decay = 0.999975
+        self.gamma = config["gamma"]
+        self.learning_rate = config["learning_rate"]
+        self.learning_rate_decay = config["learning_rate_decay"]
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
-        self.burnin = 1e4  # min. experiences before training
+        self.burnin = config["burnin"]  # min. experiences before training
         assert( self.burnin >  self.batch_size)
-        self.learn_every = 3  # no. of experiences between updates to Q_online
-        self.sync_every = 1e4  # no. of experiences between Q_target & Q_online sync
+        self.learn_every = config["learn_every"]  # no. of experiences between updates to Q_online
+        self.sync_every = config["sync_every"]  # no. of experiences between Q_target & Q_online sync
 
     def act(self, state):
         """
@@ -180,20 +180,6 @@ class DDQN_Agent:
         self.exploration_rate = dt["exploration_rate"]
         print(f"Loading model at {path} with exploration rate {self.exploration_rate}")
 
-    def saveHyperParameters(self, save_dir):
-        save_HyperParameters = os.path.join(save_dir, "hyperparameters.txt")
-        with open(save_HyperParameters, "w") as f:
-            f.write(f"exploration_rate = {self.exploration_rate}\n")
-            f.write(f"exploration_rate_decay = {self.exploration_rate_decay}\n")
-            f.write(f"exploration_rate_min = {self.exploration_rate_min}\n")
-            f.write(f"deque_size = {self.deque_size}\n")
-            f.write(f"batch_size = {self.batch_size}\n")
-            f.write(f"gamma (discount parameter) = {self.gamma}\n")
-            f.write(f"learning_rate = {self.learning_rate}\n")
-            f.write(f"learning_rate_decay = {self.learning_rate_decay}\n")
-            f.write(f"burnin = {self.burnin}\n")
-            f.write(f"learn_every = {self.learn_every}\n")
-            f.write(f"sync_every = {self.sync_every}")
 
     def save(self, save_dir):
         """

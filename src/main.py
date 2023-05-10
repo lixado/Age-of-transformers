@@ -3,7 +3,7 @@ import sys
 import torch
 from dt_selftrain import train_dt_self
 from logger import Logger
-from functions import GetConfigDict, alphanum_key
+from functions import GetConfigDict, alphanum_key, chooseModel
 from constants import inv_action_space
 from Agents.decisition_transformer import DecisionTransformer_Agent
 from Agents.ddqn import DDQN_Agent
@@ -22,29 +22,6 @@ from wrappers import SkipFrame, RepeatFrame
 STATE_SHAPE = (32, 32) # model input shapes
 FRAME_STACK = 3
 
-def chooseModel(folderPath):
-    folderList = [name for name in os.listdir(folderPath) if os.path.isdir(os.path.join(folderPath, name)) and len(os.listdir(os.path.join(folderPath, name))) != 0]
-
-    if len(folderList) == 0:
-        print("No models to load in path: ", folderPath)
-        quit()
-
-    for cnt, fileName in enumerate(folderList, 1):
-        sys.stdout.write("[%d] %s\n\r" % (cnt, fileName))
-
-    choice = int(input("Select folder with platformer model[1-%s]: " % cnt)) - 1
-    folder = folderList[choice]
-    print(folder)
-
-    fileList = [f for f in os.listdir(os.path.join(folderPath, folder)) if f.endswith(".chkpt")]
-
-    if len(fileList) == 0:
-        print("No models to load in path: ", folder)
-        quit()
-
-    modelPath = os.path.join(folderPath, folder, fileList[0])
-    return modelPath
-
 
 if __name__ == "__main__":
     workingDir = os.getcwd()
@@ -56,6 +33,7 @@ if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Device: ", device)
 
+
     """
         Handle input default train
         0 = Train
@@ -66,31 +44,36 @@ if __name__ == "__main__":
     modes = ["Train", "Eval", "Playground", "Simulate"]
     for cnt, modeName in enumerate(modes, 1):
         sys.stdout.write("[%d] %s\n\r" % (cnt, modeName))
-
     mode = (int(input("Select mode[1-%s]: " % cnt)) - 1) if "mode" not in config else config["mode"] # get from config file if exists
-
     print(f"{modes[mode]} mode.") if "mode" not in config else print(f"{modes[mode]} mode. Auto from config.json file.")
 
+
+    """
+        Handle env input
+        0 = Simple1v1
+        1 = Random1v1
+        2 = Full1v1
+        3 = Harvest
+    """
     gymModes = ["Simple1v1", "Random1v1", "Full1v1", "Harvest"]
     for cnt, modeName in enumerate(gymModes, 1):
         sys.stdout.write("[%d] %s\n\r" % (cnt, modeName))
-
-    gymMode = (int(input("Select gym[1-%s]: " % cnt)) - 1) if "gym" not in config else config[
-        "gym"]  # get from config file if exists
-
+    gymMode = (int(input("Select gym[1-%s]: " % cnt)) - 1) if "gym" not in config else config["gym"]  # get from config file if exists
     print(f"{gymModes[gymMode]} gym.") if "gym" not in config else print(f"{modes[mode]} gym. Auto from config.json file.")
+
+    
     
     """
         Start gym
     """
     if gymMode == 0:
-        gym = Simple1v1Gym(config["stepsMax"], STATE_SHAPE)
+        gym = Simple1v1Gym(STATE_SHAPE)
     elif gymMode == 1:
-        gym = Random1v1Gym(config["stepsMax"], STATE_SHAPE)
+        gym = Random1v1Gym(STATE_SHAPE)
     elif gymMode == 2:
-        gym = Full1v1Gym(config["stepsMax"], STATE_SHAPE)
+        gym = Full1v1Gym(STATE_SHAPE)
     elif gymMode == 3:
-        gym = HarvestGym(config["stepsMax"], STATE_SHAPE)
+        gym = HarvestGym(STATE_SHAPE)
     else:
         print("Invalid gym")
         quit(0)
@@ -101,39 +84,43 @@ if __name__ == "__main__":
         gym = SkipFrame(gym, config["skipFrame"])
     if config["repeatFrame"] != 0:
         gym = RepeatFrame(gym, config["repeatFrame"])
-    #gym = TransformObservation(gym, f=lambda x: x / 20.)  # normalize the values [0, 1] #MAX VALUE=20
+    if config["normalize"]:
+        gym = NormalizeObservation(gym)
+        gym = NormalizeReward(gym)
     gym = TimeLimit(gym, max_episode_steps=config["stepsMax"])
-    #gym = NormalizeObservation(gym)
-    #gym = NormalizeReward(gym)
+
 
     """
         Start agent
     """
-    state_sizes = STATE_SHAPE # number of image stacked
     agent = None
-    agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=(config["skipFrame"]+1) + int(config["stepsMax"]/(config["skipFrame"]+1)), batch_size=config["batchSize"])
-    #ddqn_agent = DDQN_Agent(state_dim=(FRAME_STACK,) + STATE_SHAPE, action_space_dim=len(gym.action_space))
+    if config["agent"] == 0:
+        agent = DDQN_Agent(state_dim=(FRAME_STACK,) + STATE_SHAPE, action_space_dim=len(gym.action_space))
+    elif config["agent"] > 0:
+        agent = DecisionTransformer_Agent(state_dim=STATE_SHAPE, action_space_dim=len(gym.action_space), device=device, max_steps=(config["skipFrame"]+1) + int(config["stepsMax"]/(config["skipFrame"]+1)), batch_size=config["batchSize"])
+    
 
     """
         Training loop
     """
     if mode == 0:
         logger = Logger(workingDir)
-        if agent != None:
-            data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
-            train_dt_self(config, agent, gym, logger)
-            
-            #data_path = os.path.join(workingDir, "simple1v1_data")
-            #train_transformer(config, agent, gym, logger, data_path)
-        else:
+
+        if config["agent"] == 0:
             gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
-            train_ddqn(config, ddqn_agent, gym, logger)
+            train_ddqn(config, agent, gym, logger)
+        elif config["agent"] == 1:
+            #data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
+            data_path = os.path.join(workingDir, "simple1v1_data")
+            train_transformer(config, agent, gym, logger, data_path)
+        elif config["agent"] == 2:
+            train_dt_self(config, agent, gym, logger)
     elif mode == 1:
-        if agent == None:
+        if config["agent"] == 0:
             gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
         modelPath = chooseModel(os.path.join(workingDir, "results"))
-        evaluate(ddqn_agent, gym, modelPath)
+        evaluate(agent, gym, modelPath)
     elif mode == 2:
         playground(gym)
     elif mode == 3:
@@ -141,7 +128,7 @@ if __name__ == "__main__":
 
         modelPath = chooseModel(os.path.join(workingDir, "results"))
         logger = Logger(workingDir)
-        simulate(config, ddqn_agent, gym, logger, modelPath)
+        simulate(config, agent, gym, logger, modelPath)
     else:
         print("Mode not avaliable")
 
