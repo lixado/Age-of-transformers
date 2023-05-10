@@ -44,6 +44,29 @@ def chooseModel(folderPath):
     modelPath = os.path.join(folderPath, folder, fileList[0])
     return modelPath
 
+def chooseDataset(folderPath):
+    folderList = [name for name in os.listdir(folderPath) if os.path.isdir(os.path.join(folderPath, name)) and len(os.listdir(os.path.join(folderPath, name))) != 0]
+
+    if len(folderList) == 0:
+        print("No datasets to load in path: ", folderPath)
+        quit()
+
+    for cnt, fileName in enumerate(folderList, 1):
+        sys.stdout.write("[%d] %s\n\r" % (cnt, fileName))
+
+    choice = int(input("Select folder with dataset for Vanilla DT[1-%s]: " % cnt)) - 1
+    folder = folderList[choice]
+    print(folder)
+
+    fileList = [f for f in os.listdir(os.path.join(folderPath, folder)) if f.endswith(".pickle")]
+
+    if len(fileList) == 0:
+        print("No data to load in dataset: ", folder)
+        quit()
+
+    folderPath = os.path.join(folderPath, folder)
+    return folderPath
+
 
 if __name__ == "__main__":
     workingDir = os.getcwd()
@@ -70,7 +93,7 @@ if __name__ == "__main__":
 
     print(f"{modes[mode]} mode.") if "mode" not in config else print(f"{modes[mode]} mode. Auto from config.json file.")
 
-    gymModes = ["Simple1v1", "Random1v1", "Full1v1", "Harvest"]
+    gymModes = ["simple1v1", "random1v1", "full1v1", "harvest"]
     for cnt, modeName in enumerate(gymModes, 1):
         sys.stdout.write("[%d] %s\n\r" % (cnt, modeName))
 
@@ -108,7 +131,7 @@ if __name__ == "__main__":
     """
     state_sizes = STATE_SHAPE # number of image stacked
     agent = None
-    #agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=config["stepsMax"]+1, batch_size=config["batchSize"])
+    agent = DecisionTransformer_Agent(state_dim=state_sizes, action_space_dim=len(gym.action_space), device=device, max_steps=config["stepsMax"]+1, batch_size=config["batchSize"])
     ddqn_agent = DDQN_Agent(state_dim=(FRAME_STACK,) + STATE_SHAPE, action_space_dim=len(gym.action_space))
 
     """
@@ -117,8 +140,10 @@ if __name__ == "__main__":
     if mode == 0:
         logger = Logger(workingDir)
         if agent != None:
-            data_path = os.path.join(workingDir, "simple1v1_data")
-            train_transformer(config, agent, gym, logger, data_path)
+            data_path = os.path.join(workingDir, "datasets")
+            data_path = os.path.join(data_path, gymModes[gymMode])
+            dataset_path = chooseDataset(data_path)
+            train_transformer(config, agent, gym, logger, dataset_path)
         else:
             gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
             train_ddqn(config, ddqn_agent, gym, logger)
