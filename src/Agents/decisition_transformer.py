@@ -15,7 +15,7 @@ class DecisionTransformer_Agent:
     def __init__(self, state_dim, action_space_dim, config):
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = config["device"]
 
         self.state_dim_flatten = np.prod(state_dim)
 

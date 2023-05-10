@@ -29,9 +29,8 @@ if __name__ == "__main__":
         sys.exit(f'Working directory: {workingDir} not correct, should be "Age-of-transformers/" not "{os.path.basename(os.path.normpath(workingDir))}"')
 
     config = GetConfigDict(workingDir)
+    config["device"] = "cuda" if torch.cuda.is_available() and config["device"] == "cuda" else "cpu"
     print("Config: ", config)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print("Device: ", device)
 
 
     """
@@ -97,7 +96,7 @@ if __name__ == "__main__":
     if config["agent"] == 0:
         agent = DDQN_Agent(state_dim=(FRAME_STACK,) + STATE_SHAPE, action_space_dim=len(gym.action_space), config=config)
     elif config["agent"] > 0:
-        agent = DecisionTransformer_Agent(state_dim=STATE_SHAPE, action_space_dim=len(gym.action_space), device=device, max_steps=(config["skipFrame"]+1) + int(config["stepsMax"]/(config["skipFrame"]+1)), batch_size=config["batchSize"])
+        agent = DecisionTransformer_Agent(state_dim=STATE_SHAPE, action_space_dim=len(gym.action_space), config=config)
     
 
     """
