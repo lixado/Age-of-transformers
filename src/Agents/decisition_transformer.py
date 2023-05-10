@@ -40,7 +40,7 @@ class DecisionTransformer_Agent:
             Memory
         """
         # sequences
-        self.max_sequence_length = int(self.n_positions/3) # not sure why / 3 might be [R1, S1, A1, R2, S2, A2]
+        self.max_sequence_length = int(self.n_positions/3) # / 3 because DecisionTransformerModeling huggingface line 912
         print("max_sequence_length: ", self.max_sequence_length)
         self.states_sequence = deque(maxlen=self.max_sequence_length)
         self.actions_sequence = deque(maxlen=self.max_sequence_length)
@@ -66,8 +66,6 @@ class DecisionTransformer_Agent:
         totalSizeInBytes = (arr.size * arr.itemsize * self.max_sequence_length * self.batch_size)
         print(f"Need {(totalSizeInBytes*(1e-9) + size_model_gb):.2f} Gb Vram for states sequence in learning.")
 
-
-        #self.save_every = 5e5  # no. of experiences between saving model
 
         """
             Q learning
