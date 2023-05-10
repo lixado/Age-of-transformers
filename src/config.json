@@ -1,5 +1,5 @@
 {
-    "epochs": 5000,
+    "epochs": 4000,
     "skipFrame": 10,
     "repeatFrame": 0,
     "batchSize": 7,
