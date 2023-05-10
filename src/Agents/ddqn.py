@@ -27,12 +27,12 @@ class DDQN_Agent:
         """
         self.deque_size = config["deque_size"]
         arr = np.zeros(state_dim)
-        totalSizeInBytes = (arr.size * arr.itemsize * 2 * self.deque_size) # *2 because 2 observations are saved
+        totalSizeInBytes = (arr.size * arr.itemsize * 3 * self.deque_size) # *3 because 3 observations are saved framestack
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
+
         self.memory = deque(maxlen=self.deque_size)
         self.batch_size = config["batch_size"]
-        print(f"Need {((arr.size * arr.itemsize * 2 * self.batch_size)*(1e-9)):.2f} Gb VRAM")
-        #self.save_every = 5e5  # no. of experiences between saving model
+        print(f"Need {((arr.size * arr.itemsize * 3 * self.batch_size)*(1e-9)):.2f} Gb VRAM")
 
         """
             Q learning
