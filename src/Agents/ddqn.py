@@ -37,12 +37,9 @@ class DDQN_Agent:
         """
             Q learning
         """
-        self.gamma = config["gamma"]
         self.learning_rate = config["learning_rate"]
-        self.learning_rate_decay = config["learning_rate_decay"]
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
-        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=self.learning_rate_decay)
         self.loss_fn = torch.nn.SmoothL1Loss()
         self.burnin = config["burnin"]  # min. experiences before training
         assert( self.burnin >  self.batch_size)
@@ -148,8 +145,6 @@ class DDQN_Agent:
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-
-        #self.scheduler.step() #
 
         return loss.item()
 

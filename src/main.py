@@ -95,7 +95,7 @@ if __name__ == "__main__":
     """
     agent = None
     if config["agent"] == 0:
-        agent = DDQN_Agent(state_dim=(FRAME_STACK,) + STATE_SHAPE, action_space_dim=len(gym.action_space))
+        agent = DDQN_Agent(state_dim=(FRAME_STACK,) + STATE_SHAPE, action_space_dim=len(gym.action_space), config=config)
     elif config["agent"] > 0:
         agent = DecisionTransformer_Agent(state_dim=STATE_SHAPE, action_space_dim=len(gym.action_space), device=device, max_steps=(config["skipFrame"]+1) + int(config["stepsMax"]/(config["skipFrame"]+1)), batch_size=config["batchSize"])
     
