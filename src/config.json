@@ -2,6 +2,7 @@
     "device": "cuda",
     "epochs": 500000,
     "skipFrame": 10,
+    "frameStack": 3,
     "repeatFrame": 0,
     "normalize": false,
     "stepsMax": 50,

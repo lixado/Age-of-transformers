@@ -20,7 +20,6 @@ from simulate import simulate
 from wrappers import SkipFrame, RepeatFrame
 
 STATE_SHAPE = (32, 32) # model input shapes
-FRAME_STACK = 3
 
 
 if __name__ == "__main__":
@@ -30,6 +29,7 @@ if __name__ == "__main__":
 
     config = GetConfigDict(workingDir)
     config["device"] = "cuda" if torch.cuda.is_available() and config["device"] == "cuda" else "cpu"
+    FRAME_STACK = config["frameStack"]
     print("Config: ", config)
 
 
@@ -105,15 +105,35 @@ if __name__ == "__main__":
     if mode == 0:
         logger = Logger(workingDir)
 
-        if config["agent"] == 0:
-            gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
-            train_ddqn(config, agent, gym, logger)
-        elif config["agent"] == 1:
-            #data_path = os.path.join(workingDir, "ddqn_harvest_data_3")
-            data_path = os.path.join(workingDir, "simple1v1_data")
-            train_transformer(config, agent, gym, logger, data_path)
-        elif config["agent"] == 2:
-            train_dt_self(config, agent, gym, logger)
+        """
+            Handle agent input
+            0 = DDQN
+            1 = DT_Rand
+            2 = DT_50
+            3 = DT_Full
+            4 = GADT
+            5 = GADT_Cross_Epi
+        """
+        match config["agent"]:
+            case 0:
+                gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
+                train_ddqn(config, agent, gym, logger)
+            case 1:
+                data_path = os.path.join(workingDir, "simple1v1_data")
+                train_transformer(config, agent, gym, logger, data_path)
+            case 2:
+                data_path = os.path.join(workingDir, "simple1v1_data")
+                train_transformer(config, agent, gym, logger, data_path)
+            case 3:
+                data_path = os.path.join(workingDir, "simple1v1_data")
+                train_transformer(config, agent, gym, logger, data_path)
+            case 4:
+                train_dt_self(config, agent, gym, logger)
+            case 5:
+                pass
+            case _:
+                exit("Invalid agent")
+
     elif mode == 1:
         if config["agent"] == 0:
             gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
@@ -123,6 +143,8 @@ if __name__ == "__main__":
     elif mode == 2:
         playground(gym)
     elif mode == 3:
+        if config["agent"] != 0:
+            exit("only DDQN can simulate")
         gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
         modelPath = chooseModel(os.path.join(workingDir, "results"))
