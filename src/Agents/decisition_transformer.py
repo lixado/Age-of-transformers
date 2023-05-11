@@ -26,9 +26,9 @@ class DecisionTransformer_Agent:
         
         
         print("max_ep_length: ", self.max_ep_length)
-        config = DecisionTransformerConfig(self.state_dim_flatten, action_space_dim, max_ep_len=self.max_ep_length, n_positions=self.n_positions, action_tanh=True)
-        self.net = DecisionTransformerModel(config).to(device=self.device)
-        self.batch_size = config["batch_size"]
+        trans_config = DecisionTransformerConfig(self.state_dim_flatten, action_space_dim, max_ep_len=self.max_ep_length, n_positions=self.n_positions, action_tanh=True)
+        self.net = DecisionTransformerModel(trans_config).to(device=self.device)
+        self.batch_size = config["batchSize"]
 
 
         self.exploration_rate = config["exploration_rate"]
@@ -76,9 +76,33 @@ class DecisionTransformer_Agent:
         self.loss_fn = lambda s_pred, a_pred, r_pred, s, a, r: torch.mean((a_pred-a)**2)
 
 
-    def act(self):
+    def act(self, state, actionIndex, tick, reward):
         """
         """
+        if tick == 1:
+            # rest memory new game
+            self.states_sequence.clear()
+            self.actions_sequence.clear()
+            self.timesteps_sequence.clear()
+            self.rewards_sequence.clear()
+
+        try:
+            self.states_sequence.append(state)
+            # save action tensor as [0,0,1,0,0,0] depending on which action
+            actionArr = np.zeros(self.action_space_dim)
+            actionArr[actionIndex] = 1
+            self.actions_sequence.append(actionArr)
+            self.timesteps_sequence.append(tick)
+            if len(self.rewards_sequence) == 0:
+                self.rewards_sequence.append(reward) 
+            else:
+                self.rewards_sequence.append(self.rewards_sequence[-1] - reward)
+        except:
+            print("Need more memory or decrease sequence size in agent.")
+            quit()
+
+
+
         pred_arr = [None for _ in range(self.action_space_dim)]
         if (random.random() < self.exploration_rate): # EXPLORE
             actionIdx = random.randint(0, self.action_space_dim-1)

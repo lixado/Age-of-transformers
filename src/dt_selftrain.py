@@ -53,7 +53,7 @@ class DTDataset(Dataset):
         print("PROBBLEM")
 
 
-def train_dt_self(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger):
+def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
     save_dir = logger.getSaveFolderPath()
 
     record_epochs = config["recordEvery"]  # record game every x epochs
@@ -86,12 +86,6 @@ def train_dt_self(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, 
 
             actionIndex = -1  # first acction is default Do nothing
             reward = 1200
-            agent.states_sequence = [observation]
-            agent.rewards_sequence = [reward]
-            agent.timesteps_sequence = [ticks]
-            actionArr = np.zeros(agent.action_space_dim)
-            actionArr[actionIndex] = 1
-            agent.actions_sequence = [actionArr]
 
             memory = []
             while not done and not truncated:
@@ -100,15 +94,13 @@ def train_dt_self(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, 
                 if e == 0: # full random on first epoch
                     agent.exploration_rate = 1
                 
-                actionIndex, q_values = agent.act()
+                actionIndex, q_values = agent.act(observation, actionIndex, ticks, reward)
 
                 gym.save_player_state()
 
                 # Act
                 next_observation, reward, done, truncated, info = gym.step(actionIndex)
 
-
-                agent.append(next_observation, actionIndex, ticks, reward)
 
                 logger.log_step(reward)
 
