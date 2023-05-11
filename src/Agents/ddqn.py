@@ -46,7 +46,7 @@ class DDQN_Agent:
         self.learn_every = config["learn_every"]  # no. of experiences between updates to Q_online
         self.sync_every = config["sync_every"]  # no. of experiences between Q_target & Q_online sync
 
-    def act(self, state):
+    def act(self, state, *argv):
         """
             Given a state, choose an epsilon-greedy action and update value of step.
             Inputs:

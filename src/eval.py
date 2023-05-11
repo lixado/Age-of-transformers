@@ -71,14 +71,19 @@ def evaluate(agent: DDQN_Agent, gym: CustomGym, modelPath):
 
     evals = []
 
+
     tests = 1000
     for _ in tqdm(range(tests)):
         state, info = gym.reset()
+        action0 = -1  # first acction is default Do nothing
+        reward = 1200
+        tick = 0
         
         start = time.time()
         while True:#not done:
+            tick += 1
             #Actions
-            action0, q_values = agent.act(state)
+            action0, q_values = agent.act(state, action0, tick, reward)
 
             gym.save_player_state()
 

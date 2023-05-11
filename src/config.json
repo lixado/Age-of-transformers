@@ -8,7 +8,7 @@
     "stepsMax": 50,
     "recordEvery": 199,
     "modes": "Train, Eval, Playground, Simulate",
-    "mode": 0,
+    "mode": 1,
     "gyms": "Simple1v1, Random1v1, Full1v1, Harvest",
     "gym": 0,
     "agents": "DDQN, DT_Rand, DT_50, DT_Full, GADT, GADT_Cross_Epi",
