@@ -14,22 +14,37 @@ from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 
 
 class DTDataset(Dataset):
-    def __init__(self, games):
-        self.games = games             
+    def __init__(self, games, action_space_dim, data_path = None):
+        self.games = games
+        self.action_space_dim = action_space_dim
 
         self.total_sequences = []
         for game in games:
             this_game_sequences_sizes = []
             if len(game) > 1:
                 i = 2
-                while i <= len(game): # assuming the whoe game can fit into model
+                while i <= len(game): # assuming the whole game can fit into model
                     this_game_sequences_sizes.append(i)
                     i += 1
 
                 self.total_sequences.append(this_game_sequences_sizes)
             else:
                 exit("A came cannot be 1 step")
-        
+
+            # fix action and reward
+            for i, step in enumerate(game):
+                # translate action to list
+                action = [0 for _ in range(self.action_space_dim)]
+                actionIndex = step[1] 
+                action[actionIndex] = 1
+                game[i][1] = action
+
+                # return to go
+                if i == 0: # first step
+                    total_reward_this_game = sum([step[-1] for step in game])
+                    game[0][-1] = total_reward_this_game # this return to go
+                else:
+                    game[i][-1] = game[i-1][-1] - game[i][-1]
 
     def __len__(self):
         total_length = 0
@@ -47,6 +62,7 @@ class DTDataset(Dataset):
             for j in range(len(self.total_sequences[i])):
                 if x == idx:
                     length = self.total_sequences[i][j]
+
                     return self.games[i][0:length]
                 x += 1
 
@@ -87,7 +103,6 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
     save_dir = logger.getSaveFolderPath()
     
     device = config["device"]
-    record_epochs = config["recordEvery"]  # record game every x epochs
     epochs = config["epochs"]
     batch_size = config["batchSize"]
     episodes = config["DTEpisodesGenerate"]
@@ -105,7 +120,7 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
 
         for epi in range(episodes):
             real_e = (e*episodes)+(epi)
-            record = (real_e % record_epochs == 0) or (e == epochs - 1)  # last part to always record last
+            record = (epi == episodes-1) # record always the last one
             if record:
                 print("Recording this epoch")
 
@@ -116,7 +131,7 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
             truncated = False
 
             actionIndex = -1  # first acction is default Do nothing
-            reward = 1200
+            reward = 10000
 
             memory = []
             while not done and not truncated:
@@ -124,7 +139,7 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
 
                 if e == 0: # full random on first epoch
                     agent.exploration_rate = 1
-                
+
                 actionIndex, q_values = agent.act(observation, actionIndex, ticks, reward)
 
                 gym.save_player_state()
@@ -137,9 +152,7 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
 
 
                 # save data
-                action = [0 for _ in range(agent.action_space_dim)]
-                action[actionIndex] = 1
-                memory.append([observation.flatten(), action, ticks, reward])
+                memory.append([observation.flatten(), actionIndex, ticks, reward])
 
                 # Record game
                 if record:
@@ -156,12 +169,6 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
                 agent.save(save_dir)
                 record = False
 
-            # Fix reward to return to go
-            total_reward = sum([step[-1] for step in memory])
-            if total_reward > 0:
-                for i, step in enumerate(memory):
-                    memory[i][-1] = total_reward - memory[i][-1]
-                    total_reward = memory[i][-1]
             generated_data.append(memory)
 
 
@@ -185,7 +192,7 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
 
             if dtDataMaxSize < 2:
                 agent.save(save_dir)
-                NotifyDiscord(f"Training finished stagnated. Epochs: {epochs} Name: {save_dir}")
+                NotifyDiscord(f"Training finished stagnated. Epochs: {e} Name: {save_dir}")
                 exit()
 
             print(f"Stagnation: No improvement new size: {dtDataMaxSize}")
@@ -196,7 +203,7 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
         # train agent
         agent.net.train()
         agent.exploration_rate = 0
-        dataset = DTDataset(best_data)
+        dataset = DTDataset(best_data, agent.action_space_dim)
         trainingLoader = DataLoader(dataset, batch_size=batch_size, collate_fn=collate_fn, shuffle=True, num_workers=6) # need to make it so can take multiple batches and sequence lengths should vary
 
         losses = []
