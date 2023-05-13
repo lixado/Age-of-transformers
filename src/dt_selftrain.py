@@ -133,7 +133,7 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
                 next_observation, reward, done, truncated, info = gym.step(actionIndex)
 
 
-                logger.log_step(reward)
+                logger.log_step(reward, 0, 0)
 
 
                 # save data
@@ -214,7 +214,7 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
                     q += q_temp
                     losses.append(loss_temp)
                     
-            logger.log_step_DT(loss)
+            logger.log_GADT(loss)
 
         print(f"Loss avg: {np.mean(losses)} Loss min:  {np.min(losses)} Loss max: {np.max(losses)}")
 
