@@ -16,11 +16,11 @@ from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 
 class DTDataset(Dataset):
     def __init__(self, games, action_space_dim, data_path = None):
-        self.games = copy.copy(games)
+        self.games = copy.deepcopy(games)
         self.action_space_dim = action_space_dim
 
         self.total_sequences = []
-        for game in games:
+        for game in self.games:
             this_game_sequences_sizes = []
             if len(game) > 1:
                 i = 2

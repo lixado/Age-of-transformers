@@ -24,6 +24,6 @@
     "sync_every": 1e4,
     "DTDataMaxSize": 30,
     "DTTrainEpochs": 50,
-    "DTEpisodesGenerate": 100,
+    "DTEpisodesGenerate": 30,
     "DTEpsilonRate": 3
 }
