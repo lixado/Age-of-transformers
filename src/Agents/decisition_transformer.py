@@ -293,3 +293,9 @@ class DecisionTransformer_Agent:
         save_path = os.path.join(save_dir, "model.chkpt")
         torch.save(dict(model=self.net.state_dict(), exploration_rate=self.exploration_rate), save_path)
         print(f"Model saved to {save_path}")
+
+    def loadModel(self, path):
+        dt = torch.load(path, map_location=torch.device(self.device))
+        self.net.load_state_dict(dt["model"])
+        self.exploration_rate = dt["exploration_rate"]
+        print(f"Loading model at {path} with exploration rate {self.exploration_rate}")

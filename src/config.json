@@ -5,6 +5,6 @@
     "batchSize": 12,
     "stepsMax": 50,
     "recordEvery": 100,
-    "mode": 0,
+    "mode": 1,
     "gym": 0
 }

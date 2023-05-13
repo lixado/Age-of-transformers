@@ -152,7 +152,8 @@ if __name__ == "__main__":
             gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
         modelPath = chooseModel(os.path.join(workingDir, "results"))
-        evaluate(ddqn_agent, gym, modelPath)
+        logger = Logger(workingDir)
+        evaluate(agent, gym, modelPath, logger)
     elif mode == 2:
         playground(gym)
     elif mode == 3:
