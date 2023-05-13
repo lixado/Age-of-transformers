@@ -1,3 +1,4 @@
+import copy
 import gym
 import os
 import torch
@@ -15,7 +16,7 @@ from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 
 class DTDataset(Dataset):
     def __init__(self, games, action_space_dim, data_path = None):
-        self.games = games
+        self.games = copy.copy(games)
         self.action_space_dim = action_space_dim
 
         self.total_sequences = []

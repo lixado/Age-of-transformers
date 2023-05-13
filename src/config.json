@@ -10,7 +10,7 @@
     "modes": "Train, Eval, Playground, Simulate",
     "mode": 0,
     "gyms": "Simple1v1, Random1v1, Full1v1, Harvest",
-    "gym": 1,
+    "gym": 0,
     "agents": "DDQN, DT_Rand, DT_50, DT_Full, GADT",
     "agent": 4,
     "batchSize": 2048,
@@ -24,6 +24,6 @@
     "sync_every": 1e4,
     "DTDataMaxSize": 30,
     "DTTrainEpochs": 50,
-    "DTEpisodesGenerate": 50,
+    "DTEpisodesGenerate": 100,
     "DTEpsilonRate": 3
 }
