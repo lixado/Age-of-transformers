@@ -8,7 +8,7 @@ from functions import SaveTempImage, CreateVideoFromTempImages
 
 from Gyms.CustomGym import CustomGym
 
-def evaluate(agent: DDQN_Agent, gym: CustomGym, modelPath, logger: Logger):
+def evaluate(agent, gym: CustomGym, modelPath, logger: Logger):
     workingDir = os.getcwd()
     if not os.path.exists(os.path.join(workingDir, "src")):
         sys.exit(
