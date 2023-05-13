@@ -5,7 +5,7 @@ import numpy as np
 from data import Simple1v1Dataset
 from torch.utils.data import DataLoader
 
-from Agents.decisition_transformer import DecisionTransformer_Agent
+from Agents.decisition_transformer import DecisionTransformerAgent
 from Agents.ddqn import DDQN_Agent
 from logger import Logger
 from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
@@ -20,7 +20,7 @@ def get_batches(data: list, batch_size):
     rewards = [[element[3].numpy() for element in row] for row in batches]
     return observations, actions, timesteps, rewards
 
-def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger, data_path):
+def train_transformer(config: dict, agent: DecisionTransformerAgent, gym: gym.Env, logger: Logger, data_path):
     save_dir = logger.getSaveFolderPath()
 
     record_epochs = config["recordEvery"]  # record game every x epochs
@@ -28,7 +28,6 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
     batch_size = config["batchSize"]
 
     data = Simple1v1Dataset(data_path)
-    gen = torch.Generator().manual_seed(42)
     trainingLoader = DataLoader(data, batch_size=1, shuffle=False)
 
     for e in range(epochs):
@@ -46,7 +45,7 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
 
         agent.net.eval()
         observation, info = gym.reset()
-        ticks = 1
+        ticks = 0
         record = (e % record_epochs == 0) or (e == epochs - 1)  # last part to always record last
         if record:
             print("Recording this epoch")
@@ -55,28 +54,20 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
 
         actionIndex = -1  # first acction is default Do nothing
         reward = 10
-        agent.states_sequence = [observation]
-        agent.rewards_sequence = [reward]
-        agent.timesteps_sequence = [ticks]
-        actionArr = np.zeros(agent.action_space_dim)
-        actionArr[actionIndex] = 1
-        agent.actions_sequence = [actionArr]
         while not done and not truncated:
             ticks += 1
 
             # AI choose action
-            actionIndex, q_values = agent.act()
+            actionIndex, q_values = agent.act(observation, actionIndex, ticks, reward)
 
             gym.save_player_state()
 
             # Act
             next_observation, reward, done, truncated, info = gym.step(actionIndex)
 
-            agent.append(next_observation, actionIndex, ticks, reward)
-
             # Record game
             if record:
-                SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values, reward), ticks)
+                SaveTempImage(save_dir, gym.render(q_values, reward), ticks)
 
             # Logging
             logger.log_step(reward, loss, q)
@@ -88,14 +79,14 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
 
         # Record game
         if record:
-            CreateVideoFromTempImages(os.path.join(logger.getSaveFolderPath(), "temp"), (e))
+            CreateVideoFromTempImages(os.path.join(save_dir, "temp"), (e))
             agent.save(save_dir)
     # save model
     agent.save(save_dir)
     NotifyDiscord(f"Training finished. Epochs: {epochs} Name: {save_dir}")
     gym.close()
 
-def train_transformer_test(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger):
+def train_transformer_test(config: dict, agent: DecisionTransformerAgent, gym: gym.Env, logger: Logger):
     agent.net.train()
     save_dir = logger.getSaveFolderPath()
 
@@ -180,7 +171,7 @@ def train_ddqn(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
 
             # Record game
             if record:
-                SaveTempImage(logger.getSaveFolderPath(), gym.render(q_values, reward), ticks)
+                SaveTempImage(save_dir, gym.render(q_values, reward), ticks)
 
             # AI Save memory
             agent.cache(observation, next_observation, actionIndex, reward, (done or truncated))
@@ -198,11 +189,11 @@ def train_ddqn(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
 
         # Record game
         if record:
-            CreateVideoFromTempImages(os.path.join(logger.getSaveFolderPath(), "temp"), (e))
-            agent.save(logger.getSaveFolderPath())
+            CreateVideoFromTempImages(os.path.join(save_dir, "temp"), (e))
+            agent.save(save_dir)
 
     # save model
-    agent.save(logger.getSaveFolderPath())
-    NotifyDiscord(f"Training finished. Epochs: {epochs} Name: {logger.getSaveFolderPath()}")
+    agent.save(save_dir)
+    NotifyDiscord(f"Training finished. Epochs: {epochs} Name: {save_dir}")
     gym.close()
 

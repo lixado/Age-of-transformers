@@ -5,7 +5,7 @@ from dt_selftrain import train_dt_self
 from logger import Logger
 from functions import GetConfigDict, alphanum_key, chooseModel
 from constants import inv_action_space
-from Agents.decisition_transformer import DecisionTransformer_Agent
+from Agents.decisition_transformer import DecisionTransformerAgent
 from Agents.ddqn import DDQN_Agent
 from gym.wrappers import TransformObservation, FrameStack, TimeLimit, NormalizeReward, NormalizeObservation
 from Gyms.Simple1v1 import Simple1v1Gym
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     if config["agent"] == 0:
         agent = DDQN_Agent(state_dim=(FRAME_STACK,) + STATE_SHAPE, action_space_dim=len(gym.action_space), config=config)
     elif config["agent"] > 0:
-        agent = DecisionTransformer_Agent(state_dim=STATE_SHAPE, action_space_dim=len(gym.action_space), config=config)
+        agent = DecisionTransformerAgent(state_dim=STATE_SHAPE, action_space_dim=len(gym.action_space), config=config)
     
 
     """

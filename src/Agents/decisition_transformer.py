@@ -1,17 +1,13 @@
 import os
-import torch.nn as nn
-import copy
 from collections import deque
 import random
 import numpy as np
 import torch
 import itertools
 from transformers import DecisionTransformerModel, DecisionTransformerConfig
-from functions import sample_with_order
-import numpy as n
 
 
-class DecisionTransformer_Agent:
+class DecisionTransformerAgent:
     def __init__(self, state_dim, action_space_dim, config):
         self.state_dim = state_dim
         self.action_space_dim = action_space_dim
@@ -77,8 +73,6 @@ class DecisionTransformer_Agent:
 
 
     def act(self, state, actionIndex, tick, reward):
-        """
-        """
         if tick == 1:
             # rest memory new game
             self.states_sequence.clear()
@@ -100,8 +94,6 @@ class DecisionTransformer_Agent:
         except:
             print("Need more memory or decrease sequence size in agent.")
             quit()
-
-
 
         pred_arr = [None for _ in range(self.action_space_dim)]
         if (random.random() < self.exploration_rate): # EXPLORE

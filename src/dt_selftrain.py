@@ -3,12 +3,7 @@ import os
 import torch
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
-import random
-
 from tqdm import tqdm
-
-from Agents.decisition_transformer import DecisionTransformer_Agent
-from Agents.ddqn import DDQN_Agent
 from logger import Logger
 from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
 
