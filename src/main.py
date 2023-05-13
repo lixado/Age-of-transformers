@@ -112,7 +112,6 @@ if __name__ == "__main__":
             2 = DT_50
             3 = DT_Full
             4 = GADT
-            5 = GADT_Cross_Epi
         """
         match config["agent"]:
             case 0:
@@ -129,8 +128,6 @@ if __name__ == "__main__":
                 train_transformer(config, agent, gym, logger, data_path)
             case 4:
                 train_dt_self(config, agent, gym, logger)
-            case 5:
-                pass
             case _:
                 exit("Invalid agent")
 

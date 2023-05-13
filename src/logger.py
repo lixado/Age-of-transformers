@@ -57,9 +57,9 @@ class Logger():
         #self.epochTotalQ += q
 
 
-    def log_step_DT(self, loss , q):
-            self.epochTotalLoss += loss
-            self.epochTotalQ += q
+    def log_step_DT(self, loss):
+            self.losses.append(loss)
+            self.movingAvglosses.append(np.round(np.mean(self.losses[-self.movingAvgNumber:]), 4))
 
     def log_epoch(self, epoch, epsilon, lr):
         tNow = time.time()
@@ -70,12 +70,11 @@ class Logger():
         avgLoss = np.round(self.epochTotalLoss / self.epochTotalActions, 5)
 
         self.rewards.append(self.epochTotalReward)
-        self.losses.append(self.epochTotalLoss)
+        #self.losses.append(self.epochTotalLoss)
         self.actions.append(self.epochTotalActions)
         self.qs.append(self.epochTotalQ)
 
         self.movingAvgrewards.append(np.round(np.mean(self.rewards[-self.movingAvgNumber:]), 4))
-        self.movingAvglosses.append(np.round(np.mean(self.losses[-self.movingAvgNumber:]), 4))
         self.movingAvgactions.append(np.round(np.mean(self.actions[-self.movingAvgNumber:]), 4))
         self.movingAvgqs.append(np.round(np.mean(self.qs[-self.movingAvgNumber:]), 4))
 

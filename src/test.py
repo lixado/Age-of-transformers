@@ -28,7 +28,7 @@ class DTDataset(Dataset):
 
                 self.total_sequences.append(this_game_sequences_sizes)
             else:
-                exit("A came cannot be 1 step")
+                print("EJBADJADBMBVDM")
         
 
     def __len__(self):
@@ -50,43 +50,12 @@ class DTDataset(Dataset):
                     return self.games[i][0:length]
                 x += 1
 
-
-def collate_fn(batch):
-
-    # here sequences will have different sizes and we want the same sizes
-    lengths = [len(sequence) for sequence in batch]
-    lengths = list(set(lengths))
-
-    batches = []
-
-    for l in lengths:
-        small_batch = []
-
-        observations = []
-        actions = []
-        timesteps = []
-        returns_to_go = []
-        for sequence in [b for b in batch if len(b) == l]:
-            observations.append([step[0] for step in sequence])
-            actions.append([step[1] for step in sequence])
-            timesteps.append([step[2] for step in sequence])
-            returns_to_go.append([step[3] for step in sequence])
-
-        small_batch.append(torch.tensor(np.array(observations), dtype=torch.float32))
-        small_batch.append(torch.tensor(np.array(actions), dtype=torch.float32))
-        small_batch.append(torch.tensor(np.array(timesteps), dtype=torch.long))
-        small_batch.append(torch.tensor(np.array(returns_to_go), dtype=torch.float32).unsqueeze(-1))
-
-        batches.append(small_batch)
-
-
-    return batches
+        print("PROBBLEM")
 
 
 def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
     save_dir = logger.getSaveFolderPath()
-    
-    device = config["device"]
+
     record_epochs = config["recordEvery"]  # record game every x epochs
     epochs = config["epochs"]
     batch_size = config["batchSize"]
@@ -197,6 +166,38 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
         agent.net.train()
         agent.exploration_rate = 0
         dataset = DTDataset(best_data)
+
+        def collate_fn(batch):
+
+            # here sequences will have different sizes and we want the same sizes
+            lengths = [len(sequence) for sequence in batch]
+            lengths = list(set(lengths))
+
+            batches = []
+
+            for l in lengths:
+                small_batch = []
+
+                observations = []
+                actions = []
+                timesteps = []
+                returns_to_go = []
+                for sequence in [b for b in batch if len(b) == l]:
+                    observations.append([step[0] for step in sequence])
+                    actions.append([step[1] for step in sequence])
+                    timesteps.append([step[2] for step in sequence])
+                    returns_to_go.append([step[3] for step in sequence])
+
+                small_batch.append(np.array(observations))
+                small_batch.append(np.array(actions))
+                small_batch.append(np.array(timesteps))
+                small_batch.append(np.array(returns_to_go))
+
+                batches.append(small_batch)
+
+
+            return batches
+
         trainingLoader = DataLoader(dataset, batch_size=batch_size, collate_fn=collate_fn, shuffle=True, num_workers=6) # need to make it so can take multiple batches and sequence lengths should vary
 
         losses = []
@@ -204,17 +205,17 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
             loss, q = 0.0, 0.0
             for batch in trainingLoader:
                 for small_batch in batch:
-                    observations = small_batch[0].to(device)
-                    actions = small_batch[1].to(device)
-                    timesteps = small_batch[2].to(device)
-                    returns_to_go = small_batch[3].to(device)
+                    observations = small_batch[0]
+                    actions = small_batch[1]
+                    timesteps = small_batch[2]
+                    returns_to_go = small_batch[3]
 
                     loss_temp, q_temp = agent.train(observations, actions, timesteps, returns_to_go)
                     loss += loss_temp
                     q += q_temp
                     losses.append(loss_temp)
                     
-            logger.log_step_DT(loss)
+            logger.log_step_DT(loss, q)
 
         print(f"Loss avg: {np.mean(losses)} Loss min:  {np.min(losses)} Loss max: {np.max(losses)}")
 

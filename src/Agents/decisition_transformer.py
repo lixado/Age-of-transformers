@@ -185,31 +185,23 @@ class DecisionTransformer_Agent:
 
 
     def train(self, observations, actions, timesteps, returns_to_go):
-        batch_size = len(observations)
-        sequence_length = len(observations[0])
+        batch_size = observations.shape[0]
+        sequence_length = observations.shape[1]
 
 
-        observations = torch.tensor(observations, device=self.device, dtype=torch.float32).reshape(batch_size, sequence_length, self.state_dim_flatten)
-
-
-        actions = torch.tensor(actions, device=self.device, dtype=torch.float32)
-        
-        rewards_to_go = torch.tensor(returns_to_go, device=self.device, dtype=torch.float32).reshape(batch_size, sequence_length, 1)
-
-        timesteps = torch.tensor(timesteps, device=self.device, dtype=torch.long)
         attention_mask = torch.ones((batch_size, sequence_length), device=self.device, dtype=torch.float32)  # if None default is full attention for all nodes (b, t)
 
         observation_preds, action_preds, reward_preds = self.net(states=observations,
            actions=actions,
            rewards=None, # not used in foward pass https://github.com/huggingface/transformers/blob/v4.27.2/src/transformers/models/decision_transformer/modeling_decision_transformer.py#L831
-           returns_to_go=rewards_to_go,
+           returns_to_go=returns_to_go,
            timesteps=timesteps,
            attention_mask=attention_mask,
            return_dict=False)
 
 
         loss = self.loss_fn(observation_preds, action_preds, reward_preds,
-                            observations[:, 1:], actions, rewards_to_go)
+                            observations[:, 1:], actions, returns_to_go)
 
         self.optimizer.zero_grad()
         loss.backward()
