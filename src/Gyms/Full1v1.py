@@ -40,7 +40,7 @@ def harvest_reward(player0, previousPlayer0: PlayerState, player1, ticks):
 
 
 class Full1v1Gym(CustomGym):
-    def __init__(self, max_episode_steps, shape):
+    def __init__(self, shape):
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
         engineConfig.set_instant_building(True)
@@ -54,7 +54,7 @@ class Full1v1Gym(CustomGym):
 
         self.action_space = [i for i in range(1, 17)]  # 1-16, all actions, (see deep-rts/bindings/Constants.cpp)
 
-        super().__init__(max_episode_steps, shape, MAP, engineConfig)
+        super().__init__(shape, MAP, engineConfig)
 
         self.player1: Engine.Player = self.game.add_player()
 

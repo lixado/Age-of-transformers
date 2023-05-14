@@ -20,3 +20,14 @@ class Simple1v1Dataset(Dataset):
         #for i in item:
             #i[0] = np.array(i[0])
         return item
+
+
+class DTDataset(Dataset):
+    def __init__(self, data):
+        self.games = data
+
+    def __len__(self):
+        return len(self.games)
+
+    def __getitem__(self, idx):
+        return self.games[idx]

@@ -56,6 +56,26 @@ class Logger():
         self.epochTotalActions += 1
         self.epochTotalQ += q
 
+    def log_GADT(self, loss):
+        path = os.path.join(self.folder_path, "GADT_losses.jpg")
+
+        if not hasattr(self, 'loss_GADT'):
+            self.loss_GADT = []
+        self.loss_GADT.append(loss)
+
+        if not hasattr(self, 'movingavg_loss_GADT'):
+            self.movingavg_loss_GADT = []
+        self.movingavg_loss_GADT.append(np.round(np.mean(self.loss_GADT[-self.movingAvgNumber:]), 4))
+
+
+        plt.plot(self.movingavg_loss_GADT)
+        plt.title(f"Avg of previous {self.movingAvgNumber} epochs of sum of loss per epoch")
+        plt.xlabel("Epochs")
+        plt.ylabel("loss")
+        plt.savefig(path)
+        plt.clf()
+
+
     def log_epoch(self, epoch, epsilon, lr):
         tNow = time.time()
         tDelta = tNow - self.record_time
@@ -73,6 +93,7 @@ class Logger():
         self.movingAvglosses.append(np.round(np.mean(self.losses[-self.movingAvgNumber:]), 4))
         self.movingAvgactions.append(np.round(np.mean(self.actions[-self.movingAvgNumber:]), 4))
         self.movingAvgqs.append(np.round(np.mean(self.qs[-self.movingAvgNumber:]), 4))
+
 
         print(
             f"Epoch {epoch} - "

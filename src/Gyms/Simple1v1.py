@@ -12,32 +12,20 @@ def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
     if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
         return 10000/ticks
     if player0.evaluate_player_state() == Constants.PlayerState.Defeat and player1.evaluate_player_state() != Constants.PlayerState.Defeat:
-        return -0.001*ticks
+        return -100
     if player0.statistic_damage_done > previousPlayer0.statistic_damage_done and player1.statistic_damage_taken > 0:
         return 1000/ticks
     return -1
 
-def harvest_reward(player0, previousPlayer0: PlayerState, ticks):
-    stoneReward = 0
-    goldReward = 0
-    lumberReward = 0
-    if player0.statistic_gathered_stone > previousPlayer0.statistic_gathered_stone:
-        stoneReward = 1000/ticks
-    if player0.statistic_gathered_gold > previousPlayer0.statistic_gathered_gold:
-        goldReward = 1000/ticks
-    if player0.statistic_gathered_lumber > previousPlayer0.statistic_gathered_lumber:
-        lumberReward = 1000/ticks
-    return stoneReward + goldReward + lumberReward
-
 class Simple1v1Gym(CustomGym):
-    def __init__(self, max_episode_steps, shape):
+    def __init__(self, shape):
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
         engineConfig.set_auto_attack(True)
 
         self.action_space = [3, 4, 5, 6, 11, 16] # move and attack simple
 
-        super().__init__(max_episode_steps, shape, MAP, engineConfig)
+        super().__init__(shape, MAP, engineConfig)
 
         self.player1: Engine.Player = self.game.add_player()
 
@@ -54,7 +42,7 @@ class Simple1v1Gym(CustomGym):
 
         # reward
         reward = conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
-
+        
         return self._get_obs(), reward, self.game.is_terminal(), False, self._get_info()
 
     def _get_info(self):

@@ -98,7 +98,6 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
 def train_transformer_test(config: dict, agent: DecisionTransformer_Agent, gym: gym.Env, logger: Logger):
     agent.net.train()
     save_dir = logger.getSaveFolderPath()
-    # agent.saveHyperParameters(save_dir)
 
     record_epochs = config["recordEvery"]  # record game every x epochs
     epochs = config["epochs"]
@@ -157,7 +156,6 @@ def train_transformer_test(config: dict, agent: DecisionTransformer_Agent, gym: 
 def train_ddqn(config: dict, agent: DDQN_Agent, gym: gym.Env, logger: Logger):
     agent.net.train()
     save_dir = logger.getSaveFolderPath()
-    agent.saveHyperParameters(save_dir)
 
     record_epochs = config["recordEvery"]  # record game every x epochs
     epochs = config["epochs"]

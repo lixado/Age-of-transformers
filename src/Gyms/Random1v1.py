@@ -12,6 +12,7 @@ from Gyms.CustomGym import CustomGym
 MAP = "10x10-2p-ffa-Eblil.json"
 
 
+
 def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
     if player0.evaluate_player_state() != Constants.PlayerState.Defeat and player1.evaluate_player_state() == Constants.PlayerState.Defeat:
         return 10000 / ticks
@@ -23,7 +24,7 @@ def conditional_reward(player0, previousPlayer0: PlayerState, player1, ticks):
 
 
 class Random1v1Gym(CustomGym):
-    def __init__(self, max_episode_steps, shape):
+    def __init__(self, shape):
         engineConfig: Engine.Config = Engine.Config().defaults()
         engineConfig.set_gui("Blend2DGui")
         engineConfig.set_auto_attack(True)
@@ -31,7 +32,7 @@ class Random1v1Gym(CustomGym):
         self.action_space = [3, 4, 5, 6, 11, 16]  # move and attack simple
         self.reward = 0
 
-        super().__init__(max_episode_steps, shape, MAP, engineConfig)
+        super().__init__(shape, MAP, engineConfig)
 
         self.player1: Engine.Player = self.game.add_player()
 
@@ -52,10 +53,10 @@ class Random1v1Gym(CustomGym):
         self.game.update()
 
         # reward
-        reward = conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
+        #doneDmg = int(self.player0.statistic_damage_done > self.previousPlayer0.statistic_damage_done)
+        #reward = doneDmg*2 - 1
 
-        # ttk
-        
+        reward = conditional_reward(self.player0, self.previousPlayer0, self.player1, self.elapsed_steps)
 
 
         return self._get_obs(), reward, self.game.is_terminal(), False, self._get_info()

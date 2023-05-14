@@ -6,8 +6,7 @@ from functions import PlayerState
 
 
 class CustomGym(gym.Env):
-    def __init__(self, max_episode_steps, shape, game_map, config):
-        self.max_episode_steps = max_episode_steps
+    def __init__(self, shape, game_map, config):
         self.elapsed_steps = None
 
         self.initial_shape = shape
