@@ -181,7 +181,7 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
 
 
 
-        # make sure best games is always maax 40 games
+        # make sure best games is always max x games
         best_data.sort(key=lambda game: sum([step[-1] for step in game]), reverse=True)
 
         best_data = best_data[0:dtDataMaxSize]
@@ -191,9 +191,10 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
         if rewards_best_data_before == rewards_best_data:
             min_reward = min(rewards_best_data) + abs(min(rewards_best_data))+1
             max_reward = max(rewards_best_data) + abs(min(rewards_best_data))+1
-            print(f"diff: {(max_reward - min_reward)/min_reward}")
+            percentageDiff = (max_reward - min_reward)/min_reward
+            print(f"diff: {percentageDiff}")
             
-            if dtDataMaxSize < config["DTDataMaxSize"]/2 and (max_reward - min_reward)/min_reward > 0.05:
+            if dtDataMaxSize < config["DTDataMaxSize"]/2 and percentageDiff < 0.05:
                 pass
             else:
                 dtDataMaxSize = int(dtDataMaxSize * (3 / 4))

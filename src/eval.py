@@ -36,7 +36,7 @@ def evaluate(agent, gym: CustomGym, modelPath, logger: Logger):
     for e in tqdm(range(tests)):
         state, info = gym.reset()
         action0 = -1  # first acction is default Do nothing
-        reward = 1200
+        reward = 10000
         tick = 0
         
         start = time.time()

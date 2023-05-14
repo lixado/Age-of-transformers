@@ -94,6 +94,7 @@ class Logger():
         self.movingAvgactions.append(np.round(np.mean(self.actions[-self.movingAvgNumber:]), 4))
         self.movingAvgqs.append(np.round(np.mean(self.qs[-self.movingAvgNumber:]), 4))
 
+
         print(
             f"Epoch {epoch} - "
             f"Actions this epoch {self.epochTotalActions} - "
