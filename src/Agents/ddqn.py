@@ -5,7 +5,6 @@ from collections import deque
 import random
 import numpy as np
 import torch
-import torch._dynamo.config
 from torchvision.models import resnet50
 from torchvision import transforms
 
