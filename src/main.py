@@ -132,11 +132,12 @@ if __name__ == "__main__":
                 exit("Invalid agent")
 
     elif mode == 1:
+        logger = Logger(workingDir)
         if config["agent"] == 0:
             gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
 
         modelPath = chooseModel(os.path.join(workingDir, "results"))
-        evaluate(agent, gym, modelPath)
+        evaluate(agent, gym, modelPath, logger)
     elif mode == 2:
         playground(gym)
     elif mode == 3:

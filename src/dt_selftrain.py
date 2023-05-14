@@ -189,15 +189,22 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
         print(rewards_best_data)
 
         if rewards_best_data_before == rewards_best_data:
-            dtDataMaxSize = int(dtDataMaxSize * (3 / 4))
+            min_reward = min(rewards_best_data) + abs(min(rewards_best_data))+1
+            max_reward = max(rewards_best_data) + abs(min(rewards_best_data))+1
+            print(f"diff: {(max_reward - min_reward)/min_reward}")
+            
+            if dtDataMaxSize < config["DTDataMaxSize"]/2 and (max_reward - min_reward)/min_reward > 0.05:
+                pass
+            else:
+                dtDataMaxSize = int(dtDataMaxSize * (3 / 4))
 
-            if dtDataMaxSize < 2:
-                agent.save(save_dir)
-                NotifyDiscord(f"Training finished stagnated. Epochs: {e} Name: {save_dir}")
-                exit()
+                if dtDataMaxSize < 2:
+                    agent.save(save_dir)
+                    NotifyDiscord(f"Training finished stagnated. Epochs: {e} Name: {save_dir}")
+                    exit()
 
-            print(f"Stagnation: No improvement new size: {dtDataMaxSize}")
-            best_data = best_data[0:dtDataMaxSize]
+                print(f"Stagnation: No improvement new size: {dtDataMaxSize}")
+                best_data = best_data[0:dtDataMaxSize]
 
 
         

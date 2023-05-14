@@ -8,7 +8,7 @@
     "stepsMax": 50,
     "recordEvery": 200,
     "modes": "Train, Eval, Playground, Simulate",
-    "mode": 0,
+    "mode": 1,
     "gyms": "Simple1v1, Random1v1, Full1v1, Harvest",
     "gym": 0,
     "agents": "DDQN, DT_Rand, DT_50, DT_Full, GADT",
@@ -22,8 +22,8 @@
     "burnin": 1e4,
     "learn_every": 3,
     "sync_every": 1e4,
-    "DTDataMaxSize": 30,
+    "DTDataMaxSize": 100,
     "DTTrainEpochs": 50,
-    "DTEpisodesGenerate": 30,
-    "DTEpsilonRate": 3
+    "DTEpisodesGenerate": 300,
+    "DTEpsilonRate": 100
 }
