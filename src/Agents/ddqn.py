@@ -30,7 +30,7 @@ class DDQN_Agent:
         print(f"Need {(totalSizeInBytes*(1e-9)):.2f} Gb ram")
 
         self.memory = deque(maxlen=self.deque_size)
-        self.batch_size = config["batch_size"]
+        self.batch_size = config["batchSize"]
         print(f"Need {((arr.size * arr.itemsize * 3 * self.batch_size)*(1e-9)):.2f} Gb VRAM")
 
         """
