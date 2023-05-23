@@ -19,6 +19,7 @@
     "exploration_rate_min": 0.001,
     "deque_size": 100000,
     "learning_rate": 0.00025,
+    "gamma": 0.9,
     "burnin": 1e4,
     "learn_every": 3,
     "sync_every": 1e4,
