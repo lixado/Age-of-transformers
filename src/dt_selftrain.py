@@ -174,39 +174,30 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
 
 
         # add best data
-        # save best games before resettin
-        rewards_best_data_before = [sum([step[-1] for step in game]) for game in best_data]
-        generated_data.sort(key=lambda game: sum([step[-1] for step in game]), reverse=True)
-        best_data += generated_data[0:dtDataMaxSize]
+        best_data += generated_data
 
-
-
-        # make sure best games is always max x games
         best_data.sort(key=lambda game: sum([step[-1] for step in game]), reverse=True)
-
         best_data = best_data[0:dtDataMaxSize]
+        
         rewards_best_data = [sum([step[-1] for step in game]) for game in best_data]
         print(rewards_best_data)
 
-        if rewards_best_data_before == rewards_best_data:
-            min_reward = min(rewards_best_data) + abs(min(rewards_best_data))+1
-            max_reward = max(rewards_best_data) + abs(min(rewards_best_data))+1
-            percentageDiff = (max_reward - min_reward)/min_reward
-            print(f"diff: {percentageDiff}")
-            
-            if dtDataMaxSize < config["DTDataMaxSize"]/2 and percentageDiff < 0.05:
-                pass
-            else:
-                dtDataMaxSize = int(dtDataMaxSize * (3 / 4))
+        min_reward = min(rewards_best_data) + abs(min(rewards_best_data))+1
+        max_reward = max(rewards_best_data) + abs(min(rewards_best_data))+1
+        percentageDiff = (max_reward - min_reward)/min_reward
+        print(f"diff: {percentageDiff}")
+        
+        if percentageDiff < config["DTDataPercentageDiff"]:
+            dtDataMaxSize = int(dtDataMaxSize * (3 / 4))
 
-                if dtDataMaxSize < 2:
-                    agent.save(save_dir)
-                    NotifyDiscord(f"Training finished stagnated. Epochs: {e} Name: {save_dir}")
-                    exit()
+            if dtDataMaxSize < int(config["DTDataMaxSize"]*(1/3)):
+                agent.save(save_dir)
+                NotifyDiscord(f"Training finished stagnated. Epochs: {e} Name: {save_dir}")
+                exit()
 
-                print(f"Stagnation: No improvement new size: {dtDataMaxSize}")
-                best_data = best_data[0:dtDataMaxSize]
-
+            print(f"Stagnation: No improvement new size: {dtDataMaxSize}")
+            best_data = best_data[0:dtDataMaxSize]
+        
 
         
         # train agent
