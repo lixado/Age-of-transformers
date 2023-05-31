@@ -9,7 +9,7 @@
     "recordEvery": 200,
     "modes": "Train, Eval, Playground, Simulate",
     "mode": 0,
-    "gyms": "Simple1v1, Random1v1, Full1v1, Harvest",
+    "gyms": ["Simple1v1", "Random1v1", "Full1v1", "Harvest"],
     "gym": 1,
     "agents": "DDQN, DT_Rand, DT_50, DT_Full, GADT",
     "agent": 4,
@@ -28,5 +28,6 @@
     "DTDataPercentageDiff": 0.15,
     "DTTrainEpochs": 10,
     "DTEpisodesGenerate": 300,
-    "DTEpsilonRate": 3
+    "DTEpsilonRate": 3,
+    "DTTargetReward": 10
 }

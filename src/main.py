@@ -32,7 +32,6 @@ if __name__ == "__main__":
     FRAME_STACK = config["frameStack"]
     print("Config: ", config)
 
-
     """
         Handle input default train
         0 = Train
@@ -45,7 +44,6 @@ if __name__ == "__main__":
         sys.stdout.write("[%d] %s\n\r" % (cnt, modeName))
     mode = (int(input("Select mode[1-%s]: " % cnt)) - 1) if "mode" not in config else config["mode"] # get from config file if exists
     print(f"{modes[mode]} mode.") if "mode" not in config else print(f"{modes[mode]} mode. Auto from config.json file.")
-
 
     """
         Handle env input
@@ -60,8 +58,6 @@ if __name__ == "__main__":
     gymMode = (int(input("Select gym[1-%s]: " % cnt)) - 1) if "gym" not in config else config["gym"]  # get from config file if exists
     print(f"{gymModes[gymMode]} gym.") if "gym" not in config else print(f"{modes[mode]} gym. Auto from config.json file.")
 
-    
-    
     """
         Start gym
     """
@@ -118,13 +114,13 @@ if __name__ == "__main__":
                 gym = FrameStack(gym, num_stack=FRAME_STACK, lz4_compress=False)
                 train_ddqn(config, agent, gym, logger)
             case 1:
-                data_path = os.path.join(workingDir, "simple1v1_data")
+                data_path = os.path.join(workingDir, "datasets", config["gyms"][gymMode], "random")
                 train_transformer(config, agent, gym, logger, data_path)
             case 2:
-                data_path = os.path.join(workingDir, "simple1v1_data")
+                data_path = os.path.join(workingDir, "datasets", config["gyms"][gymMode], "mixed")
                 train_transformer(config, agent, gym, logger, data_path)
             case 3:
-                data_path = os.path.join(workingDir, "simple1v1_data")
+                data_path = os.path.join(workingDir, "datasets", config["gyms"][gymMode], "pretrained")
                 train_transformer(config, agent, gym, logger, data_path)
             case 4:
                 train_dt_self(config, agent, gym, logger)

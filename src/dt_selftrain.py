@@ -12,92 +12,7 @@ from Agents.decisition_transformer import DecisionTransformer_Agent
 from Agents.ddqn import DDQN_Agent
 from logger import Logger
 from functions import CreateVideoFromTempImages, SaveTempImage, NotifyDiscord
-
-
-class DTDataset(Dataset):
-    def __init__(self, games, action_space_dim, data_path = None):
-        self.games = copy.deepcopy(games)
-        self.action_space_dim = action_space_dim
-
-        self.total_sequences = []
-        for game in self.games:
-            this_game_sequences_sizes = []
-            if len(game) > 1:
-                i = 2
-                while i <= len(game): # assuming the whole game can fit into model
-                    this_game_sequences_sizes.append(i)
-                    i += 1
-
-                self.total_sequences.append(this_game_sequences_sizes)
-            else:
-                exit("A came cannot be 1 step")
-
-            # fix action and reward
-            for i, step in enumerate(game):
-                # translate action to list
-                action = [0 for _ in range(self.action_space_dim)]
-                actionIndex = step[1] 
-                action[actionIndex] = 1
-                game[i][1] = action
-
-                # return to go
-                if i == 0: # first step
-                    total_reward_this_game = sum([step[-1] for step in game])
-                    game[0][-1] = total_reward_this_game # this return to go
-                else:
-                    game[i][-1] = game[i-1][-1] - game[i][-1]
-
-    def __len__(self):
-        total_length = 0
-        for game in self.total_sequences:
-            total_length += len(game)
-
-        return total_length
-    
-    def __getitem__(self, idx):
-        """
-            should return a sequence
-        """
-        x = 0
-        for i in range(len(self.total_sequences)):
-            for j in range(len(self.total_sequences[i])):
-                if x == idx:
-                    length = self.total_sequences[i][j]
-
-                    return self.games[i][0:length]
-                x += 1
-
-
-def collate_fn(batch):
-
-    # here sequences will have different sizes and we want the same sizes
-    lengths = [len(sequence) for sequence in batch]
-    lengths = list(set(lengths))
-
-    batches = []
-
-    for l in lengths:
-        small_batch = []
-
-        observations = []
-        actions = []
-        timesteps = []
-        returns_to_go = []
-        for sequence in [b for b in batch if len(b) == l]:
-            observations.append([step[0] for step in sequence])
-            actions.append([step[1] for step in sequence])
-            timesteps.append([step[2] for step in sequence])
-            returns_to_go.append([step[3] for step in sequence])
-
-        small_batch.append(torch.tensor(np.array(observations), dtype=torch.float32))
-        small_batch.append(torch.tensor(np.array(actions), dtype=torch.float32))
-        small_batch.append(torch.tensor(np.array(timesteps), dtype=torch.long))
-        small_batch.append(torch.tensor(np.array(returns_to_go), dtype=torch.float32).unsqueeze(-1))
-
-        batches.append(small_batch)
-
-
-    return batches
+from data import collate_fn, DTDataset
 
 
 def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
@@ -132,7 +47,7 @@ def train_dt_self(config: dict, agent, gym: gym.Env, logger: Logger):
             truncated = False
 
             actionIndex = -1  # first acction is default Do nothing
-            reward = 10000
+            reward = config["DTTargetReward"] #10000
 
             memory = []
             while not done and not truncated:

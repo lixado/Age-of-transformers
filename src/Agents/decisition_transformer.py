@@ -1,14 +1,10 @@
 import os
-import torch.nn as nn
-import copy
 from collections import deque
 import random
 import numpy as np
 import torch
 import itertools
 from transformers import DecisionTransformerModel, DecisionTransformerConfig
-from functions import sample_with_order
-import numpy as n
 
 
 class DecisionTransformer_Agent:
@@ -19,17 +15,13 @@ class DecisionTransformer_Agent:
 
         self.state_dim_flatten = np.prod(state_dim)
 
-        # max_steps=(config["skipFrame"]+1) + int(config["stepsMax"]/(config["skipFrame"]+1))
-
-        self.max_ep_length = config["stepsMax"]+1#2**11#max_steps # maximum number that can exists in timesteps
+        self.max_ep_length = 500#2**11#max_steps # maximum number that can exists in timesteps
         self.n_positions = 2**10 # The maximum sequence length that this model might ever be used with. Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
-        
         
         print("max_ep_length: ", self.max_ep_length)
         trans_config = DecisionTransformerConfig(self.state_dim_flatten, action_space_dim, max_ep_len=self.max_ep_length, n_positions=self.n_positions, action_tanh=True)
         self.net = DecisionTransformerModel(trans_config).to(device=self.device)
         self.batch_size = config["batchSize"]
-
 
         self.exploration_rate = config["exploration_rate"]
         self.exploration_rate_decay = config["exploration_rate_decay"]
@@ -66,7 +58,6 @@ class DecisionTransformer_Agent:
         totalSizeInBytes = (arr.size * arr.itemsize * self.max_sequence_length * self.batch_size)
         print(f"Need {(totalSizeInBytes*(1e-9) + size_model_gb):.2f} Gb Vram for states sequence in learning.")
 
-
         """
             Q learning
         """
@@ -74,7 +65,6 @@ class DecisionTransformer_Agent:
 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.loss_fn = lambda s_pred, a_pred, r_pred, s, a, r: torch.mean((a_pred-a)**2)
-
 
     def act(self, state, actionIndex, tick, reward):
         """
@@ -183,7 +173,6 @@ class DecisionTransformer_Agent:
 
         return stateBatch, actionBatch, rewardBatch, timestepsBatch
 
-
     def train(self, observations, actions, timesteps, returns_to_go):
         batch_size = observations.shape[0]
         sequence_length = observations.shape[1]
@@ -207,7 +196,6 @@ class DecisionTransformer_Agent:
         loss.backward()
         self.optimizer.step()
         return loss.detach().cpu().item(), 0
-    
 
     def save(self, save_dir):
         """
