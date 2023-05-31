@@ -34,7 +34,7 @@ def train_transformer(config: dict, agent: DecisionTransformer_Agent, gym: gym.E
     batch_size = config["batchSize"]
 
     dataset = DTDataset([], agent.action_space_dim, data_path)
-    trainingLoader = DataLoader(dataset, batch_size=batch_size, collate_fn=collate_fn, shuffle=True, num_workers=6)
+    trainingLoader = DataLoader(dataset, batch_size=batch_size, collate_fn=collate_fn, shuffle=True, num_workers=3)
 
     for e in range(epochs):
         loss, q = 0.0, 0.0
