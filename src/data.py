@@ -34,11 +34,9 @@ class DTDataset(Dataset):
             data = os.listdir(data_path)
             for path in data:
                 game_path = os.path.join(data_path, path)
-                f = open(game_path, "rb")
-                game = pickle.load(f)
-                f.close()
-
-                games.append(game)
+                with open(game_path, "rb") as f:
+                    game = pickle.load(f)
+                    games.append(game)
                 for t in game:
                     t[0] = t[0].flatten()
             self.games = copy.deepcopy(games)
