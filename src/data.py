@@ -41,6 +41,7 @@ class DTDataset(Dataset):
                 self.games.append(game)
                 for t in game:
                     t[0] = t[0].flatten()
+            self.games = copy.deepcopy(games)
         self.action_space_dim = action_space_dim
 
         self.total_sequences = []
