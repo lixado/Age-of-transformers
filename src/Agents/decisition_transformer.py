@@ -21,7 +21,7 @@ class DecisionTransformer_Agent:
 
         # max_steps=(config["skipFrame"]+1) + int(config["stepsMax"]/(config["skipFrame"]+1))
 
-        self.max_ep_length = config["stepsMax"]+1#2**11#max_steps # maximum number that can exists in timesteps
+        self.max_ep_length = config["stepsMax"] + 1#2**11#max_steps # maximum number that can exists in timesteps
         self.n_positions = 2**10 # The maximum sequence length that this model might ever be used with. Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
         
         
