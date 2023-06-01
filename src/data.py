@@ -30,7 +30,7 @@ class DTDataset(Dataset):
         if data_path is None:
             self.games = copy.deepcopy(games)
         else:
-            self.games = []
+            games = []
             data = os.listdir(data_path)
             for path in data:
                 game_path = os.path.join(data_path, path)
@@ -38,7 +38,7 @@ class DTDataset(Dataset):
                 game = pickle.load(f)
                 f.close()
 
-                self.games.append(game)
+                games.append(game)
                 for t in game:
                     t[0] = t[0].flatten()
             self.games = copy.deepcopy(games)
