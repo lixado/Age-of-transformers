@@ -66,7 +66,7 @@ def evaluate(agent, gym: CustomGym, modelPath, logger: Logger):
                 evals.append(info["eval"])
                 break
         
-        logger.log_epoch(e, agent.exploration_rate, 0)
+        logger.log_epoch(e, agent.exploration_rate, 0, print_console=False)
 
     gym.evalPrint(evals)
     

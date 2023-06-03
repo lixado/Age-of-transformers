@@ -75,8 +75,7 @@ class Logger():
         plt.savefig(path)
         plt.clf()
 
-
-    def log_epoch(self, epoch, epsilon, lr):
+    def log_epoch(self, epoch, epsilon, lr, print_console=True):
         tNow = time.time()
         tDelta = tNow - self.record_time
 
@@ -94,18 +93,18 @@ class Logger():
         self.movingAvgactions.append(np.round(np.mean(self.actions[-self.movingAvgNumber:]), 4))
         self.movingAvgqs.append(np.round(np.mean(self.qs[-self.movingAvgNumber:]), 4))
 
-
-        print(
-            f"Epoch {epoch} - "
-            f"Actions this epoch {self.epochTotalActions} - "
-            f"Epsilon {epsilon} - "
-            f"Lr {lr:.5f} - "
-            f"Avg reward {avgReward} - "
-            f"Avg loss {avgLoss} - "
-            f"Avg Q {avgQ} - "
-            f"Time Delta {tDelta} - "
-            f"Time {datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}"
-        )
+        if print_console:
+            print(
+                f"Epoch {epoch} - "
+                f"Actions this epoch {self.epochTotalActions} - "
+                f"Epsilon {epsilon} - "
+                f"Lr {lr:.5f} - "
+                f"Avg reward {avgReward} - "
+                f"Avg loss {avgLoss} - "
+                f"Avg Q {avgQ} - "
+                f"Time Delta {tDelta} - "
+                f"Time {datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}"
+            )
 
         with open(self.save_log, "a") as f:
             f.write(
@@ -114,7 +113,7 @@ class Logger():
                 f"{tDelta:15.3f}"
                 f"{datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'):>20}\n"
             )
-            
+
         for metric in ["rewards", "losses", "actions", "qs"]:
             plt.plot(getattr(self, f"movingAvg{metric}"))
             plt.title(f"Avg of previous {self.movingAvgNumber} epochs of sum of {metric} per epoch")
