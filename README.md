@@ -1,6 +1,8 @@
 # Age-of-transformers
 Transformers based AI to learn to play deep-rts
 
+Datasets: https://drive.google.com/file/d/1QnrxFDww0sCHng7Odl3ucdkVP0SdjBiM/view?usp=sharing
+
 # Index
 <!-- vscode-markdown-toc -->
 * [Setup](#Setup)
